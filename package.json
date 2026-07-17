@@ -7,7 +7,7 @@
     "dev:network": "next dev -H 0.0.0.0",
     "postinstall": "npx prisma generate",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
     "backup": "bash scripts/backup_ftp.sh"
   },
