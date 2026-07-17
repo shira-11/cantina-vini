@@ -1,0 +1,1603 @@
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { Wine, Search, Plus, Grape, MapPin, Loader2, Camera, FileText, List, FileSpreadsheet, History, ChevronDown, X, Menu, Image as ImageIcon, User, LogOut, Shield, Settings, Mic, HelpCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
+import * as XLSX from 'xlsx';
+
+import { getCountryFlag, getBadgeClass } from './utils/wineHelpers';
+import { StockCell } from './components/StockCell';
+import { MobileCatalog } from './components/MobileCatalog';
+import HelpGuideModal from './components/HelpGuideModal';
+import GlobalMovementLog from './components/GlobalMovementLog';
+
+export default function Home() {
+  const router = useRouter();
+  const [wines, setWines] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('homeWines');
+      if (cached) return JSON.parse(cached);
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !sessionStorage.getItem('homeWines');
+    }
+    return true;
+  });
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [search, setSearch] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('homeSearch') || '';
+    }
+    return '';
+  });
+  const [expandedGroups, setExpandedGroups] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('homeExpandedGroups');
+      if (cached) return JSON.parse(cached);
+    }
+    return {};
+  });
+  const [showArchive, setShowArchive] = useState(false);
+  const [hoveredPhoto, setHoveredPhoto] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [dbLocations, setDbLocations] = useState([]);
+
+  const [isMobile, setIsMobile] = useState(false);
+  const [forceDesktop, setForceDesktop] = useState(false);
+  const [isGlobalLogOpen, setIsGlobalLogOpen] = useState(false);
+  const [showPdfMenu, setShowPdfMenu] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/locations').then(res => res.json()).then(data => {
+      if (Array.isArray(data)) {
+        setDbLocations(data.map(d => d.name));
+      }
+    }).catch(console.error);
+  }, []);
+
+  const [visitorAllowedFilters, setVisitorAllowedFilters] = useState([
+    'country', 'region', 'producerCellar', 'producer',
+    'classification', 'category', 'location', 'availability',
+    'photo', 'bottleType'
+  ]);
+  const [visitorAllowWineDetails, setVisitorAllowWineDetails] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/settings').then(res => res.json()).then(data => {
+      if (data.visitorAllowedFilters) {
+        setVisitorAllowedFilters(data.visitorAllowedFilters);
+      }
+      if (data.visitorAllowWineDetails !== undefined) {
+        setVisitorAllowWineDetails(data.visitorAllowWineDetails);
+      }
+    }).catch(console.error);
+  }, []);
+
+  const handleMouseMove = (e) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+  };
+
+  const [metadata, setMetadata] = useState(null);
+
+  const toggleGroup = (name) => {
+    setExpandedGroups(prev => {
+      const next = { ...prev, [name]: !prev[name] };
+      if (typeof window !== 'undefined') sessionStorage.setItem('homeExpandedGroups', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const [filters, setFilters] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('homeFilters');
+      if (cached) return JSON.parse(cached);
+    }
+    return {
+      country: '', region: '', producerCellar: '', producer: '',
+      classification: '', category: '', location: '', availability: '', photo: '', bottleType: ''
+    };
+  });
+
+  const [sortOrder, setSortOrder] = useState('asc');
+  
+  // Resizing state
+  const [sidebarWidth, setSidebarWidth] = useState(300);
+  const [isResizing, setIsResizing] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+
+  const startResizing = useCallback(() => {
+    setIsResizing(true);
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  const resize = useCallback(
+    (e) => {
+      if (isResizing) {
+        // limit between 250px and 800px or half window width
+        setSidebarWidth(Math.max(250, Math.min(800, e.clientX)));
+      }
+    },
+    [isResizing]
+  );
+
+  useEffect(() => {
+    if (isResizing) {
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
+    } else {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+    window.addEventListener("mousemove", resize);
+    window.addEventListener("mouseup", stopResizing);
+    return () => {
+      window.removeEventListener("mousemove", resize);
+      window.removeEventListener("mouseup", stopResizing);
+    };
+  }, [resize, stopResizing, isResizing]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setSpeechSupported('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+    }
+  }, []);
+
+  const startVoiceSearch = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Il tuo browser non supporta la ricerca vocale.");
+      return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.lang = 'it-IT';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+    
+    recognition.onresult = (event) => {
+      let transcript = event.results[0][0].transcript.toLowerCase();
+      
+      const newFilters = { ...filters };
+
+      // Extract dynamic filters from existing wines data
+      const extractDynamicFilter = (field, list) => {
+        // Sort by length descending to match longest phrases first (e.g. "Pinot Nero" before "Pinot")
+        const sortedList = [...list].sort((a, b) => b.length - a.length);
+        for (const item of sortedList) {
+          if (!item) continue;
+          // Escape regex characters
+          const safeItem = item.toLowerCase().replace(/[-\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&');
+          const regex = new RegExp(`\\\\b${safeItem}\\\\b`, 'g');
+          if (regex.test(transcript)) {
+            newFilters[field] = item;
+            transcript = transcript.replace(regex, '').replace(/\\s+/g, ' ').trim();
+            break;
+          }
+        }
+      };
+
+      const uniqueCountries = [...new Set(wines.map(w => w.country).filter(Boolean))];
+      const uniqueRegions = [...new Set(wines.map(w => w.region).filter(Boolean))];
+      const uniqueClassifications = [...new Set(wines.map(w => w.classification).filter(Boolean))];
+      const uniqueBottleTypes = [...new Set(wines.map(w => w.bottleType).filter(Boolean))];
+      const uniqueProducerCellars = [...new Set(wines.map(w => w.producerCellar).filter(Boolean))];
+      const uniqueProducers = [...new Set(wines.map(w => w.producer).filter(Boolean))];
+
+      extractDynamicFilter('country', uniqueCountries);
+      extractDynamicFilter('region', uniqueRegions);
+      extractDynamicFilter('classification', uniqueClassifications);
+      extractDynamicFilter('bottleType', uniqueBottleTypes);
+      extractDynamicFilter('producerCellar', uniqueProducerCellars);
+      extractDynamicFilter('producer', uniqueProducers);
+
+      // Handle specific mappings for locations and categories (synonyms)
+      const locMap = {
+        "cantina milano": "Cantina Milano",
+        "milano": "Cantina Milano",
+        "cantina arezzo": "Cantina Arezzo",
+        "arezzo": "Cantina Arezzo",
+        "cantina saint moritz": "Cantina Saint Moritz",
+        "saint moritz": "Cantina Saint Moritz",
+        "cantina levanzo": "Cantina Levanzo",
+        "levanzo": "Cantina Levanzo"
+      };
+      
+      const catMap = {
+        "bianco": "Bianco",
+        "rosso": "Rosso",
+        "champagne": "Champagne",
+        "passito": "Passito",
+        "moscato": "Moscato",
+        "rosè": "Rosè",
+        "rosé": "Rosè",
+        "rose": "Rosè",
+        "franciacorta": "Franciacorta",
+        "prosecco": "Prosecco",
+        "spumante secco": "Spumante Secco",
+        "spumante dolce": "Spumante Dolce"
+      };
+      
+      for (const [key, val] of Object.entries(catMap)) {
+        const regex = new RegExp(`\\\\b${key}\\\\b`, 'g');
+        if (regex.test(transcript)) {
+          newFilters.category = val;
+          transcript = transcript.replace(regex, '').replace(/\\s+/g, ' ').trim();
+          break;
+        }
+      }
+
+      for (const [key, val] of Object.entries(locMap)) {
+        if (transcript.includes(key)) {
+          newFilters.location = val;
+          transcript = transcript.replace(key, '').replace(/\\s+/g, ' ').trim();
+          break;
+        }
+      }
+      
+      setFilters(newFilters);
+      setSearch(transcript);
+    };
+    
+    recognition.onerror = (event) => {
+      console.error("Errore riconoscimento vocale:", event.error);
+      setIsListening(false);
+    };
+    
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+    
+    recognition.start();
+  };
+
+  const [sortConfig, setSortConfig] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('homeSortConfig');
+      if (cached) return JSON.parse(cached);
+    }
+    return { key: 'name', direction: 'asc' };
+  });
+
+  const [colWidths, setColWidths] = useState({
+    name: 300, vintage: 100, country: 200, category: 200, bottleType: 120, totalStock: 150
+  });
+
+  const [activeMenu, setActiveMenu] = useState(null); // 'scheda', 'indice', 'excel'
+  const [selectedGroups, setSelectedGroups] = useState([]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.print-menu-container')) {
+        setActiveMenu(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Salva i filtri e l'ordinamento in sessionStorage quando cambiano
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('homeFilters', JSON.stringify(filters));
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('homeSortConfig', JSON.stringify(sortConfig));
+    }
+  }, [sortConfig]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('homeSearch', search);
+    }
+    fetchWines();
+  }, [search, showArchive]);
+
+  // Ascolta anche i cambiamenti di visibilità della pagina per sicurezza
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && sessionStorage.getItem('homeNeedsRefresh') === 'true') {
+        sessionStorage.removeItem('homeNeedsRefresh');
+        fetchWines();
+      }
+    };
+
+    // Controlla anche con un interval per coprire il caso della cache di Next.js
+    const interval = setInterval(() => {
+      if (typeof window !== 'undefined' && sessionStorage.getItem('homeNeedsRefresh') === 'true') {
+        sessionStorage.removeItem('homeNeedsRefresh');
+        fetchWines();
+      }
+    }, 500);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    fetchWines();
+    
+    // Fetch user info
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) setCurrentUser(data.user);
+      })
+      .catch(err => console.error("Error fetching user:", err));
+
+  }, []);
+
+  const fetchWinesRef = useRef();
+
+  // SSE connection for real-time updates
+  useEffect(() => {
+    const eventSource = new EventSource('/api/events');
+    eventSource.onmessage = (e) => {
+      if (e.data === 'update' && fetchWinesRef.current) {
+        fetchWinesRef.current();
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const res = await fetch('/api/wines/metadata');
+        const data = await res.json();
+        if (res.ok) setMetadata(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchMetadata();
+  }, []);
+
+  useEffect(() => {
+    const scrollPos = sessionStorage.getItem('homeScrollPos');
+    if (scrollPos && wines.length > 0) {
+      const y = parseInt(scrollPos, 10);
+      requestAnimationFrame(() => {
+        window.scrollTo(0, y);
+        setTimeout(() => {
+          window.scrollTo(0, y);
+          sessionStorage.removeItem('homeScrollPos');
+        }, 150);
+      });
+    }
+  }, [wines.length]);
+
+  const fetchWines = async () => {
+    if (!wines.length) setLoading(true);
+    try {
+      const res = await fetch(`/api/wines?search=${search}&archived=${showArchive}&t=${Date.now()}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setWines(data);
+        if (typeof window !== 'undefined') {
+          try {
+            sessionStorage.setItem('homeWines', JSON.stringify(data));
+          } catch (e) {
+            console.warn("Could not save to sessionStorage:", e);
+          }
+        }
+      } else {
+        console.error("API returned error:", data);
+        setWines([]);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWinesRef.current = fetchWines;
+  }, [search, showArchive, wines.length]);
+
+  const getBadgeClass = (category) => {
+    const cat = category?.toLowerCase() || '';
+    if (cat.includes('ross')) return 'badge red';
+    if (cat.includes('bianc')) return 'badge white';
+    if (cat.includes('bollicin') || cat.includes('champagne')) return 'badge sparkling';
+    return 'badge';
+  };
+
+  const filteredWines = wines.map(w => {
+    let displayStock = w.totalStock;
+    if (filters.location) {
+      let stockInLoc = 0;
+      for (const m of w.movements) {
+        if (m.location?.name === filters.location) {
+          if (m.movementType === 'Ingresso') stockInLoc += m.quantity;
+          if (m.movementType === 'Uscita') stockInLoc -= m.quantity;
+        }
+      }
+      displayStock = stockInLoc;
+    }
+    return { ...w, displayStock };
+  }).filter(w => {
+    if (filters.country && w.country !== filters.country) return false;
+    if (filters.region && w.region !== filters.region) return false;
+    if (filters.producerCellar && w.producerCellar !== filters.producerCellar) return false;
+    if (filters.producer && w.producer !== filters.producer) return false;
+    if (filters.classification && w.classification !== filters.classification) return false;
+    if (filters.category && w.category !== filters.category) return false;
+
+    if (filters.availability === 'available' && w.displayStock <= 0) return false;
+    if (filters.availability === 'unavailable' && w.displayStock > 0) return false;
+    if (filters.availability === 'was_in_stock') {
+      if (w.displayStock > 0) return false;
+      if (!w.movements || w.movements.length === 0) return false;
+    }
+    if (filters.location && w.displayStock <= 0 && filters.availability !== 'unavailable' && filters.availability !== 'was_in_stock') return false;
+
+    if (filters.photo === 'with_photo' && !w.photo) return false;
+    if (filters.photo === 'without_photo' && w.photo) return false;
+
+    if (filters.bottleType) {
+      const hasMovementBottle = w.movements && w.movements.some(m => m.bottleType === filters.bottleType);
+      if (w.bottleType !== filters.bottleType && !hasMovementBottle) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  const groupedMap = new Map();
+  for (const w of filteredWines) {
+    if (!groupedMap.has(w.name)) {
+      groupedMap.set(w.name, {
+        name: w.name,
+        country: w.country,
+        category: w.category,
+        displayStock: 0,
+        wines: [],
+        photo: w.photo,
+        id: w.id
+      });
+    }
+    const g = groupedMap.get(w.name);
+    g.wines.push(w);
+    g.displayStock += w.displayStock;
+  }
+
+  const groupedWinesArray = Array.from(groupedMap.values()).sort((a, b) => {
+    let valA = a[sortConfig.key] || '';
+    let valB = b[sortConfig.key] || '';
+
+    if (sortConfig.key === 'totalStock') {
+      valA = a.displayStock || 0;
+      valB = b.displayStock || 0;
+    }
+
+    if (sortConfig.key === 'vintage') {
+      valA = Math.max(...a.wines.map(w => parseInt(w.vintage) || 0));
+      valB = Math.max(...b.wines.map(w => parseInt(w.vintage) || 0));
+    }
+
+    if (typeof valA === 'string' && typeof valB === 'string') {
+      return sortConfig.direction === 'asc'
+        ? valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' })
+        : valB.localeCompare(valA, undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const handleResize = (e, colKey) => {
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = colWidths[colKey];
+
+    const onMouseMove = (moveEvent) => {
+      const diff = moveEvent.clientX - startX;
+      setColWidths(prev => ({
+        ...prev,
+        [colKey]: Math.max(60, startWidth + diff)
+      }));
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const handleVisualSearch = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setOcrLoading(true);
+
+    try {
+      // Ridimensiona l'immagine prima dell'upload per evitare che il server si blocchi
+      const resizedBlob = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1000;
+            const MAX_HEIGHT = 1000;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error("Impossibile convertire l'immagine."));
+            }, 'image/jpeg', 0.8);
+          };
+          img.onerror = () => reject(new Error("Formato immagine non valido o file corrotto."));
+          img.src = event.target.result;
+        };
+        reader.onerror = () => reject(new Error("Impossibile leggere il file."));
+        reader.readAsDataURL(file);
+      });
+
+      const formData = new FormData();
+      formData.append('file', resizedBlob, 'image.jpg');
+
+      const res = await fetch('/api/ocr', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.text) {
+        // Parole comuni sulle etichette da ignorare
+        const blacklist = ['denominazione', 'origine', 'controllata', 'garantita', 'imbottigliato', 'prodotto', 'italia', 'vendemmia', 'cantina', 'annata', 'contiene', 'solfiti', 'volume', 'alcol', 'viticoltori', 'agricola', 'tenuta', 'azienda', 'delle', 'della', 'degli', 'riserva', 'superiore', 'classico', 'docg', 'doc', 'igt'];
+
+        // Pulisce il testo includendo lettere accentate
+        const cleanText = data.text.replace(/[^a-zA-ZÀ-ÖØ-öø-ÿ\s]/g, ' ');
+        const wordsArray = cleanText.split(/[\s\n]+/).filter(w => w.length > 3 && !blacklist.includes(w.toLowerCase()));
+
+        // Cerca il miglior abbinamento confrontando le parole lette con il database locale
+        let bestMatch = null;
+        let highestScore = 0;
+
+        wines.forEach(wine => {
+          let score = 0;
+          const wineString = `${wine.name} ${wine.producer} ${wine.producerCellar || ''}`.toLowerCase();
+          
+          wordsArray.forEach(word => {
+            if (wineString.includes(word.toLowerCase())) {
+              // Parole più lunghe danno più punteggio
+              score += word.length;
+            }
+          });
+
+          if (score > highestScore) {
+            highestScore = score;
+            bestMatch = wine;
+          }
+        });
+
+        if (bestMatch && highestScore > 3) {
+          // Usa il nome del produttore o del vino che ha matchato meglio
+          setSearch(bestMatch.name);
+        } else {
+          // Fallback alla vecchia logica se non trova corrispondenze chiare nel db
+          wordsArray.sort((a, b) => b.length - a.length);
+          const bestWord = wordsArray.length > 0 ? wordsArray[0] : '';
+
+          if (bestWord) {
+            setSearch(bestWord);
+          } else {
+            alert('Testo non leggibile o troppo breve, riprova con una foto più nitida.');
+          }
+        }
+      } else {
+        alert("Errore nella lettura dell'etichetta. Assicurati che l'immagine sia a fuoco.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert(`Errore: ${error.message || "Impossibile elaborare l'immagine"}`);
+    } finally {
+      setOcrLoading(false);
+      // Reset input value so the same file can be selected again
+      e.target.value = null;
+    }
+  };
+
+  const defaultRegions = [
+    'Toscana', 'Piemonte', 'Trentino Alto Adige', 'Sicilia',
+    'Friuli Venezia Giulia', 'Campania', 'Emilia Romagna',
+    'Liguria', 'Veneto', 'Marche', 'Lombardia', 'Sardegna',
+    'Umbria', 'Abruzzo', 'Calabria', 'Lazio', 'Basilicata'
+  ];
+
+  const uniqueCountries = [...new Set(wines.map(w => w.country).filter(Boolean))].sort();
+  const winesForRegion = filters.country ? wines.filter(w => w.country === filters.country) : wines;
+  const dbRegions = winesForRegion.map(w => w.region).filter(Boolean);
+  const possibleDefaultRegions = (!filters.country || filters.country.toLowerCase() === 'italia') ? defaultRegions : [];
+  const uniqueRegions = [...new Set([...possibleDefaultRegions, ...dbRegions])].sort();
+  const uniqueProducerCellars = [...new Set(wines.map(w => w.producerCellar).filter(Boolean))].sort();
+  const uniqueProducers = [...new Set(wines.map(w => w.producer).filter(Boolean))].sort();
+  const uniqueClassifications = [...new Set(wines.map(w => w.classification).filter(Boolean))].sort();
+  const uniqueCategories = [...new Set(wines.map(w => w.category).filter(Boolean))].sort();
+  const uniqueLocations = [...new Set([...dbLocations, ...wines.flatMap(w => w.movements.map(m => m.location?.name)).filter(Boolean)])].sort();
+  const uniqueBottleTypes = [...new Set([
+    ...(metadata?.bottleTypes || []),
+    ...wines.flatMap(w => w.movements?.map(m => m.bottleType)).filter(Boolean)
+  ])].sort();
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
+  const canViewFilter = (filterId) => {
+    if (!currentUser || currentUser.role !== 'viewer') return true;
+    return visitorAllowedFilters.includes(filterId);
+  };
+
+  const handleWineClick = (wineId) => {
+    if (currentUser?.role === 'viewer' && !visitorAllowWineDetails) {
+      return;
+    }
+    sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
+    router.push(`/wine/${wineId}`);
+  };
+
+  if (isMobile && !forceDesktop) {
+    return (
+      <MobileCatalog 
+        wines={filteredWines}
+        loading={loading}
+        search={search}
+        setSearch={setSearch}
+        filters={filters}
+        setFilters={setFilters}
+        canViewFilter={canViewFilter}
+        onWineClick={handleWineClick}
+        setForceDesktop={setForceDesktop}
+        uniqueCountries={uniqueCountries}
+        uniqueRegions={uniqueRegions}
+        uniqueProducerCellars={uniqueProducerCellars}
+        uniqueProducers={uniqueProducers}
+        uniqueClassifications={uniqueClassifications}
+        uniqueCategories={uniqueCategories}
+        uniqueLocations={uniqueLocations}
+        uniqueBottleTypes={uniqueBottleTypes}
+        currentUser={currentUser}
+        setIsGlobalLogOpen={setIsGlobalLogOpen}
+        winesArray={groupedWinesArray}
+      />
+    );
+  }
+
+  return (
+    <div className="app-container">
+      {/* Mobile Sidebar Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className={`sidebar-backdrop ${isSidebarOpen ? 'show' : ''}`}
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      
+      {showHelp && <HelpGuideModal onClose={() => setShowHelp(false)} />}
+
+      {/* Sidebar Filters */}
+      <aside 
+        className={`sidebar ${isSidebarOpen ? 'open' : ''}`} 
+        style={{ '--sidebar-width': `${sidebarWidth}px` }}
+      >
+        <div 
+          onMouseDown={startResizing}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: '6px',
+            cursor: 'col-resize',
+            backgroundColor: isResizing ? 'var(--primary-color)' : 'transparent',
+            zIndex: 10
+          }}
+          className="sidebar-resizer"
+        />
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', cursor: 'pointer' }}
+          onClick={() => window.location.href = '/'}
+        >
+          <Wine size={28} color="var(--primary-color)" />
+          <h2>{showArchive ? 'ARCHIVIO VINI' : 'CANTINA'}</h2>
+        </div>
+
+          <div className="filter-group">
+          <label>Cerca</label>
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ position: 'relative', width: '100%' }}>
+              <Search size={18} style={{ position: 'absolute', left: 10, top: 11, color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Nome, produttore..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '3.5rem' : '2.25rem', width: '100%' }}
+              />
+              {speechSupported && (
+                <button 
+                  onClick={startVoiceSearch}
+                  title="Ricerca vocale"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '0',
+                    cursor: 'pointer',
+                    position: 'absolute',
+                    right: '2.25rem',
+                    top: '11px',
+                    color: isListening ? '#ef4444' : '#64748b',
+                    animation: isListening ? 'pulse 1.5s infinite' : 'none'
+                  }}
+                >
+                  <Mic size={18} />
+                </button>
+              )}
+              {search && (
+                <X
+                  size={16}
+                  style={{ position: 'absolute', right: 10, top: 12, color: '#94a3b8', cursor: 'pointer' }}
+                  onClick={() => setSearch('')}
+                />
+              )}
+            </div>
+            {currentUser?.role !== 'viewer' && (
+              <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                <div style={{ position: 'relative', flex: 1 }} title="Scatta foto all'etichetta">
+                  <input type="file" accept="image/*" capture="environment" onChange={handleVisualSearch} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={ocrLoading} />
+                  <button className="btn" style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border-color)', background: 'white', color: ocrLoading ? '#94a3b8' : 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {ocrLoading ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+                  </button>
+                </div>
+                <div style={{ position: 'relative', flex: 1 }} title="Scegli dalla galleria">
+                  <input type="file" accept="image/*" onChange={handleVisualSearch} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={ocrLoading} />
+                  <button className="btn" style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border-color)', background: 'white', color: ocrLoading ? '#94a3b8' : 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {ocrLoading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {canViewFilter('country') && (
+          <div className="filter-group">
+            <label>Nazione</label>
+            <select value={filters.country} onChange={e => setFilters({ ...filters, country: e.target.value })}>
+              <option value="">Tutte</option>
+              {uniqueCountries.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        )}
+
+        {canViewFilter('region') && filters.country && (
+          <div className="filter-group">
+            <label>Regione</label>
+            <select value={filters.region} onChange={e => setFilters({ ...filters, region: e.target.value })}>
+              <option value="">Tutte</option>
+              {uniqueRegions.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+        )}
+
+        {canViewFilter('producerCellar') && (
+          <div className="filter-group">
+            <label>Cantina Produttrice</label>
+            <select value={filters.producerCellar} onChange={e => setFilters({ ...filters, producerCellar: e.target.value })}>
+              <option value="">Tutte</option>
+              {uniqueProducerCellars.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        )}
+
+        {canViewFilter('producer') && (
+          <div className="filter-group">
+            <label>Produttore</label>
+            <select value={filters.producer} onChange={e => setFilters({ ...filters, producer: e.target.value })}>
+              <option value="">Tutti</option>
+              {uniqueProducers.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        )}
+
+        {canViewFilter('classification') && (
+          <div className="filter-group">
+            <label>Classificazione</label>
+            <select value={filters.classification} onChange={e => setFilters({ ...filters, classification: e.target.value })}>
+              <option value="">Tutte</option>
+              {uniqueClassifications.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        )}
+
+        {canViewFilter('category') && (
+          <div className="filter-group">
+            <label>Categoria</label>
+            <select value={filters.category} onChange={e => setFilters({ ...filters, category: e.target.value })}>
+              <option value="">Tutte</option>
+              {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        )}
+
+        {canViewFilter('location') && (
+          <div className="filter-group">
+            <label>Cantina Fisica</label>
+            <select value={filters.location} onChange={e => setFilters({ ...filters, location: e.target.value })}>
+              <option value="">Tutte</option>
+              {uniqueLocations.map(l => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+        )}
+
+        {canViewFilter('availability') && (
+          <div className="filter-group">
+            <label>Disponibilità</label>
+            <select value={filters.availability} onChange={e => setFilters({ ...filters, availability: e.target.value })}>
+              <option value="">Tutte</option>
+              <option value="available">Solo Disponibili</option>
+              <option value="unavailable">Giacenze Non Disponibili</option>
+              <option value="was_in_stock">Vino era già in carico ora non disponibile</option>
+            </select>
+          </div>
+        )}
+
+        {canViewFilter('photo') && (
+          <div className="filter-group">
+            <label>Foto</label>
+            <select value={filters.photo || ''} onChange={e => setFilters({ ...filters, photo: e.target.value })}>
+              <option value="">Tutte</option>
+              <option value="with_photo">Con Foto</option>
+              <option value="without_photo">Senza Foto</option>
+            </select>
+          </div>
+        )}
+
+        {canViewFilter('bottleType') && (
+          <div className="filter-group">
+            <label>Tipo Bottiglia</label>
+            <select value={filters.bottleType || ''} onChange={e => setFilters({ ...filters, bottleType: e.target.value })}>
+              <option value="">Tutte</option>
+              {uniqueBottleTypes.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+        )}
+
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
+          <button
+            className="btn"
+            style={{ width: '100%', justifyContent: 'center', background: 'white', border: '1px solid var(--border-color)' }}
+            onClick={() => {
+              setSearch('');
+              setFilters({
+                country: '',
+                region: '',
+                producerCellar: '',
+                producer: '',
+                classification: '',
+                category: '',
+                location: '',
+                availability: '',
+                photo: '',
+                bottleType: ''
+              });
+              setSelectedGroups([]);
+            }}
+          >
+            🔄 Azzera Filtri
+          </button>
+        </div>
+
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
+          <button
+            className="btn"
+            style={{ width: '100%', justifyContent: 'center', background: showArchive ? 'var(--primary-color)' : 'white', color: showArchive ? 'white' : 'inherit', border: '1px solid var(--border-color)' }}
+            onClick={() => {
+              setShowArchive(!showArchive);
+              setSelectedGroups([]);
+            }}
+          >
+            {showArchive ? '🗄️ Torna alla Cantina' : '🗄️ Vedi Archivio'}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="main-content">
+        <header className="header">
+          <div className="header-left">
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'none' }}
+            >
+              <Menu size={28} />
+            </button>
+            <h1 className="mobile-title">
+              {showArchive ? 'Archivio' : 'Cantina Vini'}
+            </h1>
+
+            {/* Menu Stampe & Export & Cestino */}
+            <div className="header-tools">
+
+              {/* Azioni di eliminazione/recupero visibili solo se ci sono elementi selezionati */}
+              {currentUser?.role !== 'viewer' && selectedGroups.length > 0 && (
+                <>
+                  {!showArchive ? (
+                    <>
+                      <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
+                        setConfirmDialog({
+                          message: `Sei sicuro di voler archiviare i ${selectedGroups.length} vini selezionati? Potrai recuperarli dall'Archivio.`,
+                          onConfirm: async () => {
+                            const targetIds = groupedWinesArray.filter(g => selectedGroups.includes(g.name)).flatMap(g => g.wines.map(w => w.id));
+                            try {
+                              const res = await fetch('/api/wines/batch', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'archive', wineIds: targetIds })
+                              });
+                              if (res.ok) {
+                                alert("Vini archiviati con successo!");
+                                setSelectedGroups([]);
+                                fetchWines();
+                              } else {
+                                const err = await res.text();
+                                alert("Errore durante l'archiviazione: " + err);
+                              }
+                            } catch (e) { alert('Errore di rete: ' + e.message); }
+                          }
+                        });
+                      }} title="Archivia selezionati">
+                        <span style={{ fontSize: '1.3rem' }}>🗄️</span>
+                      </div>
+
+                      <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>
+
+                      <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
+                        setConfirmDialog({
+                          message: `ATTENZIONE: Sei sicuro di voler ELIMINARE DEFINITIVAMENTE i ${selectedGroups.length} vini selezionati? Questa azione non è reversibile.`,
+                          isDanger: true,
+                          onConfirm: async () => {
+                            const targetIds = groupedWinesArray.filter(g => selectedGroups.includes(g.name)).flatMap(g => g.wines.map(w => w.id));
+                            if (targetIds.length === 0) {
+                              alert("Nessun vino valido selezionato per l'eliminazione."); return; }
+                            try {
+                              const res = await fetch('/api/wines/batch', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'delete', wineIds: targetIds })
+                              });
+                              if (res.ok) {
+                                alert("Vini eliminati definitivamente con successo!");
+                                setSelectedGroups([]);
+                                fetchWines();
+                              } else {
+                                const err = await res.text();
+                                alert("Errore durante l'eliminazione definitiva: " + err);
+                              }
+                            } catch (e) { alert('Errore di rete: ' + e.message); }
+                          }
+                        });
+                      }} title="Elimina Definitivamente">
+                        <span style={{ fontSize: '1.3rem' }}>🗑️</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
+                        setConfirmDialog({
+                          message: `Sei sicuro di voler ripristinare i ${selectedGroups.length} vini selezionati? Torneranno in cantina.`,
+                          onConfirm: async () => {
+                            const targetIds = groupedWinesArray.filter(g => selectedGroups.includes(g.name)).flatMap(g => g.wines.map(w => w.id));
+                            try {
+                              const res = await fetch('/api/wines/batch', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'restore', wineIds: targetIds })
+                              });
+                              if (res.ok) {
+                                alert("Vini ripristinati con successo!");
+                                setSelectedGroups([]);
+                                fetchWines();
+                              } else {
+                                const err = await res.text();
+                                alert("Errore durante il ripristino: " + err);
+                              }
+                            } catch (e) { alert('Errore di rete: ' + e.message); }
+                          }
+                        });
+                      }} title="Ripristina in Cantina">
+                        <span style={{ fontSize: '1.3rem' }}>♻️</span>
+                      </div>
+
+                      <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>
+
+                      <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
+                        setConfirmDialog({
+                          message: `ATTENZIONE: Sei sicuro di voler ELIMINARE DEFINITIVAMENTE i ${selectedGroups.length} vini selezionati? Questa azione non è reversibile.`,
+                          isDanger: true,
+                          onConfirm: async () => {
+                            const targetIds = groupedWinesArray.filter(g => selectedGroups.includes(g.name)).flatMap(g => g.wines.map(w => w.id));
+                            if (targetIds.length === 0) {
+                              alert("Nessun vino valido selezionato per l'eliminazione."); return; }
+                            try {
+                              const res = await fetch('/api/wines/batch', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'delete', wineIds: targetIds })
+                              });
+                              if (res.ok) {
+                                alert("Vini eliminati definitivamente con successo!");
+                                setSelectedGroups([]);
+                                fetchWines();
+                              } else {
+                                const err = await res.text();
+                                alert("Errore durante l'eliminazione definitiva: " + err);
+                              }
+                            } catch (e) { alert('Errore di rete: ' + e.message); }
+                          }
+                        });
+                      }} title="Elimina Definitivamente">
+                        <span style={{ fontSize: '1.3rem' }}>🗑️</span>
+                      </div>
+                    </>
+                  )}
+                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', marginRight: '0.5rem', marginLeft: '0.5rem' }}></div>
+                </>
+              )}
+
+              {!showArchive && (
+                <>
+                  {/* Pulsante SCHEDA */}
+                  <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
+                    try {
+                      const targetGroups = selectedGroups.length > 0
+                        ? groupedWinesArray.filter(g => selectedGroups.includes(g.name))
+                        : groupedWinesArray;
+
+                      if (targetGroups.length === 0) {
+                        alert('Nessun vino selezionato o filtrato.');
+                        return;
+                      }
+
+                      const namesToPrint = targetGroups.map(g => g.name);
+                      sessionStorage.setItem('printWineNames', JSON.stringify(namesToPrint));
+                      sessionStorage.setItem('printGroupBy', 'filtri_attivi');
+
+                      const newWin = window.open('/print/scheda', '_blank');
+                      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+                        window.location.href = '/print/scheda';
+                      }
+                    } catch (err) {
+                      alert("Errore nell'apertura della stampa: " + err.message);
+                    }
+                  }} title="Stampa Schede Vino (Copertine da Filtri)">
+                    <FileText size={24} color="#475569" />
+                  </div>
+
+                  {/* Pulsante ELENCO GIACENZE */}
+                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }}></div>
+                  <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
+                    const targetGroups = selectedGroups.length > 0 ? groupedWinesArray.filter(g => selectedGroups.includes(g.name)) : groupedWinesArray;
+                    if (targetGroups.length === 0) { alert('Nessun vino selezionato/filtrato.'); return; }
+                    sessionStorage.setItem('printWineNames', JSON.stringify(targetGroups.map(g => g.name)));
+                    const newWin = window.open('/print/elenco-nazioni', '_blank');
+                    if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+                      window.location.href = '/print/elenco-nazioni';
+                    }
+                  }} title="Elenco giacenze vini per paese">
+                    <List size={24} color="#475569" />
+                  </div>
+
+                  {/* Pulsante STAMPA DETTAGLIATA PDF */}
+                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }}></div>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <div className="toolbar-icon" onClick={() => {
+                      const targetGroups = selectedGroups.length > 0 ? groupedWinesArray.filter(g => selectedGroups.includes(g.name)) : groupedWinesArray;
+                      if (targetGroups.length === 0) { alert('Nessun vino selezionato/filtrato.'); return; }
+                      sessionStorage.setItem('printWineNames', JSON.stringify(targetGroups.map(g => g.name)));
+                      setShowPdfMenu(!showPdfMenu);
+                    }} title="Stampa Elenco Giacenze Dettagliato (PDF)">
+                      <FileText size={24} color="#f43f5e" />
+                    </div>
+                    {showPdfMenu && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        marginTop: '8px',
+                        background: 'white',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                        zIndex: 9999,
+                        minWidth: '240px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 'bold', backgroundColor: '#f1f5f9', borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
+                          ORDINA PDF PER:
+                        </div>
+                        {[
+                          { label: 'Nome Vino (A-Z)', sort: 'name' },
+                          { label: 'Nazione (A-Z)', sort: 'country' },
+                          { label: 'Cantina Produttrice (A-Z)', sort: 'producer' },
+                          { label: 'Categoria (A-Z)', sort: 'category' }
+                        ].map((opt, idx) => (
+                          <div 
+                            key={idx}
+                            style={{ padding: '12px 16px', fontSize: '14px', cursor: 'pointer', borderBottom: idx < 3 ? '1px solid #f1f5f9' : 'none' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+                            onClick={() => {
+                              setShowPdfMenu(false);
+                              const newWin = window.open(`/print/giacenze-dettaglio?sort=${opt.sort}`, '_blank');
+                              if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+                                window.location.href = `/print/giacenze-dettaglio?sort=${opt.sort}`;
+                              }
+                            }}
+                          >
+                            {opt.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pulsante EXCEL */}
+                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }}></div>
+                  <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={async () => {
+                    const targetGroups = selectedGroups.length > 0 ? groupedWinesArray.filter(g => selectedGroups.includes(g.name)) : groupedWinesArray;
+                    if (targetGroups.length === 0) { alert('Nessun vino selezionato/filtrato.'); return; }
+
+                    try {
+                      // 1. Fetch locations per colonne dinamiche
+                      const res = await fetch('/api/locations');
+                      let locationsData = [];
+                      if (res.ok) {
+                        locationsData = await res.json();
+                      }
+                      const locNames = locationsData.map(l => l.name);
+
+                      // 2. Prepara le intestazioni (Headers)
+                      const headers = [
+                        "Nome Vino", "Annata", "Nazione", "Cantina produttore", 
+                        "Categoria", "Classificazione", "Inventariato", "Disponibile", "Usato"
+                      ];
+                      locNames.forEach(loc => {
+                        const shortName = loc.replace(/cantina /i, '').trim();
+                        headers.push(`Disp. ${shortName}`);
+                        headers.push(`Usato ${shortName}`);
+                      });
+
+                      const dataRows = [headers];
+
+                      // 3. Processa i vini per calcolare giacenze e consumi globali e per sede
+                      targetGroups.forEach(g => {
+                        g.wines.forEach(w => {
+                          let globalIngresso = 0;
+                          let globalUscita = 0;
+                          
+                          const locStats = {};
+                          locNames.forEach(loc => {
+                            locStats[loc] = { ingresso: 0, uscita: 0 };
+                          });
+
+                          if (w.movements && w.movements.length > 0) {
+                            w.movements.forEach(m => {
+                              const qty = m.quantity || 0;
+                              const isIngresso = m.movementType === 'Ingresso';
+                              const isUscita = m.movementType === 'Uscita';
+                              
+                              if (isIngresso) globalIngresso += qty;
+                              if (isUscita) globalUscita += qty;
+
+                              if (m.location && m.location.name) {
+                                const lName = m.location.name;
+                                if (locStats[lName]) {
+                                  if (isIngresso) locStats[lName].ingresso += qty;
+                                  if (isUscita) locStats[lName].uscita += qty;
+                                }
+                              }
+                            });
+                          }
+
+                          const row = [
+                            w.name || "",
+                            w.vintage || "",
+                            w.country || "",
+                            w.producer || "",
+                            w.category || "",
+                            w.classification || "",
+                            globalIngresso,
+                            globalIngresso - globalUscita,
+                            globalUscita
+                          ];
+
+                          locNames.forEach(loc => {
+                            const stats = locStats[loc];
+                            const disp = stats.ingresso - stats.uscita;
+                            row.push(disp === 0 && stats.uscita === 0 && stats.ingresso === 0 ? "" : disp);
+                            row.push(stats.uscita === 0 ? "" : stats.uscita);
+                          });
+
+                          dataRows.push(row);
+                        });
+                      });
+
+                      // 4. Crea il foglio Excel
+                      const ws = XLSX.utils.aoa_to_sheet(dataRows);
+                      
+                      // 5. Imposta la larghezza delle colonne e l'orientamento
+                      const wscols = [
+                        {wch: 32}, // Nome Vino
+                        {wch: 7},  // Annata
+                        {wch: 12}, // Nazione
+                        {wch: 22}, // Cantina
+                        {wch: 12}, // Categoria
+                        {wch: 14}, // Classificazione
+                        {wch: 11}, // Inventariato
+                        {wch: 11}, // Disponibile
+                        {wch: 8},  // Usato
+                      ];
+                      locNames.forEach(() => {
+                        wscols.push({wch: 10}); // Disp Sede
+                        wscols.push({wch: 10}); // Usato Sede
+                      });
+                      ws['!cols'] = wscols;
+
+                      // Imposta la pagina A4 in orizzontale
+                      ws['!pageSetup'] = { orientation: 'landscape' };
+
+                      const wb = XLSX.utils.book_new();
+                      XLSX.utils.book_append_sheet(wb, ws, "Giacenze");
+                      
+                      XLSX.writeFile(wb, "Elenco_Giacenze_Vino.xlsx");
+
+                    } catch(e) {
+                      console.error("Errore esportazione:", e);
+                      alert("Errore durante l'esportazione: " + e.message);
+                    }
+                  }} title="Esporta in Excel">
+                    <FileSpreadsheet size={24} color="#16a34a" />
+                  </div>
+                  
+                  <div className="toolbar-icon" onClick={() => setIsGlobalLogOpen(true)} title="Cronologia Movimenti">
+                    <History size={24} color="#3b82f6" />
+                  </div>
+                  
+                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>
+                  
+                  <div className="user-profile-btn">
+                    <User size={18} color="#64748b" />
+                    <span style={{ fontSize: '0.9rem', fontWeight: '500', color: '#334155' }}>
+                      {currentUser ? currentUser.username : 'User'}
+                    </span>
+                  </div>
+
+                  {currentUser?.role === 'admin' && (
+                    <>
+                      <div className="toolbar-icon" style={{ marginLeft: '0.25rem' }} title="Gestione Utenti" onClick={() => router.push('/admin/users')}>
+                        <Shield size={20} color="var(--primary-color)" />
+                      </div>
+                      <div className="toolbar-icon" style={{ marginLeft: '0.25rem' }} title="Impostazioni Visitatore" onClick={() => router.push('/admin/settings')}>
+                        <Settings size={20} color="var(--primary-color)" />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="toolbar-icon" style={{ marginLeft: '0.25rem' }} title="Esci dal gestionale" onClick={async () => {
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                    window.location.href = '/login';
+                  }}>
+                    <LogOut size={20} color="#ef4444" />
+                  </div>
+                </>
+              )}
+
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div style={{ color: '#475569', fontSize: '14px', textAlign: 'right', lineHeight: '1.4' }}>
+              <div>Etichette Trovate: <strong>{groupedWinesArray.length}</strong></div>
+              <div>Selezionate: <strong>{selectedGroups.length}</strong></div>
+            </div>
+            
+            <button 
+              className="btn" 
+              style={{ padding: '0.5rem', background: '#e0f2fe', color: 'var(--primary-color)', border: '1px solid #bae6fd', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => setShowHelp(true)}
+              title="Guida all'uso"
+            >
+              <HelpCircle size={22} strokeWidth={2.5} />
+            </button>
+
+            {currentUser?.role !== 'viewer' && (
+              <button className="btn btn-primary" onClick={() => {
+                sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
+                router.push('/wine/new');
+              }}>
+                <Plus size={18} /> Nuovo Vino
+              </button>
+            )}
+          </div>
+        </header>
+
+        <div className="table-container" style={{ overflowX: 'auto' }}>
+          {loading ? (
+            <div className="empty-state">
+              <Loader2 className="animate-spin" size={48} />
+              <p>Caricamento cantina in corso...</p>
+            </div>
+          ) : (
+            <table className="data-table" style={{ tableLayout: 'fixed', minWidth: '100%', width: Object.values(colWidths).reduce((a, b) => a + b, 0) + 40 }}>
+              <thead>
+                <tr>
+                  <th style={{ width: 40, textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={groupedWinesArray.length > 0 && selectedGroups.length === groupedWinesArray.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedGroups(groupedWinesArray.map(g => g.name));
+                        } else {
+                          setSelectedGroups([]);
+                        }
+                      }}
+                    />
+                  </th>
+                  <th style={{ width: colWidths.name, position: 'relative' }} onClick={() => handleSort('name')}>
+                    Nome {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                    <div className="resizer" onMouseDown={(e) => handleResize(e, 'name')} />
+                  </th>
+                  <th style={{ width: colWidths.vintage, position: 'relative' }} onClick={() => handleSort('vintage')}>
+                    Anno {sortConfig.key === 'vintage' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                    <div className="resizer" onMouseDown={(e) => handleResize(e, 'vintage')} />
+                  </th>
+                  <th style={{ width: colWidths.country, position: 'relative' }} onClick={() => handleSort('country')}>
+                    Nazione {sortConfig.key === 'country' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                    <div className="resizer" onMouseDown={(e) => handleResize(e, 'country')} />
+                  </th>
+                  <th style={{ width: colWidths.category, position: 'relative' }} onClick={() => handleSort('category')}>
+                    Categoria {sortConfig.key === 'category' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                    <div className="resizer" onMouseDown={(e) => handleResize(e, 'category')} />
+                  </th>
+                  <th style={{ width: colWidths.bottleType, position: 'relative' }}>
+                    Tipo Bottiglia
+                    <div className="resizer" onMouseDown={(e) => handleResize(e, 'bottleType')} />
+                  </th>
+                  <th style={{ width: colWidths.totalStock, position: 'relative' }} onClick={() => handleSort('totalStock')}>
+                    {filters.location ? `Giacenza ${filters.location}` : 'Giacenza Totale'} {sortConfig.key === 'totalStock' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                    <div className="resizer" onMouseDown={(e) => handleResize(e, 'totalStock')} />
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupedWinesArray.map(group => (
+                  <React.Fragment key={group.name}>
+                    <tr
+                      onClick={() => {
+                        if (group.wines.length === 1) {
+                          handleWineClick(group.wines[0].id);
+                        } else {
+                          toggleGroup(group.name);
+                        }
+                      }}
+                      style={{ cursor: 'pointer', background: expandedGroups[group.name] ? '#f8fafc' : (selectedGroups.includes(group.name) ? '#f0f9ff' : 'white') }}
+                      onMouseEnter={(e) => { if (group.photo) setHoveredPhoto(group.photo); }}
+                      onMouseLeave={() => setHoveredPhoto(null)}
+                      onMouseMove={handleMouseMove}
+                    >
+                      <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedGroups.includes(group.name)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedGroups(prev => [...prev, group.name]);
+                            } else {
+                              setSelectedGroups(prev => prev.filter(n => n !== group.name));
+                            }
+                          }}
+                        />
+                      </td>
+                      <td style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {group.wines.length > 1 && (
+                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                              {expandedGroups[group.name] ? '▼' : '▶'}
+                            </span>
+                          )}
+                          {group.name} {group.wines.length > 1 && <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>({group.wines.length})</span>}
+                        </div>
+                      </td>
+                      <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {group.wines.length === 1 ? (group.wines[0].vintage || '-') : 'Varie'}
+                      </td>
+                      <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '1.1rem' }}>{getCountryFlag(group.country)}</span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{group.country || '-'}</span>
+                        </div>
+                      </td>
+                      <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span className={getBadgeClass(group.category)}>
+                          {group.category || '-'}
+                        </span>
+                      </td>
+                      <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b', fontSize: '0.9rem' }}>
+                        {[...new Set(group.wines.flatMap(w => [w.bottleType, ...(w.movements?.map(m => m.bottleType) || [])]).filter(Boolean))].join(', ') || '0,75 L'}
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}>
+                        <StockCell winesArray={group.wines} displayStock={group.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} />
+                      </td>
+                    </tr>
+                    {expandedGroups[group.name] && group.wines.length > 1 && group.wines.map(wine => (
+                      <tr
+                        key={wine.id}
+                        onClick={() => {
+                          handleWineClick(wine.id);
+                        }}
+                        style={{ background: '#fcfcfc', cursor: 'pointer' }}
+                        onMouseEnter={(e) => { if (wine.photo) setHoveredPhoto(wine.photo); }}
+                        onMouseLeave={() => setHoveredPhoto(null)}
+                        onMouseMove={handleMouseMove}
+                      >
+                        <td></td>
+                        <td style={{ paddingLeft: '2.5rem', fontSize: '0.9rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          ↳ {wine.name} {wine.vintage ? `- ${wine.vintage}` : ''} {wine.bottleType ? `(${wine.bottleType})` : ''}
+                        </td>
+                        <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wine.vintage || '-'}</td>
+                        <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '1.1rem', marginRight: '0.3rem' }}>{getCountryFlag(wine.country)}</span>
+                          {wine.country || '-'}
+                        </td>
+                        <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><span className={getBadgeClass(wine.category)}>{wine.category || '-'}</span></td>
+                        <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>
+                          {[...new Set([wine.bottleType, ...(wine.movements?.map(m => m.bottleType) || [])].filter(Boolean))].join(', ') || '0,75 L'}
+                        </td>
+                        <td style={{ fontSize: '0.9rem', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}><StockCell winesArray={[wine]} displayStock={wine.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} /></td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {!loading && filteredWines.length === 0 && (
+            <div className="empty-state">
+              <Wine size={48} />
+              <h3>Nessun vino trovato</h3>
+              <p>Prova a cambiare i filtri di ricerca.</p>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Floating Hover Image */}
+      {hoveredPhoto && (
+        <div style={{
+          position: 'fixed',
+          top: mousePos.y + 15,
+          left: mousePos.x + 15,
+          zIndex: 9999,
+          pointerEvents: 'none',
+          backgroundColor: 'white',
+          padding: '4px',
+          borderRadius: '8px',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)',
+          border: '1px solid #e2e8f0'
+        }}>
+          <img src={hoveredPhoto} alt="Anteprima bottiglia" style={{ width: '150px', height: 'auto', borderRadius: '4px', display: 'block', objectFit: 'contain' }} />
+        </div>
+      )}
+
+      {/* Custom Confirm Dialog */}
+      {confirmDialog && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', maxWidth: '400px', width: '90%', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ marginTop: 0, color: confirmDialog.isDanger ? '#ef4444' : '#0f172a' }}>
+              {confirmDialog.isDanger ? '⚠️ Attenzione' : 'Conferma Azione'}
+            </h3>
+            <p style={{ color: '#475569', lineHeight: 1.5, marginBottom: '2rem' }}>{confirmDialog.message}</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <button 
+                className="btn"
+                style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1' }}
+                onClick={() => setConfirmDialog(null)}>
+                Annulla
+              </button>
+              <button 
+                className="btn" 
+                style={{ backgroundColor: confirmDialog.isDanger ? '#ef4444' : '#3b82f6', color: 'white' }}
+                onClick={() => {
+                  confirmDialog.onConfirm();
+                  setConfirmDialog(null);
+                }}>
+                {confirmDialog.isDanger ? 'Sì, Elimina' : 'Conferma'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <GlobalMovementLog isOpen={isGlobalLogOpen} onClose={() => setIsGlobalLogOpen(false)} />
+    </div>
+  );
+}

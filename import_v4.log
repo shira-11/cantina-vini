@@ -1,0 +1,118 @@
+Loaded 268 wine cards from JSON.
+  -> [ALLINEAMENTO] +2 in Cantina Milano for Chateau Latour
+  -> [ALLINEAMENTO] +1 in Cantina Levanzo for Chateau Latour
+  -> [ALLINEAMENTO] -2 in Cantina Milano for Chateau Latour
+  -> [ALLINEAMENTO] -1 in Cantina Levanzo for Chateau Latour
+  -> [ALLINEAMENTO] +20 in Cantina Arezzo for Chateau Latour
+  -> [ALLINEAMENTO] +3 in Cantina Milano for Chateau Latour
+  -> [ALLINEAMENTO] -20 in Cantina Arezzo for Chateau Latour
+  -> [ALLINEAMENTO] -3 in Cantina Milano for Chateau Latour
+  -> [ALLINEAMENTO] -3 in Cantina Arezzo for Chateau Mouton Rotshild
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Chateau Mouton Rotshild
+  -> [ALLINEAMENTO] -2 in Cantina Levanzo for Chateau Mouton Rotshild
+  -> [ALLINEAMENTO] +3 in Cantina Arezzo for Chateau Mouton Rotshild
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Chateau Mouton Rotshild
+  -> [ALLINEAMENTO] +2 in Cantina Levanzo for Chateau Mouton Rotshild
+  -> [ALLINEAMENTO] +10 in Cantina Arezzo for Chambertin Domaine Rousseau
+  -> [ALLINEAMENTO] -10 in Cantina Arezzo for Chambertin Domaine Rousseau
+  -> [ALLINEAMENTO] +2 in Cantina Arezzo for Charmes Chambertin Rousseau
+  -> [ALLINEAMENTO] -2 in Cantina Arezzo for Charmes Chambertin Rousseau
+  -> [ALLINEAMENTO] -1 in Cantina Arezzo for Charmes Chambertin Rousseau
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Charmes Chambertin Rousseau
+  -> [ALLINEAMENTO] -9 in Cantina Arezzo for Clos de la Roche Cuvèe Vieilles Vign
+  -> [ALLINEAMENTO] +5 in Cantina Saint Moritz for Clos de la Roche Cuvèe Vieilles Vign
+  -> [ALLINEAMENTO] +9 in Cantina Arezzo for Clos de la Roche Cuvèe Vieilles Vign
+  -> [ALLINEAMENTO] -5 in Cantina Saint Moritz for Clos de la Roche Cuvèe Vieilles Vign
+  -> [ALLINEAMENTO] +5 in Cantina Arezzo for Clos de Lambrays Grand Cru
+  -> [ALLINEAMENTO] +7 in Cantina Saint Moritz for Clos de Lambrays Grand Cru
+  -> [ALLINEAMENTO] -5 in Cantina Arezzo for Clos de Lambrays Grand Cru
+  -> [ALLINEAMENTO] -7 in Cantina Saint Moritz for Clos de Lambrays Grand Cru
+  -> [ALLINEAMENTO] +5 in Cantina Arezzo for Clos Saint Denis Jadot
+  -> [ALLINEAMENTO] -5 in Cantina Arezzo for Clos Saint Denis Jadot
+  -> [ALLINEAMENTO] +7 in Cantina Arezzo for Clos St. Jacques Gevrey Chamber@n
+  -> [ALLINEAMENTO] +2 in Cantina Milano for Clos St. Jacques Gevrey Chamber@n
+  -> [ALLINEAMENTO] +5 in Cantina Levanzo for Clos St. Jacques Gevrey Chamber@n
+  -> [ALLINEAMENTO] -7 in Cantina Arezzo for Clos St. Jacques Gevrey Chamber@n
+  -> [ALLINEAMENTO] -2 in Cantina Milano for Clos St. Jacques Gevrey Chamber@n
+  -> [ALLINEAMENTO] -5 in Cantina Levanzo for Clos St. Jacques Gevrey Chamber@n
+  -> [ALLINEAMENTO] +6 in Cantina Arezzo for Clos Vougeot d' Eugenie
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Clos Vougeot d' Eugenie
+  -> [ALLINEAMENTO] -6 in Cantina Arezzo for Clos Vougeot d' Eugenie
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Clos Vougeot d' Eugenie
+  -> [ALLINEAMENTO] +5 in Cantina Arezzo for Corton Charlemagne Bonneau Mart
+  -> [ALLINEAMENTO] -5 in Cantina Arezzo for Corton Charlemagne Bonneau Mart
+  -> [ALLINEAMENTO] +2 in Cantina Arezzo for Corton Charlemagne Bonneau Mart
+  -> [ALLINEAMENTO] -2 in Cantina Arezzo for Corton Charlemagne Bonneau Mart
+  -> [ALLINEAMENTO] +3 in Cantina Arezzo for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] +30 in Cantina Milano for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] +20 in Cantina Saint Moritz for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] +60 in Cantina Levanzo for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] -3 in Cantina Arezzo for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] -30 in Cantina Milano for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] -20 in Cantina Saint Moritz for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] -60 in Cantina Levanzo for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] -1 in Cantina Arezzo for Clos Des Goisses Brut Philipponnat
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Clos Des Goisses Brut Philipponnat
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Clos Des Goisses Brut Philipponnat
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Clos Des Goisses Brut Philipponnat
+  -> [ALLINEAMENTO] -3 in Cantina Arezzo for Cristal
+  -> [ALLINEAMENTO] -4 in Cantina Levanzo for Cristal
+  -> [ALLINEAMENTO] +3 in Cantina Arezzo for Cristal
+  -> [ALLINEAMENTO] +4 in Cantina Levanzo for Cristal
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Dom Perignon Vintage
+  -> [ALLINEAMENTO] -1 in Cantina Saint Moritz for Dom Perignon Vintage
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Dom Perignon Vintage
+  -> [ALLINEAMENTO] +1 in Cantina Saint Moritz for Dom Perignon Vintage
+  -> [ALLINEAMENTO] +6 in Cantina Arezzo for Dom Perignon Vintage
+  -> [ALLINEAMENTO] +2 in Cantina Saint Moritz for Dom Perignon Vintage
+  -> [ALLINEAMENTO] -6 in Cantina Arezzo for Dom Perignon Vintage
+  -> [ALLINEAMENTO] -2 in Cantina Saint Moritz for Dom Perignon Vintage
+  -> [ALLINEAMENTO] +10 in Cantina Arezzo for Krug Clos du Mesnil
+  -> [ALLINEAMENTO] -10 in Cantina Arezzo for Krug Clos du Mesnil
+  -> [ALLINEAMENTO] +14 in Cantina Arezzo for Krug Clos du Mesnil
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Krug Clos du Mesnil
+  -> [ALLINEAMENTO] -2 in Cantina Saint Moritz for Krug Clos du Mesnil
+  -> [ALLINEAMENTO] -14 in Cantina Arezzo for Krug Clos du Mesnil
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Krug Clos du Mesnil
+  -> [ALLINEAMENTO] +2 in Cantina Saint Moritz for Krug Clos du Mesnil
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Krug Vintage
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Krug Vintage
+  -> [ALLINEAMENTO] -1 in Cantina Saint Moritz for Krug Vintage
+  -> [ALLINEAMENTO] -1 in Cantina Arezzo for Krug Vintage
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Krug Vintage
+  -> [ALLINEAMENTO] +1 in Cantina Saint Moritz for Krug Vintage
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Krug Vintage
+  -> [ALLINEAMENTO] +5 in Cantina Milano for Krug Vintage
+  -> [ALLINEAMENTO] -1 in Cantina Arezzo for Krug Vintage
+  -> [ALLINEAMENTO] -5 in Cantina Milano for Krug Vintage
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Pol Roger Reserve
+  -> [ALLINEAMENTO] -1 in Cantina Saint Moritz for Pol Roger Reserve
+  -> [ALLINEAMENTO] -1 in Cantina Arezzo for Pol Roger Reserve
+  -> [ALLINEAMENTO] +1 in Cantina Saint Moritz for Pol Roger Reserve
+  -> [ALLINEAMENTO] +43 in Cantina Milano for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +40 in Cantina Saint Moritz for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +24 in Cantina Levanzo for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] -43 in Cantina Milano for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] -40 in Cantina Saint Moritz for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] -24 in Cantina Levanzo for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +15 in Cantina Arezzo for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +12 in Cantina Milano for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +19 in Cantina Saint Moritz for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] -5 in Cantina Levanzo for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] -15 in Cantina Arezzo for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] -12 in Cantina Milano for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] -19 in Cantina Saint Moritz for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +5 in Cantina Levanzo for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] +19 in Cantina Arezzo for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] +12 in Cantina Milano for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] +5 in Cantina Saint Moritz for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] -19 in Cantina Arezzo for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] -12 in Cantina Milano for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] -5 in Cantina Saint Moritz for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] +18 in Cantina Arezzo for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] +2 in Cantina Saint Moritz for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] -18 in Cantina Arezzo for Salon Le Mesnil Blanc de Blancs
+  -> [ALLINEAMENTO] -2 in Cantina Saint Moritz for Salon Le Mesnil Blanc de Blancs
+Import successfully completed!

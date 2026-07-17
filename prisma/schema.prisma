@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Per passare a MySQL in futuro, cambia 'provider = "sqlite"' in 'provider = "mysql"'
+// e aggiorna il DATABASE_URL nel file .env (es. mysql://user:password@localhost:3306/cantina)
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Wine {
+  id              Int      @id @default(autoincrement())
+  name            String
+  vintage         String?
+  country         String?
+  region          String?
+  producerCellar  String?
+  producer        String?
+  classification  String?
+  category        String?
+  type            String?
+  alcoholContent  Float?
+  tempMin         Float?
+  tempMax         Float?
+  bottleType      String?
+  notes           String?
+  photo           String?
+  photoBack       String?
+  isArchived      Boolean  @default(false)
+  
+  grapeVarieties  GrapeVariety[]
+  movements       Movement[]
+  archivedPhotos  WinePhoto[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model GrapeVariety {
+  id         Int    @id @default(autoincrement())
+  name       String
+  percentage Float?
+  
+  wineId     Int
+  wine       Wine   @relation(fields: [wineId], references: [id], onDelete: Cascade)
+}
+
+model Location {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique // es. "Cantina Arezzo", "Cantina Milano"
+  
+  movements Movement[]
+}
+
+model Movement {
+  id            Int      @id @default(autoincrement())
+  date          DateTime @default(now())
+  movementType  String   // "Ingresso" o "Uscita"
+  quantity      Int
+  bottleType    String?
+  reason        String?
+  vendor        String?
+  price         Float?
+  tempPrice     Float?   // Prezzo provvisorio
+  notes         String?  // Nota per il movimento
+  user          String?  // Utente che ha effettuato il movimento
+  
+  wineId        Int
+  wine          Wine     @relation(fields: [wineId], references: [id], onDelete: Cascade)
+  
+  locationId    Int
+  location      Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+}
+
+model WinePhoto {
+  id        Int      @id @default(autoincrement())
+  url       String
+  type      String   // "Fronte" o "Retro"
+  wineId    Int
+  wine      Wine     @relation(fields: [wineId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  role         String   @default("user") // "admin", "editor", "viewer"
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SystemSettings {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+}

@@ -1,0 +1,273 @@
+Parsing index for regions...
+Processed: Opus One (5 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Extraction complete! Found 1 wine cards.
+(node:45133) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/casamilano/Downloads/VINI/scripts/import_wines.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/casamilano/Downloads/VINI/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Reading data from: temp_batch_0.json
+Found locations in PDF: Cantina Arezzo, Cantina Milano, Cantina Saint Moritz, Cantina Levanzo
+Loaded 1 wine cards from JSON.
+  -> [ALLINEAMENTO] -6 in Cantina Arezzo for Opus One
+  -> [ALLINEAMENTO] -6 in Cantina Arezzo for Opus One
+  -> [ALLINEAMENTO] +12 in Cantina Arezzo for Opus One
+Import successfully completed!
+Parsing index for regions...
+Processed: ELENCO GIACENZE VINO (34 vintages) | Locs: []
+Processed: ELENCO GIACENZE VINO (36 vintages) | Locs: []
+Processed: ELENCO GIACENZE VINO (36 vintages) | Locs: []
+Processed: ELENCO GIACENZE VINO (11 vintages) | Locs: []
+Extraction complete! Found 4 wine cards.
+(node:45135) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/casamilano/Downloads/VINI/scripts/import_wines.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/casamilano/Downloads/VINI/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Reading data from: temp_batch_1.json
+Found locations in PDF: 
+Loaded 4 wine cards from JSON.
+Import successfully completed!
+Parsing index for regions...
+Processed: Alte Reben Van Volxem (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Bockstein Van Volxen (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Scharzhofberger (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Extraction complete! Found 3 wine cards.
+(node:45158) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/casamilano/Downloads/VINI/scripts/import_wines.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/casamilano/Downloads/VINI/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Reading data from: temp_batch_2.json
+Found locations in PDF: Cantina Arezzo, Cantina Milano, Cantina Saint Moritz, Cantina Levanzo
+Loaded 3 wine cards from JSON.
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Bockstein Van Volxen
+Import successfully completed!
+Parsing index for regions...
+Processed: Barons de Rothschild blanc de blanc (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Barons de Rothschild concordia brut (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Barons de Rothschild rose (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Chateau Clerc Milon (7 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Batard Montrachet Ramonet (7 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Charmes Chambertin Pacalet (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Clos Saint Denis Servelle (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Echezeaux Meo Camuset (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: La Tache DRC (10 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: La Tache DRC (4 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Billecart Salmon Rosè (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Bollinger La Grande Annee (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Bollinger Special Cuvèe (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Bonnaire (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Dom Perignon Vintage (10 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Dom Perignon Vintage (9 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Drappier (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Gosset Grande Reserve Brut (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Krug Rose (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Ruinart Blanc de Blancs (8 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Ruinart Brut Rosè (6 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Ulysse Collin Blanc de Blanc (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Ulysse Collin Blanc de Noir (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Extraction complete! Found 23 wine cards.
+(node:45162) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/casamilano/Downloads/VINI/scripts/import_wines.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/casamilano/Downloads/VINI/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Reading data from: temp_batch_3.json
+Found locations in PDF: Cantina Arezzo, Cantina Milano, Cantina Saint Moritz, Cantina Levanzo
+Loaded 23 wine cards from JSON.
+  -> [ALLINEAMENTO] +1 in Cantina Levanzo for Barons de Rothschild blanc de blanc
+  -> [ALLINEAMENTO] -10 in Cantina Milano for Barons de Rothschild concordia brut
+  -> [ALLINEAMENTO] -2 in Cantina Saint Moritz for Barons de Rothschild concordia brut
+  -> [ALLINEAMENTO] +1 in Cantina Levanzo for Barons de Rothschild concordia brut
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Barons de Rothschild rose
+  -> [ALLINEAMENTO] -6 in Cantina Saint Moritz for Barons de Rothschild rose
+  -> [ALLINEAMENTO] +2 in Cantina Levanzo for Barons de Rothschild rose
+  -> [ALLINEAMENTO] +8 in Cantina Milano for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] -12 in Cantina Saint Moritz for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] +7 in Cantina Levanzo for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] -8 in Cantina Milano for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] +12 in Cantina Saint Moritz for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] -7 in Cantina Levanzo for Bollinger Special Cuvèe
+  -> [ALLINEAMENTO] -1 in Cantina Arezzo for Dom Perignon Vintage
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Dom Perignon Vintage
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Dom Perignon Vintage
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Dom Perignon Vintage
+  -> [ALLINEAMENTO] +7 in Cantina Arezzo for Dom Perignon Vintage
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Dom Perignon Vintage
+  -> [ALLINEAMENTO] -7 in Cantina Arezzo for Dom Perignon Vintage
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Dom Perignon Vintage
+  -> [ALLINEAMENTO] -2 in Cantina Milano for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +5 in Cantina Saint Moritz for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +12 in Cantina Levanzo for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] +2 in Cantina Milano for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] -5 in Cantina Saint Moritz for Ruinart Blanc de Blancs
+  -> [ALLINEAMENTO] -12 in Cantina Levanzo for Ruinart Blanc de Blancs
+Import successfully completed!
+Parsing index for regions...
+Processed: Goldwater (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Stonyridge (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Extraction complete! Found 2 wine cards.
+(node:45170) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/casamilano/Downloads/VINI/scripts/import_wines.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/casamilano/Downloads/VINI/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Reading data from: temp_batch_4.json
+Found locations in PDF: Cantina Arezzo, Cantina Milano, Cantina Saint Moritz, Cantina Levanzo
+Loaded 2 wine cards from JSON.
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Goldwater
+Import successfully completed!
+Parsing index for regions...
+Processed: Mounier Torrontes (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: RD (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Extraction complete! Found 2 wine cards.
+(node:45192) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/casamilano/Downloads/VINI/scripts/import_wines.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/casamilano/Downloads/VINI/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Reading data from: temp_batch_5.json
+Found locations in PDF: Cantina Arezzo, Cantina Milano, Cantina Saint Moritz, Cantina Levanzo
+Loaded 2 wine cards from JSON.
+  -> [ALLINEAMENTO] -1 in Cantina Arezzo for Mounier Torrontes
+Import successfully completed!
+Parsing index for regions...
+Processed: Axpoint Gruner Veltliner Hirtzberger (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Rotes Tor Gruner Veltliner Hirtzberg (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Steinporz Riesling Hirtzberger (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Riesling Ried Kellerberg Smaragd (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Riesling Smaragd Loibner (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Riesling Vinothekfullung Smaragd (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Extraction complete! Found 6 wine cards.
+(node:45194) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/casamilano/Downloads/VINI/scripts/import_wines.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/casamilano/Downloads/VINI/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Reading data from: temp_batch_6.json
+Found locations in PDF: Cantina Arezzo, Cantina Milano, Cantina Saint Moritz, Cantina Levanzo
+Loaded 6 wine cards from JSON.
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Axpoint Gruner Veltliner Hirtzberger
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Axpoint Gruner Veltliner Hirtzberger
+  -> [ALLINEAMENTO] +6 in Cantina Arezzo for Rotes Tor Gruner Veltliner Hirtzberg
+  -> [ALLINEAMENTO] +6 in Cantina Arezzo for Steinporz Riesling Hirtzberger
+  -> [ALLINEAMENTO] +3 in Cantina Arezzo for Riesling Ried Kellerberg Smaragd
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Riesling Ried Kellerberg Smaragd
+  -> [ALLINEAMENTO] +2 in Cantina Milano for Riesling Smaragd Loibner
+  -> [ALLINEAMENTO] +3 in Cantina Milano for Riesling Vinothekfullung Smaragd
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Riesling Vinothekfullung Smaragd
+Import successfully completed!
+Parsing index for regions...
+Processed: Dual (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Terroir X (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Marques de Grinon (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Marques de Riscal (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Mauro VS (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Termanthia (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Arinzano (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Cruor (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Abadia de San Quirce (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Cosecha Tinto Valbuena (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Flor De Pingus (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Honoris de Valdubon (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Malleolus de Valderramiro (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Matarromera (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Pago de carraovejas (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Pago De Los Cappelanes (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Parcela El Nogal (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Pingus (10 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Pingus (7 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Teso la Monja (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Tinto (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Unico Riserva Speciale Vega Sicilia (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Unico Vega Sicilia (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Baron de Chirel (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Contino Graciano (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Cuna Imperial Gran Reserva (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Cune Reserva (2 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Finca torrea (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Izadi Expresion (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: La Nieta (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Macan Clasico (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Marques de Riscal Gran Reserva (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Marquese de Murrieta (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Muga (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Orube (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Processed: Vina El Pison (1 vintages) | Locs: ['Cantina Arezzo', 'Cantina Milano', 'Cantina Saint Moritz', 'Cantina Levanzo']
+Extraction complete! Found 36 wine cards.
+(node:45349) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/casamilano/Downloads/VINI/scripts/import_wines.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/casamilano/Downloads/VINI/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Reading data from: temp_batch_7.json
+Found locations in PDF: Cantina Arezzo, Cantina Milano, Cantina Saint Moritz, Cantina Levanzo
+Loaded 36 wine cards from JSON.
+  -> [ALLINEAMENTO] -1 in Cantina Arezzo for Arinzano
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Arinzano
+  -> [ALLINEAMENTO] -7 in Cantina Arezzo for Cosecha Tinto Valbuena
+  -> [ALLINEAMENTO] +7 in Cantina Arezzo for Cosecha Tinto Valbuena
+  -> [ALLINEAMENTO] -5 in Cantina Milano for Cosecha Tinto Valbuena
+  -> [ALLINEAMENTO] -1 in Cantina Milano for Pago De Los Cappelanes
+  -> [ALLINEAMENTO] -3 in Cantina Milano for Pago De Los Cappelanes
+  -> [ALLINEAMENTO] +2 in Cantina Arezzo for Pingus
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Pingus
+  -> [ALLINEAMENTO] +7 in Cantina Arezzo for Pingus
+  -> [ALLINEAMENTO] +19 in Cantina Arezzo for Pingus
+  -> [ALLINEAMENTO] +3 in Cantina Levanzo for Pingus
+  -> [ALLINEAMENTO] +1 in Cantina Arezzo for Unico Riserva Speciale Vega Sicilia
+  -> [ALLINEAMENTO] +1 in Cantina Milano for Unico Riserva Speciale Vega Sicilia
+  -> [ALLINEAMENTO] -2 in Cantina Arezzo for Unico Vega Sicilia
+Import successfully completed!
+Found 8 PDF files to process.
+
+==================================================
+[1/8] Processing: vini usa.pdf
+==================================================
+-> Extracting data...
+-> Importing data to database...
+-> SUCCESS: Moved vini usa.pdf to Completati folder.
+
+==================================================
+[2/8] Processing: Vini levanzo 22-03-2025.pdf
+==================================================
+-> Extracting data...
+-> Importing data to database...
+-> SUCCESS: Moved Vini levanzo 22-03-2025.pdf to Completati folder.
+
+==================================================
+[3/8] Processing: vini germania.pdf
+==================================================
+-> Extracting data...
+-> Importing data to database...
+-> SUCCESS: Moved vini germania.pdf to Completati folder.
+
+==================================================
+[4/8] Processing: vini_francia_levanzo.pdf
+==================================================
+-> Extracting data...
+-> Importing data to database...
+-> SUCCESS: Moved vini_francia_levanzo.pdf to Completati folder.
+
+==================================================
+[5/8] Processing: vini nuova zelanda.pdf
+==================================================
+-> Extracting data...
+-> Importing data to database...
+-> SUCCESS: Moved vini nuova zelanda.pdf to Completati folder.
+
+==================================================
+[6/8] Processing: vini argentina.pdf
+==================================================
+-> Extracting data...
+-> Importing data to database...
+-> SUCCESS: Moved vini argentina.pdf to Completati folder.
+
+==================================================
+[7/8] Processing: vini austria.pdf
+==================================================
+-> Extracting data...
+-> Importing data to database...
+-> SUCCESS: Moved vini austria.pdf to Completati folder.
+
+==================================================
+[8/8] Processing: vini spagna.pdf
+==================================================
+-> Extracting data...
+-> Importing data to database...
+-> SUCCESS: Moved vini spagna.pdf to Completati folder.
+
+Batch processing finished!
