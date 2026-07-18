@@ -272,6 +272,9 @@ export async function PUT(request, { params }) {
   }
 }
 
+import { promises as fs } from 'fs';
+import path from 'path';
+
 export async function DELETE(request, { params }) {
   try {
     const role = request.headers.get('x-user-role');
@@ -279,9 +282,71 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Forbidden: Viewer cannot perform this action" }, { status: 403 });
     }
     const { id } = await params;
-    await prisma.wine.delete({
-      where: { id: parseInt(id) }
+    const wineId = parseInt(id);
+
+    // Trova il vino e le sue foto archiviate prima di eliminarlo
+    const wineToDelete = await prisma.wine.findUnique({
+      where: { id: wineId },
+      include: { archivedPhotos: true }
     });
+
+    if (!wineToDelete) {
+      return NextResponse.json({ error: "Wine not found" }, { status: 404 });
+    }
+
+    // Funzione helper per verificare se una foto è usata da altre annate
+    const isPhotoInUseElsewhere = async (url) => {
+      if (!url) return true; // se null/empty, non facciamo nulla
+      
+      const inWines = await prisma.wine.findFirst({
+        where: {
+          id: { not: wineId },
+          OR: [ { photo: url }, { photoBack: url } ]
+        }
+      });
+      if (inWines) return true;
+
+      const inArchives = await prisma.winePhoto.findFirst({
+        where: {
+          wineId: { not: wineId },
+          url: url
+        }
+      });
+      if (inArchives) return true;
+
+      return false;
+    };
+
+    const deletePhysicalFile = async (url) => {
+      if (!url) return;
+      try {
+        const inUse = await isPhotoInUseElsewhere(url);
+        if (!inUse) {
+          const filename = url.split('/').pop();
+          const uploadDir = path.join(process.cwd(), 'public', 'foto_bottiglie');
+          const filePath = path.join(uploadDir, filename);
+          await fs.unlink(filePath);
+          console.log(`Eliminato file fisico: ${filename}`);
+        }
+      } catch (err) {
+        // Ignoriamo gli errori di file non trovato
+        console.error('Errore durante l\'eliminazione del file fisico:', err.message);
+      }
+    };
+
+    // Tentiamo di eliminare i file fisici
+    const urlsToDelete = [wineToDelete.photo, wineToDelete.photoBack];
+    wineToDelete.archivedPhotos.forEach(ap => urlsToDelete.push(ap.url));
+
+    for (const url of urlsToDelete) {
+      if (url) await deletePhysicalFile(url);
+    }
+
+    // Infine, elimina il vino dal database (questo eliminerà a cascata anche archivedPhotos)
+    await prisma.wine.delete({
+      where: { id: wineId }
+    });
+    
     syncEventEmitter.emit('db_update');
     return NextResponse.json({ success: true });
   } catch (error) {
