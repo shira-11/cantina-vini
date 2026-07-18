@@ -398,13 +398,54 @@ export default function WineDetail({ params }) {
     img.src = imageUrl;
   };
 
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          }, 'image/jpeg', 0.92);
+        };
+      };
+    });
+  };
+
   const handleUpload = async (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setUploading(true);
+    
+    // Comprime l'immagine prima di inviarla (risolve il limite del server)
+    const compressedFile = await compressImage(file);
+    
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', compressedFile);
     formData.append('wineName', wine.name || 'Sconosciuto');
     formData.append('vintage', wine.vintage || '');
     formData.append('type', type);
