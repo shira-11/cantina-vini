@@ -487,7 +487,6 @@ export const MobileCatalog = ({
                     <option value="">Tutte</option>
                     <option value="available">Solo Disponibili</option>
                     <option value="unavailable">Giacenze Non Disponibili</option>
-                    <option value="was_in_stock">Vino era già in carico ora non disponibile</option>
                   </select>
                 </div>
               )}
