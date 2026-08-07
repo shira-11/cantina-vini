@@ -196,6 +196,11 @@ export const MobileCatalog = ({
           <Wine size={24} color="#6366f1" /> CANTINA
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {currentUser?.username && (
+            <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569', backgroundColor: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+              {currentUser.username}
+            </span>
+          )}
           {currentUser?.role === 'admin' && (
             <>
               <button 
@@ -228,18 +233,17 @@ export const MobileCatalog = ({
               </button>
             </>
           )}
-          {currentUser && (
-            <button 
-              onClick={async () => {
-                await fetch('/api/auth/logout', { method: 'POST' });
-                window.location.href = '/login';
-              }}
-              style={{ background: 'none', border: 'none', color: '#ef4444', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
-              title="Esci"
-            >
-              <LogOut size={22} />
-            </button>
-          )}
+          <button 
+            onClick={async () => {
+              await fetch('/api/auth/logout', { method: 'POST' });
+              window.location.href = '/login';
+            }}
+            style={{ background: 'none', border: 'none', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem' }}
+            title="Esci dal gestionale"
+          >
+            <LogOut size={22} color="#ef4444" />
+            <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: '600' }}>Esci</span>
+          </button>
           <button 
             onClick={() => setForceDesktop(true)}
             style={{ background: 'none', border: 'none', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem' }}
