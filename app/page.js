@@ -283,7 +283,7 @@ export default function Home() {
   });
 
   const [colWidths, setColWidths] = useState({
-    name: 300, vintage: 100, country: 200, category: 200, bottleType: 120, totalStock: 150
+    name: 300, totalStock: 150, vintage: 100, country: 200, category: 200, bottleType: 120
   });
 
   const [activeMenu, setActiveMenu] = useState(null); // 'scheda', 'indice', 'excel'
@@ -1425,6 +1425,10 @@ export default function Home() {
                     Nome {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                     <div className="resizer" onMouseDown={(e) => handleResize(e, 'name')} />
                   </th>
+                  <th style={{ width: colWidths.totalStock, position: 'relative' }} onClick={() => handleSort('totalStock')}>
+                    {filters.location ? `Giacenza ${filters.location}` : 'Giacenza Totale'} {sortConfig.key === 'totalStock' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                    <div className="resizer" onMouseDown={(e) => handleResize(e, 'totalStock')} />
+                  </th>
                   <th style={{ width: colWidths.vintage, position: 'relative' }} onClick={() => handleSort('vintage')}>
                     Anno {sortConfig.key === 'vintage' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                     <div className="resizer" onMouseDown={(e) => handleResize(e, 'vintage')} />
@@ -1440,10 +1444,6 @@ export default function Home() {
                   <th style={{ width: colWidths.bottleType, position: 'relative' }}>
                     Tipo Bottiglia
                     <div className="resizer" onMouseDown={(e) => handleResize(e, 'bottleType')} />
-                  </th>
-                  <th style={{ width: colWidths.totalStock, position: 'relative' }} onClick={() => handleSort('totalStock')}>
-                    {filters.location ? `Giacenza ${filters.location}` : 'Giacenza Totale'} {sortConfig.key === 'totalStock' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
-                    <div className="resizer" onMouseDown={(e) => handleResize(e, 'totalStock')} />
                   </th>
                 </tr>
               </thead>
@@ -1486,6 +1486,9 @@ export default function Home() {
                           {group.name} {group.wines.length > 1 && <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>({group.wines.length})</span>}
                         </div>
                       </td>
+                      <td style={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}>
+                        <StockCell winesArray={group.wines} displayStock={group.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} />
+                      </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {group.wines.length === 1 ? (group.wines[0].vintage || '-') : 'Varie'}
                       </td>
@@ -1503,9 +1506,6 @@ export default function Home() {
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b', fontSize: '0.9rem' }}>
                         {[...new Set(group.wines.flatMap(w => [w.bottleType, ...(w.movements?.map(m => m.bottleType) || [])]).filter(Boolean))].join(', ') || '0,75 L'}
                       </td>
-                      <td style={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}>
-                        <StockCell winesArray={group.wines} displayStock={group.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} />
-                      </td>
                     </tr>
                     {expandedGroups[group.name] && group.wines.length > 1 && group.wines.map(wine => (
                       <tr
@@ -1522,6 +1522,7 @@ export default function Home() {
                         <td style={{ paddingLeft: '2.5rem', fontSize: '0.9rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           ↳ {wine.name} {wine.vintage ? `- ${wine.vintage}` : ''} {wine.bottleType ? `(${wine.bottleType})` : ''}
                         </td>
+                        <td style={{ fontSize: '0.9rem', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}><StockCell winesArray={[wine]} displayStock={wine.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} /></td>
                         <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wine.vintage || '-'}</td>
                         <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <span style={{ fontSize: '1.1rem', marginRight: '0.3rem' }}>{getCountryFlag(wine.country)}</span>
@@ -1531,7 +1532,6 @@ export default function Home() {
                         <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#64748b' }}>
                           {[...new Set([wine.bottleType, ...(wine.movements?.map(m => m.bottleType) || [])].filter(Boolean))].join(', ') || '0,75 L'}
                         </td>
-                        <td style={{ fontSize: '0.9rem', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}><StockCell winesArray={[wine]} displayStock={wine.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} /></td>
                       </tr>
                     ))}
                   </React.Fragment>
