@@ -6,6 +6,7 @@ import { ArrowLeft, Wine } from 'lucide-react';
 export default function PrintGiacenzeDettaglio() {
   const [wines, setWines] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [selectedLocations, setSelectedLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortParam, setSortParam] = useState('name');
 
@@ -36,7 +37,9 @@ export default function PrintGiacenzeDettaglio() {
             });
 
             setWines(filtered);
-            setLocations(allLocs.map(l => l.name));
+            const locNames = allLocs.map(l => l.name);
+            setLocations(locNames);
+            setSelectedLocations(locNames);
             setLoading(false);
           })
           .catch(err => {
@@ -60,6 +63,8 @@ export default function PrintGiacenzeDettaglio() {
     'category': 'Categoria'
   };
   const sortLabel = sortLabelMap[sortParam] || 'Nome Vino';
+
+  const activeLocations = locations.filter(l => selectedLocations.includes(l));
 
   return (
     <>
@@ -172,6 +177,40 @@ export default function PrintGiacenzeDettaglio() {
             </button>
           </div>
         </div>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 'bold', color: 'white' }}>Seleziona Cantine:</span>
+          {locations.map(loc => {
+            const isSelected = selectedLocations.includes(loc);
+            return (
+              <button
+                key={loc}
+                onClick={() => {
+                  if (isSelected) {
+                    setSelectedLocations(prev => prev.filter(l => l !== loc));
+                  } else {
+                    setSelectedLocations(prev => {
+                      const newArr = [...prev, loc];
+                      return locations.filter(l => newArr.includes(l));
+                    });
+                  }
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  border: isSelected ? '2px solid #10b981' : '1px solid #ccc',
+                  background: isSelected ? '#ecfdf5' : 'white',
+                  color: isSelected ? '#065f46' : '#666',
+                  cursor: 'pointer',
+                  fontWeight: isSelected ? 'bold' : 'normal',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {loc.replace(/cantina\s*/i, '').trim()}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <>
@@ -192,13 +231,11 @@ export default function PrintGiacenzeDettaglio() {
             }
           }
 
-          const totalCols = 8 + (locations.length * 2);
-
+          const pages = [];
+          let currentIdx = 0;
           const rowsPerPageFirst = 16;
           const rowsPerPageNext = 20;
 
-          const pages = [];
-          let currentIdx = 0;
           while (currentIdx < wines.length) {
             const isFirstPage = pages.length === 0;
             const limit = isFirstPage ? rowsPerPageFirst : rowsPerPageNext;
@@ -230,7 +267,7 @@ export default function PrintGiacenzeDettaglio() {
                     <th>Inventariato</th>
                     <th>Disponibile</th>
                     <th>Usato</th>
-                    {locations.map(loc => {
+                    {activeLocations.map(loc => {
                       const shortName = loc.replace(/cantina /i, '').trim();
                       return (
                         <React.Fragment key={loc}>
@@ -247,7 +284,7 @@ export default function PrintGiacenzeDettaglio() {
                     let globalUscita = 0;
                     
                     const locStats = {};
-                    locations.forEach(loc => {
+                    activeLocations.forEach(loc => {
                       locStats[loc] = { ingresso: 0, uscita: 0 };
                     });
 
@@ -257,14 +294,15 @@ export default function PrintGiacenzeDettaglio() {
                         const isIngresso = m.movementType === 'Ingresso';
                         const isUscita = m.movementType === 'Uscita';
                         
-                        if (isIngresso) globalIngresso += qty;
-                        if (isUscita) globalUscita += qty;
-
-                        if (m.location && m.location.name) {
+                        if (m.location && m.location.name && activeLocations.includes(m.location.name)) {
                           const lName = m.location.name;
-                          if (locStats[lName]) {
-                            if (isIngresso) locStats[lName].ingresso += qty;
-                            if (isUscita) locStats[lName].uscita += qty;
+                          if (isIngresso) {
+                            globalIngresso += qty;
+                            locStats[lName].ingresso += qty;
+                          }
+                          if (isUscita) {
+                            globalUscita += qty;
+                            locStats[lName].uscita += qty;
                           }
                         }
                       });
@@ -282,7 +320,7 @@ export default function PrintGiacenzeDettaglio() {
                         <td className="text-bold">{globalIngresso || ''}</td>
                         <td className="text-bold">{dispGlobale === 0 && globalUscita === 0 && globalIngresso === 0 ? '' : dispGlobale}</td>
                         <td className="text-bold">{globalUscita || ''}</td>
-                        {locations.map(loc => {
+                        {activeLocations.map(loc => {
                           const stats = locStats[loc];
                           const disp = stats.ingresso - stats.uscita;
                           return (
