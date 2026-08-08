@@ -13,9 +13,18 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Username e password richiesti' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { username }
+    const trimmedUsername = username ? username.trim() : '';
+
+    let user = await prisma.user.findFirst({
+      where: {
+        username: trimmedUsername
+      }
     });
+
+    if (!user) {
+      const allUsers = await prisma.user.findMany();
+      user = allUsers.find(u => u.username.toLowerCase() === trimmedUsername.toLowerCase());
+    }
 
     if (!user) {
       return NextResponse.json({ error: 'Credenziali non valide' }, { status: 401 });
