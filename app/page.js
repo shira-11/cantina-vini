@@ -1433,12 +1433,22 @@ export default function Home() {
 
                   {currentUser?.role === 'admin' && (
                     <>
-                      <div className="toolbar-icon" style={{ marginLeft: '0.25rem' }} title="Gestione Utenti" onClick={() => router.push('/admin/users')}>
-                        <Shield size={20} color="var(--primary-color)" />
-                      </div>
-                      <div className="toolbar-icon" style={{ marginLeft: '0.25rem' }} title="Impostazioni Visitatore" onClick={() => router.push('/admin/settings')}>
-                        <Settings size={20} color="var(--primary-color)" />
-                      </div>
+                      <button 
+                        onClick={() => router.push('/admin/users')}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', padding: '0.35rem 0.65rem', borderRadius: '6px', cursor: 'pointer', marginLeft: '0.25rem' }}
+                        title="Gestione Utenti e Accessi"
+                      >
+                        <Shield size={18} color="var(--primary-color)" />
+                        <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>Utenti</span>
+                      </button>
+                      <button 
+                        onClick={() => router.push('/admin/settings')}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', padding: '0.35rem 0.65rem', borderRadius: '6px', cursor: 'pointer', marginLeft: '0.25rem' }}
+                        title="Impostazioni Visitatore"
+                      >
+                        <Settings size={18} color="var(--primary-color)" />
+                        <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>Impostazioni</span>
+                      </button>
                     </>
                   )}
 

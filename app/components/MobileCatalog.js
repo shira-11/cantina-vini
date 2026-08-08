@@ -219,17 +219,19 @@ export const MobileCatalog = ({
               </button>
               <button 
                 onClick={() => router.push('/admin/users')}
-                style={{ background: 'none', border: 'none', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
                 title="Gestione Utenti"
               >
-                <Shield size={22} />
+                <Shield size={18} />
+                <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>Utenti</span>
               </button>
               <button 
                 onClick={() => router.push('/admin/settings')}
-                style={{ background: 'none', border: 'none', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
                 title="Impostazioni Visitatore"
               >
-                <Settings size={22} />
+                <Settings size={18} />
+                <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>Impostazioni</span>
               </button>
             </>
           )}
