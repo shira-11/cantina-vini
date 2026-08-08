@@ -244,14 +244,16 @@ export const MobileCatalog = ({
             <LogOut size={22} color="#ef4444" />
             <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: '600' }}>Esci</span>
           </button>
-          <button 
-            onClick={() => setForceDesktop(true)}
-            style={{ background: 'none', border: 'none', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem' }}
-            title="Passa alla visualizzazione Desktop"
-          >
-            <Monitor size={20} />
-            <span style={{ fontSize: '0.85rem' }}>Desktop</span>
-          </button>
+          {currentUser?.role !== 'viewer' && (
+            <button 
+              onClick={() => setForceDesktop(true)}
+              style={{ background: 'none', border: 'none', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem' }}
+              title="Passa alla visualizzazione Desktop"
+            >
+              <Monitor size={20} />
+              <span style={{ fontSize: '0.85rem' }}>Desktop</span>
+            </button>
+          )}
         </div>
       </div>
 
