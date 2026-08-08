@@ -997,7 +997,7 @@ export default function Home() {
           </button>
         </div>
 
-        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <button
             className="btn"
             style={{ width: '100%', justifyContent: 'center', background: showArchive ? 'var(--primary-color)' : 'white', color: showArchive ? 'white' : 'inherit', border: '1px solid var(--border-color)' }}
@@ -1008,6 +1008,27 @@ export default function Home() {
           >
             {showArchive ? '🗄️ Torna alla Cantina' : '🗄️ Vedi Archivio'}
           </button>
+
+          {currentUser?.role === 'admin' && (
+            <>
+              <button
+                className="btn"
+                style={{ width: '100%', justifyContent: 'center', background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                onClick={() => router.push('/admin/settings')}
+              >
+                <Settings size={18} color="var(--primary-color)" />
+                <span>Impostazioni Visitatore</span>
+              </button>
+              <button
+                className="btn"
+                style={{ width: '100%', justifyContent: 'center', background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                onClick={() => router.push('/admin/users')}
+              >
+                <Shield size={18} color="var(--primary-color)" />
+                <span>Gestione Utenti</span>
+              </button>
+            </>
+          )}
         </div>
       </aside>
       )}

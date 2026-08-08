@@ -14,24 +14,27 @@ export async function GET(request) {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     
+    let username = payload.username;
+    let role = payload.role;
     let autoLogoutEnabled = true;
     let autoLogoutMinutes = 30;
 
-    if (payload.userId) {
-      const user = await prisma.user.findUnique({
-        where: { id: Number(payload.userId) },
-        select: { autoLogoutEnabled: true, autoLogoutMinutes: true }
-      });
-      if (user) {
-        autoLogoutEnabled = user.autoLogoutEnabled;
-        autoLogoutMinutes = user.autoLogoutMinutes;
-      }
+    const dbUser = await prisma.user.findFirst({
+      where: payload.userId ? { id: Number(payload.userId) } : { username: payload.username },
+      select: { username: true, role: true, autoLogoutEnabled: true, autoLogoutMinutes: true, isActive: true }
+    });
+
+    if (dbUser && dbUser.isActive) {
+      username = dbUser.username;
+      role = dbUser.role;
+      autoLogoutEnabled = dbUser.autoLogoutEnabled;
+      autoLogoutMinutes = dbUser.autoLogoutMinutes;
     }
 
     return NextResponse.json({
       user: {
-        username: payload.username,
-        role: payload.role,
+        username,
+        role,
         autoLogoutEnabled,
         autoLogoutMinutes
       }
