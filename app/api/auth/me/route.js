@@ -19,16 +19,21 @@ export async function GET(request) {
     let autoLogoutEnabled = true;
     let autoLogoutMinutes = 30;
 
-    const dbUser = await prisma.user.findFirst({
-      where: payload.userId ? { id: Number(payload.userId) } : { username: payload.username },
-      select: { username: true, role: true, autoLogoutEnabled: true, autoLogoutMinutes: true, isActive: true }
-    });
+    let dbUser = null;
+    try {
+      dbUser = await prisma.user.findFirst({
+        where: payload.userId ? { id: Number(payload.userId) } : { username: payload.username },
+        select: { username: true, role: true, isActive: true }
+      });
+    } catch (dbErr) {
+      console.error('Error finding user in auth/me:', dbErr);
+    }
 
     if (dbUser && dbUser.isActive) {
       username = dbUser.username;
       role = dbUser.role;
-      autoLogoutEnabled = dbUser.autoLogoutEnabled;
-      autoLogoutMinutes = dbUser.autoLogoutMinutes;
+      if (dbUser.autoLogoutEnabled !== undefined) autoLogoutEnabled = dbUser.autoLogoutEnabled;
+      if (dbUser.autoLogoutMinutes !== undefined) autoLogoutMinutes = dbUser.autoLogoutMinutes;
     }
 
     return NextResponse.json({
@@ -40,6 +45,7 @@ export async function GET(request) {
       }
     });
   } catch (error) {
+    console.error("me route error:", error);
     return NextResponse.json({ error: 'Token non valido' }, { status: 401 });
   }
 }

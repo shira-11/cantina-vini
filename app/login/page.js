@@ -46,9 +46,7 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Redirigi alla home
-        router.push('/');
-        router.refresh();
+        window.location.href = '/';
       } else {
         setError(data.error || 'Errore durante il login');
       }

@@ -9,7 +9,7 @@ async function handleLogout(request) {
   const searchParams = request.nextUrl.searchParams;
   const reasonParam = searchParams.get('reason') || 'manual';
 
-  if (token) {
+  if (token && prisma.userSession) {
     try {
       const { payload } = await jwtVerify(token, JWT_SECRET);
       if (payload.sessionId) {
@@ -24,7 +24,7 @@ async function handleLogout(request) {
         const lastSession = await prisma.userSession.findFirst({
           where: { userId: Number(payload.userId), logoutTime: null },
           orderBy: { id: 'desc' }
-        });
+        }).catch(() => null);
         if (lastSession) {
           await prisma.userSession.update({
             where: { id: lastSession.id },

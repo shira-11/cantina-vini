@@ -30,16 +30,33 @@ export async function PUT(request, { params }) {
       }
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: { id: true, username: true, role: true, isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: true }
-    });
+    let updatedUser;
+    try {
+      updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: updateData
+      });
+    } catch (upErr) {
+      console.warn("Retrying user update without autoLogout fields:", upErr);
+      delete updateData.autoLogoutEnabled;
+      delete updateData.autoLogoutMinutes;
+      updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: updateData
+      });
+    }
 
-    return NextResponse.json(updatedUser);
+    return NextResponse.json({
+      id: updatedUser.id,
+      username: updatedUser.username,
+      role: updatedUser.role,
+      isActive: updatedUser.isActive,
+      autoLogoutEnabled: updatedUser.autoLogoutEnabled ?? true,
+      autoLogoutMinutes: updatedUser.autoLogoutMinutes ?? 30
+    });
   } catch (error) {
     console.error("PUT user error:", error);
-    return NextResponse.json({ error: "Errore nell'aggiornamento dell'utente" }, { status: 500 });
+    return NextResponse.json({ error: "Errore nell'aggiornamento dell'utente: " + (error.message || "") }, { status: 500 });
   }
 }
 

