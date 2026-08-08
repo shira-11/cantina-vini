@@ -364,13 +364,20 @@ export default function Home() {
     
     // Fetch user info
     fetch('/api/auth/me')
-      .then(res => res.json())
+      .then(res => {
+        if (res.status === 401) {
+          router.push('/login');
+          return null;
+        }
+        return res.json();
+      })
       .then(data => {
-        if (data.user) setCurrentUser(data.user);
+        if (data && data.user) {
+          setCurrentUser(data.user);
+        }
       })
       .catch(err => console.error("Error fetching user:", err));
-
-  }, []);
+  }, [router]);
 
   const fetchWinesRef = useRef();
 
@@ -1424,12 +1431,22 @@ export default function Home() {
                   
                   <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>
                   
-                  <div className="user-profile-btn">
-                    <User size={18} color="#64748b" />
-                    <span style={{ fontSize: '0.9rem', fontWeight: '500', color: '#334155' }}>
-                      {currentUser ? currentUser.username : 'User'}
-                    </span>
-                  </div>
+                  {!currentUser ? (
+                    <button 
+                      onClick={() => router.push('/login')}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#3b82f6', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}
+                      title="Effettua il Login con nome utente Shirantha"
+                    >
+                      <User size={16} /> Accedi (Login)
+                    </button>
+                  ) : (
+                    <div className="user-profile-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: '#f1f5f9', padding: '0.35rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                      <User size={18} color="#64748b" />
+                      <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
+                        {currentUser.username}
+                      </span>
+                    </div>
+                  )}
 
                   {currentUser?.role === 'admin' && (
                     <>
