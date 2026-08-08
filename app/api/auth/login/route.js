@@ -31,13 +31,44 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Account disabilitato. Contatta l\'amministratore.' }, { status: 403 });
     }
 
+    // Registra la sessione nel database
+    let sessionId = null;
+    try {
+      const userAgent = request.headers.get('user-agent') || 'Unknown';
+      const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+      const session = await prisma.userSession.create({
+        data: {
+          userId: user.id,
+          username: user.username,
+          ipAddress,
+          userAgent
+        }
+      });
+      sessionId = session.id;
+    } catch (sErr) {
+      console.error('Error creating UserSession:', sErr);
+    }
+
     // Crea il token JWT
-    const token = await new SignJWT({ userId: user.id, username: user.username, role: user.role })
+    const token = await new SignJWT({
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+      sessionId
+    })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('7d')
       .sign(JWT_SECRET);
 
-    const response = NextResponse.json({ success: true, user: { username: user.username, role: user.role } });
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        username: user.username,
+        role: user.role,
+        autoLogoutEnabled: user.autoLogoutEnabled,
+        autoLogoutMinutes: user.autoLogoutMinutes
+      }
+    });
     
     // Imposta il cookie HttpOnly
     response.cookies.set({

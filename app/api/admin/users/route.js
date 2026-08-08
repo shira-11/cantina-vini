@@ -10,6 +10,8 @@ export async function GET(request) {
         username: true,
         role: true,
         isActive: true,
+        autoLogoutEnabled: true,
+        autoLogoutMinutes: true,
         createdAt: true,
         updatedAt: true
       },
@@ -27,7 +29,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const data = await request.json();
-    const { username, password, role, isActive } = data;
+    const { username, password, role, isActive, autoLogoutEnabled, autoLogoutMinutes } = data;
 
     if (!username || !password) {
       return NextResponse.json({ error: "Username e password obbligatori" }, { status: 400 });
@@ -46,9 +48,11 @@ export async function POST(request) {
         username,
         passwordHash,
         role: role || 'viewer',
-        isActive: isActive !== undefined ? isActive : true
+        isActive: isActive !== undefined ? isActive : true,
+        autoLogoutEnabled: autoLogoutEnabled !== undefined ? autoLogoutEnabled : true,
+        autoLogoutMinutes: autoLogoutMinutes ? Number(autoLogoutMinutes) : 30
       },
-      select: { id: true, username: true, role: true, isActive: true }
+      select: { id: true, username: true, role: true, isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: true }
     });
 
     return NextResponse.json(newUser, { status: 201 });

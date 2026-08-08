@@ -1,6 +1,5 @@
 import './globals.css';
-import Link from 'next/link';
-import { Wine } from 'lucide-react';
+import InactivityTracker from './components/InactivityTracker';
 
 export const metadata = {
   title: 'Cantina Vini',
@@ -16,7 +15,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="it">
       <body>
-
+        <InactivityTracker />
         <main>
           {children}
         </main>

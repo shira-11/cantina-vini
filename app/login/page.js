@@ -14,6 +14,13 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('reason') === 'timeout') {
+        setError('⏱️ Disconnessione automatica eseguita per inattività. Effettua nuovamente il login.');
+      }
+    }
+
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {

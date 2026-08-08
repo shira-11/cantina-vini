@@ -83,13 +83,31 @@ model WinePhoto {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  username     String   @unique
-  passwordHash String
-  role         String   @default("user") // "admin", "editor", "viewer"
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                Int           @id @default(autoincrement())
+  username          String        @unique
+  passwordHash      String
+  role              String        @default("user") // "admin", "editor", "viewer"
+  isActive          Boolean       @default(true)
+  autoLogoutEnabled Boolean       @default(true)
+  autoLogoutMinutes Int           @default(30)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  sessions          UserSession[]
+}
+
+model UserSession {
+  id           Int       @id @default(autoincrement())
+  userId       Int?
+  username     String
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginTime    DateTime  @default(now())
+  logoutTime   DateTime?
+  logoutReason String?   // "manual", "auto_timeout", "force"
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model SystemSettings {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Shield, Plus, Edit2, Trash2, ArrowLeft, Check, X, Lock, Unlock } from 'lucide-react';
+import { Users, Shield, Plus, Edit2, Trash2, ArrowLeft, Check, X, Lock, Unlock, Clock } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -15,7 +15,9 @@ export default function AdminUsersPage() {
     username: '',
     password: '',
     role: 'viewer',
-    isActive: true
+    isActive: true,
+    autoLogoutEnabled: true,
+    autoLogoutMinutes: 30
   });
 
   const fetchUsers = async () => {
@@ -44,11 +46,13 @@ export default function AdminUsersPage() {
         username: user.username,
         password: '',
         role: user.role,
-        isActive: user.isActive
+        isActive: user.isActive,
+        autoLogoutEnabled: user.autoLogoutEnabled !== false,
+        autoLogoutMinutes: user.autoLogoutMinutes || 30
       });
     } else {
       setEditingUser(null);
-      setFormData({ username: '', password: '', role: 'viewer', isActive: true });
+      setFormData({ username: '', password: '', role: 'viewer', isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: 30 });
     }
     setIsModalOpen(true);
   };
@@ -142,11 +146,16 @@ export default function AdminUsersPage() {
       </div>
 
       <div style={{ padding: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <h2 style={{ margin: 0, color: 'var(--text-color)' }}>Elenco Utenti</h2>
-          <button className="btn btn-primary" onClick={() => handleOpenModal()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={18} /> Nuovo Utente
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button className="btn" onClick={() => router.push('/admin/sessions')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#334155' }}>
+              <Clock size={18} color="#6366f1" /> Registro Accessi
+            </button>
+            <button className="btn btn-primary" onClick={() => handleOpenModal()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Plus size={18} /> Nuovo Utente
+            </button>
+          </div>
         </div>
 
         <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
@@ -156,7 +165,7 @@ export default function AdminUsersPage() {
                 <th style={{ padding: '1rem' }}>Username</th>
                 <th>Ruolo</th>
                 <th style={{ textAlign: 'center' }}>Stato</th>
-                <th>Data Creazione</th>
+                <th style={{ textAlign: 'center' }}>Auto-Logout</th>
                 <th style={{ textAlign: 'right', padding: '1rem' }}>Azioni</th>
               </tr>
             </thead>
@@ -184,7 +193,13 @@ export default function AdminUsersPage() {
                       </span>
                     )}
                   </td>
-                  <td style={{ color: '#64748b' }}>{new Date(user.createdAt).toLocaleDateString('it-IT')}</td>
+                  <td style={{ textAlign: 'center', fontSize: '0.85rem', color: '#475569' }}>
+                    {user.autoLogoutEnabled !== false ? (
+                      <span style={{ color: '#0284c7', fontWeight: '500' }}>⏱️ {user.autoLogoutMinutes || 30} Min</span>
+                    ) : (
+                      <span style={{ color: '#94a3b8' }}>Disattivato</span>
+                    )}
+                  </td>
                   <td style={{ textAlign: 'right', padding: '1rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                       <button className="btn" style={{ padding: '0.4rem', border: '1px solid var(--border-color)', background: 'white' }} onClick={() => handleToggleStatus(user)} title={user.isActive ? "Blocca Accesso" : "Sblocca Accesso"}>
@@ -212,7 +227,7 @@ export default function AdminUsersPage() {
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div className="modal-header">
               <h3>{editingUser ? 'Modifica Utente' : 'Nuovo Utente'}</h3>
               <button className="btn-close" onClick={() => setIsModalOpen(false)}><X size={20}/></button>
@@ -254,7 +269,7 @@ export default function AdminUsersPage() {
                 </select>
               </div>
 
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input 
                   type="checkbox" 
                   id="isActive" 
@@ -263,6 +278,34 @@ export default function AdminUsersPage() {
                   style={{ width: '18px', height: '18px' }}
                 />
                 <label htmlFor="isActive" style={{ margin: 0, cursor: 'pointer' }}>Account Attivo</label>
+              </div>
+
+              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input 
+                    type="checkbox" 
+                    id="autoLogoutEnabled" 
+                    checked={formData.autoLogoutEnabled} 
+                    onChange={e => setFormData({...formData, autoLogoutEnabled: e.target.checked})}
+                    style={{ width: '18px', height: '18px' }}
+                  />
+                  <label htmlFor="autoLogoutEnabled" style={{ margin: 0, cursor: 'pointer', fontWeight: 'bold' }}>
+                    Auto-Logout Inattività (30 min)
+                  </label>
+                </div>
+                {formData.autoLogoutEnabled && (
+                  <div className="form-group" style={{ marginTop: '0.5rem' }}>
+                    <label style={{ fontSize: '0.85rem', color: '#64748b' }}>Minuti di inattività prima del logout:</label>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      max="1440" 
+                      value={formData.autoLogoutMinutes} 
+                      onChange={e => setFormData({...formData, autoLogoutMinutes: Number(e.target.value)})}
+                      style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', marginTop: '0.25rem' }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>

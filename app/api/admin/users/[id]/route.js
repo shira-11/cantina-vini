@@ -11,6 +11,8 @@ export async function PUT(request, { params }) {
     const updateData = {};
     if (data.role) updateData.role = data.role;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.autoLogoutEnabled !== undefined) updateData.autoLogoutEnabled = data.autoLogoutEnabled;
+    if (data.autoLogoutMinutes !== undefined) updateData.autoLogoutMinutes = Number(data.autoLogoutMinutes);
     
     if (data.password) {
       const salt = await bcrypt.genSalt(10);
@@ -31,7 +33,7 @@ export async function PUT(request, { params }) {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
-      select: { id: true, username: true, role: true, isActive: true }
+      select: { id: true, username: true, role: true, isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: true }
     });
 
     return NextResponse.json(updatedUser);
