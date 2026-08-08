@@ -405,42 +405,185 @@ export const MobileCatalog = ({
               <button onClick={() => setShowFilters(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={24} /></button>
             </div>
 
-            {/* Same filters as desktop but stacked vertically */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Visual Touch Chips for fast 1-tap filtering */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {canViewFilter('location') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Cantina Fisica</label>
-                  <select value={filters.location || ''} onChange={e => setFilters({ ...filters, location: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                    <option value="">Tutte</option>
-                    {uniqueLocations.map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
+                    Cantina Fisica
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {['', ...uniqueLocations].map(l => {
+                      const isSelected = (filters.location || '') === l;
+                      const label = l ? l.replace(/^cantina\s+/i, '') : 'Tutte';
+                      return (
+                        <button
+                          key={l || 'all'}
+                          type="button"
+                          onClick={() => setFilters({ ...filters, location: l })}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '20px',
+                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
+                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
+                            color: isSelected ? '#4338ca' : '#475569',
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
               {canViewFilter('country') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Nazione</label>
-                  <select value={filters.country} onChange={e => setFilters({ ...filters, country: e.target.value, region: '' })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                    <option value="">Tutte</option>
-                    {uniqueCountries.map(c => <option key={c} value={c}>{getCountryFlag(c)} {c}</option>)}
-                  </select>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
+                    Nazione
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {['', ...uniqueCountries].map(c => {
+                      const isSelected = (filters.country || '') === c;
+                      const label = c ? `${getCountryFlag(c)} ${c}` : 'Tutte';
+                      return (
+                        <button
+                          key={c || 'all'}
+                          type="button"
+                          onClick={() => setFilters({ ...filters, country: c, region: '' })}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '20px',
+                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
+                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
+                            color: isSelected ? '#4338ca' : '#475569',
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
               {canViewFilter('region') && filters.country && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Regione</label>
-                  <select value={filters.region} onChange={e => setFilters({ ...filters, region: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                    <option value="">Tutte</option>
-                    {uniqueRegions.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
+                    Regione ({filters.country})
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {['', ...uniqueRegions].map(r => {
+                      const isSelected = (filters.region || '') === r;
+                      const label = r || 'Tutte';
+                      return (
+                        <button
+                          key={r || 'all'}
+                          type="button"
+                          onClick={() => setFilters({ ...filters, region: r })}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '20px',
+                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
+                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
+                            color: isSelected ? '#4338ca' : '#475569',
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {canViewFilter('category') && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
+                    Categoria
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {['', ...uniqueCategories].map(cat => {
+                      const isSelected = (filters.category || '') === cat;
+                      const label = cat || 'Tutte';
+                      return (
+                        <button
+                          key={cat || 'all'}
+                          type="button"
+                          onClick={() => setFilters({ ...filters, category: cat })}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '20px',
+                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
+                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
+                            color: isSelected ? '#4338ca' : '#475569',
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {canViewFilter('availability') && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
+                    Disponibilità
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {[
+                      { value: '', label: 'Tutte' },
+                      { value: 'available', label: 'Solo Disponibili' },
+                      { value: 'unavailable', label: 'Giacenze Non Disponibili' }
+                    ].map(opt => {
+                      const isSelected = (filters.availability || '') === opt.value;
+                      return (
+                        <button
+                          key={opt.value || 'all'}
+                          type="button"
+                          onClick={() => setFilters({ ...filters, availability: opt.value })}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '20px',
+                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
+                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
+                            color: isSelected ? '#4338ca' : '#475569',
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
               {canViewFilter('producerCellar') && (
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Cantina Produttrice</label>
-                  <select value={filters.producerCellar} onChange={e => setFilters({ ...filters, producerCellar: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                  <select value={filters.producerCellar} onChange={e => setFilters({ ...filters, producerCellar: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white' }}>
                     <option value="">Tutte</option>
                     {uniqueProducerCellars.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
@@ -450,7 +593,7 @@ export const MobileCatalog = ({
               {canViewFilter('producer') && (
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Produttore</label>
-                  <select value={filters.producer || ''} onChange={e => setFilters({ ...filters, producer: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                  <select value={filters.producer || ''} onChange={e => setFilters({ ...filters, producer: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white' }}>
                     <option value="">Tutti</option>
                     {uniqueProducers.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
@@ -460,53 +603,57 @@ export const MobileCatalog = ({
               {canViewFilter('classification') && (
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Classificazione</label>
-                  <select value={filters.classification} onChange={e => setFilters({ ...filters, classification: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                  <select value={filters.classification} onChange={e => setFilters({ ...filters, classification: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white' }}>
                     <option value="">Tutte</option>
                     {uniqueClassifications.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               )}
 
-              {canViewFilter('category') && (
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Categoria (es. Rosso)</label>
-                  <select value={filters.category} onChange={e => setFilters({ ...filters, category: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                    <option value="">Tutte</option>
-                    {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              )}
-
-              
               {canViewFilter('bottleType') && (
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Tipo Bottiglia</label>
-                  <select value={filters.bottleType || ''} onChange={e => setFilters({ ...filters, bottleType: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                  <select value={filters.bottleType || ''} onChange={e => setFilters({ ...filters, bottleType: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white' }}>
                     <option value="">Tutte</option>
                     {uniqueBottleTypes.map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </div>
               )}
 
-              {canViewFilter('availability') && (
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Disponibilità</label>
-                  <select value={filters.availability} onChange={e => setFilters({ ...filters, availability: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                    <option value="">Tutte</option>
-                    <option value="available">Solo Disponibili</option>
-                    <option value="unavailable">Giacenze Non Disponibili</option>
-                  </select>
-                </div>
-              )}
-
               {canViewFilter('photo') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Foto</label>
-                  <select value={filters.photo || ''} onChange={e => setFilters({ ...filters, photo: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                    <option value="">Tutte</option>
-                    <option value="with_photo">Con Foto</option>
-                    <option value="without_photo">Senza Foto</option>
-                  </select>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
+                    Foto
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {[
+                      { value: '', label: 'Tutte' },
+                      { value: 'with_photo', label: 'Con Foto 📷' },
+                      { value: 'without_photo', label: 'Senza Foto' }
+                    ].map(opt => {
+                      const isSelected = (filters.photo || '') === opt.value;
+                      return (
+                        <button
+                          key={opt.value || 'all'}
+                          type="button"
+                          onClick={() => setFilters({ ...filters, photo: opt.value })}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '20px',
+                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
+                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
+                            color: isSelected ? '#4338ca' : '#475569',
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
