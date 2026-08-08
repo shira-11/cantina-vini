@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wine, Search, Plus, Grape, MapPin, Loader2, Camera, FileText, List, FileSpreadsheet, History, ChevronDown, X, Menu, Image as ImageIcon, User, LogOut, Shield, Settings, Mic, HelpCircle } from 'lucide-react';
+import { Wine, Search, Plus, Grape, MapPin, Loader2, Camera, FileText, List, FileSpreadsheet, History, ChevronDown, ChevronLeft, ChevronRight, X, Menu, Image as ImageIcon, User, LogOut, Shield, Settings, Mic, HelpCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import * as XLSX from 'xlsx';
@@ -48,6 +48,22 @@ export default function Home() {
   const [hoveredPhoto, setHoveredPhoto] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('sidebarCollapsed') === 'true';
+    }
+    return false;
+  });
+
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('sidebarCollapsed', next ? 'true' : 'false');
+      }
+      return next;
+    });
+  };
   const [dbLocations, setDbLocations] = useState([]);
 
   const [isMobile, setIsMobile] = useState(false);
@@ -748,31 +764,53 @@ export default function Home() {
       {showHelp && <HelpGuideModal onClose={() => setShowHelp(false)} />}
 
       {/* Sidebar Filters */}
-      <aside 
-        className={`sidebar ${isSidebarOpen ? 'open' : ''}`} 
-        style={{ '--sidebar-width': `${sidebarWidth}px` }}
-      >
-        <div 
-          onMouseDown={startResizing}
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: '6px',
-            cursor: 'col-resize',
-            backgroundColor: isResizing ? 'var(--primary-color)' : 'transparent',
-            zIndex: 10
-          }}
-          className="sidebar-resizer"
-        />
-        <div
-          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', cursor: 'pointer' }}
-          onClick={() => window.location.href = '/'}
+      {!isSidebarCollapsed && (
+        <aside 
+          className={`sidebar ${isSidebarOpen ? 'open' : ''}`} 
+          style={{ '--sidebar-width': `${sidebarWidth}px` }}
         >
-          <Wine size={28} color="var(--primary-color)" />
-          <h2>{showArchive ? 'ARCHIVIO VINI' : 'CANTINA'}</h2>
-        </div>
+          <div 
+            onMouseDown={startResizing}
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: '6px',
+              cursor: 'col-resize',
+              backgroundColor: isResizing ? 'var(--primary-color)' : 'transparent',
+              zIndex: 10
+            }}
+            className="sidebar-resizer"
+          />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+              onClick={() => window.location.href = '/'}
+            >
+              <Wine size={28} color="var(--primary-color)" />
+              <h2 style={{ margin: 0 }}>{showArchive ? 'ARCHIVIO VINI' : 'CANTINA'}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={toggleSidebarCollapse}
+              style={{
+                background: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                padding: '0.3rem 0.5rem',
+                color: '#475569',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease'
+              }}
+              title="Chiudi pannello filtri (Nascondi spazietto)"
+            >
+              <ChevronLeft size={22} color="#0f172a" />
+            </button>
+          </div>
 
           <div className="filter-group">
           <label>Cerca</label>
@@ -972,11 +1010,35 @@ export default function Home() {
           </button>
         </div>
       </aside>
+      )}
 
       {/* Main Content Area */}
       <main className="main-content">
         <header className="header">
-          <div className="header-left">
+          <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {isSidebarCollapsed && (
+              <button
+                type="button"
+                onClick={toggleSidebarCollapse}
+                style={{
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '0.35rem 0.65rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  color: 'var(--primary-color)',
+                  fontWeight: '600',
+                  fontSize: '0.9rem'
+                }}
+                title="Apri pannello filtri (Mostra spazietto)"
+              >
+                <ChevronRight size={20} />
+                <span>Filtri</span>
+              </button>
+            )}
             <button
               className="mobile-menu-btn"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
