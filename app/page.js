@@ -1450,22 +1450,20 @@ export default function Home() {
 
                   {currentUser?.role === 'admin' && (
                     <>
-                      <button 
+                      <div 
+                        className="toolbar-icon"
                         onClick={() => router.push('/admin/users')}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', padding: '0.35rem 0.65rem', borderRadius: '6px', cursor: 'pointer', marginLeft: '0.25rem' }}
                         title="Gestione Utenti e Accessi"
                       >
-                        <Shield size={18} color="var(--primary-color)" />
-                        <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>Utenti</span>
-                      </button>
-                      <button 
+                        <Shield size={24} color="#0284c7" />
+                      </div>
+                      <div 
+                        className="toolbar-icon"
                         onClick={() => router.push('/admin/settings')}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', padding: '0.35rem 0.65rem', borderRadius: '6px', cursor: 'pointer', marginLeft: '0.25rem' }}
                         title="Impostazioni Visitatore"
                       >
-                        <Settings size={18} color="var(--primary-color)" />
-                        <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>Impostazioni</span>
-                      </button>
+                        <Settings size={24} color="#0284c7" />
+                      </div>
                     </>
                   )}
 
@@ -1481,10 +1479,10 @@ export default function Home() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div style={{ color: '#475569', fontSize: '14px', textAlign: 'right', lineHeight: '1.4' }}>
-              <div>Etichette Trovate: <strong>{groupedWinesArray.length}</strong></div>
-              <div>Selezionate: <strong>{selectedGroups.length}</strong></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
+            <div style={{ color: '#334155', fontSize: '13px', textAlign: 'right', lineHeight: '1.3', whiteSpace: 'nowrap', background: '#f8fafc', padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+              <div>Etichette Trovate: <strong style={{ color: '#0284c7' }}>{groupedWinesArray.length}</strong></div>
+              <div>Selezionate: <strong style={{ color: selectedGroups.length > 0 ? '#16a34a' : '#64748b' }}>{selectedGroups.length}</strong></div>
             </div>
             
             <button 
