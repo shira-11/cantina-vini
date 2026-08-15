@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, ArrowLeft, Check, X, Save, Plus, Minus, Clock } from 'lucide-react';
+import { Settings, ArrowLeft, Check, X, Save } from 'lucide-react';
 
 const FILTER_OPTIONS = [
   { id: 'country', label: 'Nazione' },
@@ -37,7 +37,9 @@ export default function AdminSettingsPage() {
           setAllowedFilters(data.visitorAllowedFilters || FILTER_OPTIONS.map(f => f.id));
           setAllowWineDetails(data.visitorAllowWineDetails !== false);
           setLoginPageBackground(data.loginPageBackground !== false);
-          setPhotoPreviewSeconds(data.photoPreviewSeconds || 3);
+          if (data.photoPreviewSeconds !== undefined) {
+            setPhotoPreviewSeconds(data.photoPreviewSeconds);
+          }
         } else if (res.status === 403) {
           router.push('/');
         }
@@ -52,8 +54,8 @@ export default function AdminSettingsPage() {
   }, [router]);
 
   const handleToggle = (filterId) => {
-    setAllowedFilters(prev => 
-      prev.includes(filterId) 
+    setAllowedFilters(prev =>
+      prev.includes(filterId)
         ? prev.filter(id => id !== filterId)
         : [...prev, filterId]
     );
@@ -74,14 +76,14 @@ export default function AdminSettingsPage() {
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           visitorAllowedFilters: allowedFilters,
           visitorAllowWineDetails: allowWineDetails,
           loginPageBackground: loginPageBackground,
           photoPreviewSeconds: photoPreviewSeconds
         })
       });
-      
+
       if (res.ok) {
         setMessage({ text: 'Impostazioni salvate con successo!', type: 'success' });
       } else {
@@ -133,14 +135,14 @@ export default function AdminSettingsPage() {
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Settings size={28} color="var(--primary-color)" />
-            <h2>Impostazioni Visitatore e Sistema</h2>
+            <h2>Impostazioni Visitatore</h2>
           </div>
         </div>
       </div>
 
       <div className="admin-content" style={{ maxWidth: '600px', margin: '0 auto', paddingTop: '2rem' }}>
         <p style={{ marginBottom: '2rem', color: '#64748b', lineHeight: '1.5' }}>
-          Configura i permessi per i visitatori, la durata dell&apos;anteprima delle foto delle bottiglie e l&apos;estetica dell&apos;applicazione.
+          Seleziona quali filtri vuoi rendere visibili agli utenti &quot;Visitatori&quot; (Viewer) e gestisci la durata di visualizzazione delle foto.
         </p>
 
         {loading ? (
@@ -149,84 +151,80 @@ export default function AdminSettingsPage() {
           </div>
         ) : (
           <div className="form-card" style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            
-            {/* Sezione Durata Anteprima Foto Vino */}
+
+            {/* Sezione Durata Anteprima Foto Vini */}
             <div>
-              <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Clock size={20} color="#8b5cf6" /> Durata Anteprima Foto Vino (3 Secondi di Default)
-              </h3>
-              <div style={{ padding: '1.25rem', borderRadius: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <label style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '600' }}>
-                  Tempo di visualizzazione foto al passaggio mouse o tocco (secondi)
-                </label>
-                <span style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: '1.4' }}>
-                  Quando si passa il mouse o si fa un tocco col dito <strong>esclusivamente sul nome del vino</strong>, la foto della bottiglia rimane visibile per il numero di secondi impostato e poi scompare automaticamente.
+              <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Anteprima Foto Vini</h3>
+              <div style={{ padding: '1rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500', display: 'block', marginBottom: '0.25rem' }}>
+                  Durata scomparsa foto (secondi)
                 </span>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: '1rem' }}>
+                  Imposta per quanti secondi deve rimanere visibile l&apos;anteprima della foto della bottiglia dopo aver rilasciato il mouse o il dito.
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <button
                     type="button"
                     onClick={() => setPhotoPreviewSeconds(prev => Math.max(1, prev - 1))}
                     style={{
-                      width: '38px',
-                      height: '38px',
+                      width: '2.5rem',
+                      height: '2.5rem',
                       borderRadius: '8px',
                       border: '1px solid #cbd5e1',
                       background: 'white',
+                      fontSize: '1.25rem',
+                      fontWeight: 'bold',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#475569',
-                      fontWeight: 'bold'
+                      justifyContent: 'center'
                     }}
-                    title="Diminuisci secondi"
                   >
-                    <Minus size={18} />
+                    -
                   </button>
 
-                  <input 
+                  <input
                     type="number"
                     min="1"
-                    max="20"
+                    max="30"
                     value={photoPreviewSeconds}
-                    onChange={(e) => setPhotoPreviewSeconds(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => setPhotoPreviewSeconds(Math.max(1, parseInt(e.target.value, 10) || 1))}
                     style={{
-                      width: '70px',
-                      height: '38px',
-                      padding: '0.25rem',
-                      borderRadius: '8px',
-                      border: '1px solid #8b5cf6',
-                      fontSize: '1.1rem',
+                      width: '4.5rem',
+                      height: '2.5rem',
                       textAlign: 'center',
+                      fontSize: '1.1rem',
                       fontWeight: 'bold',
-                      color: '#0f172a',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
                       background: 'white'
                     }}
                   />
 
                   <button
                     type="button"
-                    onClick={() => setPhotoPreviewSeconds(prev => Math.min(20, prev + 1))}
+                    onClick={() => setPhotoPreviewSeconds(prev => prev + 1)}
                     style={{
-                      width: '38px',
-                      height: '38px',
+                      width: '2.5rem',
+                      height: '2.5rem',
                       borderRadius: '8px',
                       border: '1px solid #cbd5e1',
                       background: 'white',
+                      fontSize: '1.25rem',
+                      fontWeight: 'bold',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#475569',
-                      fontWeight: 'bold'
+                      justifyContent: 'center'
                     }}
-                    title="Aumenta secondi"
                   >
-                    <Plus size={18} />
+                    +
                   </button>
 
-                  <span style={{ fontSize: '1rem', color: '#334155', fontWeight: '600' }}>secondi</span>
+                  <span style={{ fontSize: '1rem', fontWeight: '500', color: '#475569' }}>
+                    secondi
+                  </span>
                 </div>
               </div>
             </div>
@@ -234,21 +232,21 @@ export default function AdminSettingsPage() {
             {/* Sezione Accesso Scheda Vino */}
             <div>
               <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Permessi Generali</h3>
-              <label 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '1rem', 
-                  padding: '1rem', 
-                  borderRadius: '8px', 
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1rem',
+                  borderRadius: '8px',
                   cursor: 'pointer',
                   background: allowWineDetails ? '#f8fafc' : 'transparent',
                   border: '1px solid #e2e8f0',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={allowWineDetails}
                   onChange={() => setAllowWineDetails(!allowWineDetails)}
                   style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
@@ -263,21 +261,21 @@ export default function AdminSettingsPage() {
             {/* Sezione Sfondo Pagina Login */}
             <div>
               <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Estetica Generale</h3>
-              <label 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '1rem', 
-                  padding: '1rem', 
-                  borderRadius: '8px', 
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1rem',
+                  borderRadius: '8px',
                   cursor: 'pointer',
                   background: loginPageBackground ? '#f8fafc' : 'transparent',
                   border: '1px solid #e2e8f0',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={loginPageBackground}
                   onChange={() => setLoginPageBackground(!loginPageBackground)}
                   style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
@@ -292,9 +290,9 @@ export default function AdminSettingsPage() {
                 <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
                   <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', fontWeight: '500', color: '#334155' }}>Cambia l'immagine di sfondo</p>
                   <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#64748b' }}>Carica un'immagine JPG o PNG. Verrà applicata immediatamente.</p>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
+                  <input
+                    type="file"
+                    accept="image/*"
                     onChange={handleBgUpload}
                     disabled={uploadingBg}
                     style={{ fontSize: '0.9rem' }}
@@ -309,13 +307,13 @@ export default function AdminSettingsPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
                 <h3 style={{ margin: 0 }}>Filtri di Ricerca</h3>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button 
+                  <button
                     onClick={() => handleSelectAll(true)}
                     style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.875rem' }}
                   >
                     Seleziona Tutti
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleSelectAll(false)}
                     style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.875rem' }}
                   >
@@ -326,22 +324,22 @@ export default function AdminSettingsPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {FILTER_OPTIONS.map(filter => (
-                  <label 
-                    key={filter.id} 
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '1rem', 
-                      padding: '0.75rem', 
-                      borderRadius: '8px', 
+                  <label
+                    key={filter.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
                       cursor: 'pointer',
                       background: allowedFilters.includes(filter.id) ? '#f8fafc' : 'transparent',
                       border: '1px solid #e2e8f0',
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={allowedFilters.includes(filter.id)}
                       onChange={() => handleToggle(filter.id)}
                       style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
@@ -361,9 +359,9 @@ export default function AdminSettingsPage() {
                   </span>
                 )}
               </div>
-              <button 
-                className="btn btn-primary" 
-                onClick={handleSave} 
+              <button
+                className="btn btn-primary"
+                onClick={handleSave}
                 disabled={saving}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '140px', justifyContent: 'center' }}
               >

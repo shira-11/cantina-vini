@@ -107,12 +107,14 @@ export default function PrintGiacenzeDettaglio() {
         .print-page {
           background: white;
           width: 277mm;
+          max-width: 96vw;
           min-height: 190mm;
           padding: 10mm;
           margin-top: 20px;
           margin-bottom: 20px;
           box-shadow: 0 4px 10px rgba(0,0,0,0.5);
           box-sizing: border-box;
+          overflow-x: auto;
         }
         .detail-table {
           width: 100%;

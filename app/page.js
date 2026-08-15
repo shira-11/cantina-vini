@@ -110,36 +110,41 @@ export default function Home() {
     }).catch(console.error);
   }, []);
 
-  const handleMouseMove = (e) => {
-    setMousePos({ x: e.clientX, y: e.clientY });
-  };
-
-  const triggerPhotoPreview = (e, photoUrl) => {
+  const showWinePhotoNearElement = (e, photoUrl) => {
     if (!photoUrl) return;
     if (e && e.stopPropagation) e.stopPropagation();
 
-    let posX = e ? e.clientX : 0;
-    let posY = e ? e.clientY : 0;
+    if (photoTimerRef.current) {
+      clearTimeout(photoTimerRef.current);
+      photoTimerRef.current = null;
+    }
 
-    if (e && e.touches && e.touches.length > 0) {
-      posX = e.touches[0].clientX;
-      posY = e.touches[0].clientY;
-    } else if ((!posX && !posY) && e && e.currentTarget) {
+    let posX = 0;
+    let posY = 0;
+
+    if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
-      posX = rect.left + rect.width / 2;
-      posY = rect.top + rect.height;
+      // Position top edge of photo preview strictly BELOW the bottom of the wine name text (rect.bottom + 12px)
+      // so it opens lower down ("in basso") and NEVER covers the wine name at the top!
+      posY = rect.bottom + 12;
+      posX = Math.max(10, rect.left + 30);
+      
+      if (typeof window !== 'undefined' && posX + 250 > window.innerWidth) {
+        posX = Math.max(10, window.innerWidth - 260);
+      }
+    } else if (e) {
+      posX = e.clientX + 30;
+      posY = e.clientY + 25;
     }
 
-    if (posX || posY) {
-      setMousePos({ x: posX || 200, y: posY || 200 });
-    }
-
+    setMousePos({ x: posX || 200, y: posY || 200 });
     setHoveredPhoto(photoUrl);
+  };
 
+  const startPhotoHideTimerAfterLeave = () => {
     if (photoTimerRef.current) {
       clearTimeout(photoTimerRef.current);
     }
-
     photoTimerRef.current = setTimeout(() => {
       setHoveredPhoto(null);
       photoTimerRef.current = null;
@@ -1605,7 +1610,6 @@ export default function Home() {
                         }
                       }}
                       style={{ cursor: 'pointer', background: expandedGroups[group.name] ? '#f8fafc' : (selectedGroups.includes(group.name) ? '#f0f9ff' : 'white') }}
-                      onMouseMove={handleMouseMove}
                     >
                       <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <input
@@ -1621,26 +1625,34 @@ export default function Home() {
                         />
                       </td>
                       <td style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <div 
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
-                          onMouseEnter={(e) => triggerPhotoPreview(e, group.photo)}
-                          onTouchStart={(e) => triggerPhotoPreview(e, group.photo)}
-                          onClick={(e) => {
-                            if (group.photo) {
-                              triggerPhotoPreview(e, group.photo);
-                            }
-                          }}
-                        >
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                           {group.wines.length > 1 && (
-                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                            <span 
+                              style={{ fontSize: '0.9rem', color: '#475569', padding: '2px 6px', cursor: 'pointer', borderRadius: '4px', userSelect: 'none' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleGroup(group.name);
+                              }}
+                            >
                               {expandedGroups[group.name] ? '▼' : '▶'}
                             </span>
                           )}
-                          <span style={{ borderBottom: group.photo ? '1px dotted #8b5cf6' : 'none' }}>
+                          <span
+                            style={{ cursor: 'pointer' }}
+                            onMouseEnter={(e) => showWinePhotoNearElement(e, group.photo)}
+                            onMouseLeave={startPhotoHideTimerAfterLeave}
+                            onTouchStart={(e) => showWinePhotoNearElement(e, group.photo)}
+                            onTouchEnd={startPhotoHideTimerAfterLeave}
+                            onClick={(e) => {
+                              if (group.photo) {
+                                showWinePhotoNearElement(e, group.photo);
+                                startPhotoHideTimerAfterLeave();
+                              }
+                            }}
+                          >
                             {group.name}
                           </span>
-                          {group.wines.length > 1 && <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>({group.wines.length})</span>}
-                          {group.photo && <span style={{ fontSize: '0.75rem', color: '#8b5cf6' }} title="Passa sopra o tocca per foto">📷</span>}
+                          {group.wines.length > 1 && <span style={{ fontSize: '0.8rem', color: '#94a3b8', userSelect: 'none' }}>({group.wines.length})</span>}
                         </div>
                       </td>
                       <td style={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}>
@@ -1671,25 +1683,12 @@ export default function Home() {
                           handleWineClick(wine.id);
                         }}
                         style={{ background: '#fcfcfc', cursor: 'pointer' }}
-                        onMouseMove={handleMouseMove}
                       >
                         <td></td>
                         <td style={{ paddingLeft: '2.5rem', fontSize: '0.9rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          <div
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}
-                            onMouseEnter={(e) => triggerPhotoPreview(e, wine.photo)}
-                            onTouchStart={(e) => triggerPhotoPreview(e, wine.photo)}
-                            onClick={(e) => {
-                              if (wine.photo) {
-                                triggerPhotoPreview(e, wine.photo);
-                              }
-                            }}
-                          >
-                            <span style={{ borderBottom: wine.photo ? '1px dotted #8b5cf6' : 'none' }}>
-                              ↳ {wine.name} {wine.vintage ? `- ${wine.vintage}` : ''} {wine.bottleType ? `(${wine.bottleType})` : ''}
-                            </span>
-                            {wine.photo && <span style={{ fontSize: '0.75rem', color: '#8b5cf6' }} title="Passa sopra o tocca per foto">📷</span>}
-                          </div>
+                          <span>
+                            ↳ {wine.name} {wine.vintage ? `- ${wine.vintage}` : ''} {wine.bottleType ? `(${wine.bottleType})` : ''}
+                          </span>
                         </td>
                         <td style={{ fontSize: '0.9rem', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}><StockCell winesArray={[wine]} displayStock={wine.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} /></td>
                         <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wine.vintage || '-'}</td>
@@ -1722,22 +1721,14 @@ export default function Home() {
       {/* Floating Hover / Touch Image */}
       {hoveredPhoto && (
         <div 
-          onClick={() => {
-            if (photoTimerRef.current) clearTimeout(photoTimerRef.current);
-            setHoveredPhoto(null);
-          }}
-          onTouchStart={() => {
-            if (photoTimerRef.current) clearTimeout(photoTimerRef.current);
-            setHoveredPhoto(null);
-          }}
           style={{
             position: 'fixed',
-            top: Math.min((typeof window !== 'undefined' ? window.innerHeight : 800) - 340, Math.max(20, mousePos.y + 15)),
-            left: Math.min((typeof window !== 'undefined' ? window.innerWidth : 1200) - 240, Math.max(20, mousePos.x + 15)),
+            top: Math.max(10, mousePos.y),
+            left: Math.min((typeof window !== 'undefined' ? window.innerWidth : 1200) - 250, Math.max(10, mousePos.x)),
             zIndex: 9999,
-            cursor: 'pointer',
+            pointerEvents: 'none',
             backgroundColor: 'white',
-            padding: '8px',
+            padding: '6px',
             borderRadius: '12px',
             boxShadow: '0 20px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -6px rgba(0,0,0,0.3)',
             border: '2px solid #8b5cf6',
@@ -1745,9 +1736,6 @@ export default function Home() {
           }}
         >
           <img src={hoveredPhoto} alt="Anteprima bottiglia" style={{ maxWidth: '220px', maxHeight: '300px', width: 'auto', height: 'auto', borderRadius: '8px', display: 'block', objectFit: 'contain', margin: '0 auto' }} />
-          <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b', marginTop: '6px', fontWeight: '500' }}>
-            ⏱️ Scompare tra {photoPreviewSeconds}s (o tocca per chiudere)
-          </div>
         </div>
       )}
 

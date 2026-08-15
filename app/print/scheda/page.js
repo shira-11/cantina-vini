@@ -290,6 +290,7 @@ export default function PrintScheda() {
           page-break-after: always;
           position: relative;
           width: 190mm; /* A4 Portrait preview width */
+          max-width: 96vw;
           min-height: 260mm; /* Ridotto per evitare spillover */
           background: white;
           padding: 10mm;
@@ -631,58 +632,63 @@ export default function PrintScheda() {
               const activeRows = rows.filter(r => matrix[r] && Object.values(matrix[r]).some(v => v > 0));
               if (activeRows.length === 0) return null;
 
-              const colTotals = {};
-              cols.forEach(c => colTotals[c] = 0);
-              let grandTotal = 0;
+              const totBianco = cols.reduce((sum, c) => sum + (matrix['Bianco']?.[c] || 0), 0);
+              const totRosso = cols.reduce((sum, c) => sum + (matrix['Rosso']?.[c] || 0), 0);
+              const totBollicine = cols.reduce((sum, c) => sum + (matrix['Bollicine']?.[c] || 0), 0);
+              const totAltri = cols.reduce((sum, c) => sum + (matrix['Altri']?.[c] || 0), 0);
+              const grandTotal = totBianco + totRosso + totBollicine + totAltri;
 
-              activeRows.forEach(r => {
-                if (!matrix[r]) return;
-                cols.forEach(c => {
-                  const val = matrix[r][c] || 0;
-                  colTotals[c] += val;
-                  grandTotal += val;
-                });
-              });
-
-              const formatNum = (num) => num ? new Intl.NumberFormat('it-IT').format(num) : '';
+              const formatNum = (num) => num ? new Intl.NumberFormat('it-IT').format(num) : '-';
 
               return (
-                <div className="print-page" style={{ padding: '20mm', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <h2 style={{ fontSize: '24px', textTransform: 'uppercase', marginBottom: '3rem', textAlign: 'center' }}>
+                <div className="print-page" style={{ padding: '15mm', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <h2 style={{ fontSize: '24px', textTransform: 'uppercase', marginBottom: '2rem', textAlign: 'center' }}>
                     Giacenze {(section.coverLines && section.coverLines.length > 0) ? section.coverLines[0] : section.title} {section.subtitle ? `- ${section.subtitle}` : ''}
                   </h2>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '16px' }}>
-                    <thead>
-                      <tr>
-                        <th style={{ border: '1px solid #555', padding: '12px', backgroundColor: 'white', borderTop: 'none', borderLeft: 'none' }}></th>
-                        {cols.map(c => <th key={c} style={{ border: '1px solid #555', padding: '12px', backgroundColor: '#cbd5e1' }}>{c}</th>)}
-                        <th style={{ border: '1px solid #555', padding: '12px', backgroundColor: '#cbd5e1' }}>Totale</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {activeRows.map(r => {
-                        let rowTotal = 0;
-                        return (
-                          <tr key={r}>
-                            <td style={{ border: '1px solid #555', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>{r}</td>
-                            {cols.map(c => {
-                              const val = (matrix[r] && matrix[r][c]) ? matrix[r][c] : 0;
-                              rowTotal += val;
-                              return <td key={c} style={{ border: '1px solid #555', padding: '12px', textAlign: 'center' }}>{formatNum(val)}</td>;
-                            })}
-                            <td style={{ border: '1px solid #555', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>{formatNum(rowTotal)}</td>
-                          </tr>
-                        );
-                      })}
-                      <tr>
-                        <td style={{ border: '1px solid #555', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>Totale</td>
-                        {cols.map(c => (
-                          <td key={c} style={{ border: '1px solid #555', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>{formatNum(colTotals[c])}</td>
-                        ))}
-                        <td style={{ border: '1px solid #555', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>{formatNum(grandTotal)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <div style={{ width: '100%', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '15px' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#1e293b', color: 'white' }}>
+                          <th style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'left' }}>Regione / Area</th>
+                          <th style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center' }}>Bianco</th>
+                          <th style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center' }}>Rosso</th>
+                          <th style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center' }}>Bollicine</th>
+                          <th style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center' }}>Altri</th>
+                          <th style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center', backgroundColor: '#0f172a' }}>Totale</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cols.map((reg, rIdx) => {
+                          const b = matrix['Bianco']?.[reg] || 0;
+                          const r = matrix['Rosso']?.[reg] || 0;
+                          const bol = matrix['Bollicine']?.[reg] || 0;
+                          const alt = matrix['Altri']?.[reg] || 0;
+                          const regTotal = b + r + bol + alt;
+
+                          if (regTotal <= 0) return null;
+
+                          return (
+                            <tr key={reg} style={{ backgroundColor: rIdx % 2 === 1 ? '#f8fafc' : 'white' }}>
+                              <td style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'left', fontWeight: 'bold', color: '#0f172a' }}>{reg}</td>
+                              <td style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center' }}>{formatNum(b)}</td>
+                              <td style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center' }}>{formatNum(r)}</td>
+                              <td style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center' }}>{formatNum(bol)}</td>
+                              <td style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center' }}>{formatNum(alt)}</td>
+                              <td style={{ border: '1px solid #cbd5e1', padding: '10px 14px', textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f1f5f9' }}>{formatNum(regTotal)}</td>
+                            </tr>
+                          );
+                        })}
+                        <tr style={{ backgroundColor: '#e2e8f0', fontWeight: 'bold', borderTop: '2px solid #0f172a' }}>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '12px 14px', textAlign: 'left', color: '#0f172a' }}>TOTALE GENERALE</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '12px 14px', textAlign: 'center' }}>{formatNum(totBianco)}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '12px 14px', textAlign: 'center' }}>{formatNum(totRosso)}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '12px 14px', textAlign: 'center' }}>{formatNum(totBollicine)}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '12px 14px', textAlign: 'center' }}>{formatNum(totAltri)}</td>
+                          <td style={{ border: '1px solid #cbd5e1', padding: '12px 14px', textAlign: 'center', color: '#059669' }}>{formatNum(grandTotal)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               );
             })()}
