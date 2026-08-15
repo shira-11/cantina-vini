@@ -128,7 +128,7 @@ export default function Home() {
       // so it opens lower down ("in basso") and NEVER covers the wine name at the top!
       posY = rect.bottom + 12;
       posX = Math.max(10, rect.left + 30);
-      
+
       if (typeof window !== 'undefined' && posX + 250 > window.innerWidth) {
         posX = Math.max(10, window.innerWidth - 260);
       }
@@ -1138,7 +1138,7 @@ export default function Home() {
             >
               <Menu size={28} />
             </button>
-            <h1 
+            <h1
               className="mobile-title"
               style={{ cursor: 'pointer' }}
               onClick={() => {
@@ -1673,10 +1673,10 @@ export default function Home() {
                         />
                       </td>
                       <td style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                          {group.wines.length > 1 && (
-                            <span 
-                              style={{ fontSize: '0.9rem', color: '#475569', padding: '2px 6px', cursor: 'pointer', borderRadius: '4px', userSelect: 'none' }}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                          {group.wines.length > 1 ? (
+                            <span
+                              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px', fontSize: '0.85rem', color: '#475569', cursor: 'pointer', borderRadius: '4px', userSelect: 'none', flexShrink: 0 }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleGroup(group.name);
@@ -1684,6 +1684,8 @@ export default function Home() {
                             >
                               {expandedGroups[group.name] ? '▼' : '▶'}
                             </span>
+                          ) : (
+                            <span style={{ display: 'inline-block', width: '20px', flexShrink: 0 }} />
                           )}
                           <span
                             style={{ cursor: 'pointer' }}
@@ -1692,9 +1694,10 @@ export default function Home() {
                             onTouchStart={(e) => showWinePhotoNearElement(e, group.photo)}
                             onTouchEnd={startPhotoHideTimerAfterLeave}
                             onClick={(e) => {
-                              if (group.photo) {
-                                showWinePhotoNearElement(e, group.photo);
-                                startPhotoHideTimerAfterLeave();
+                              if (group.wines.length === 1) {
+                                handleWineClick(group.wines[0].id);
+                              } else {
+                                toggleGroup(group.name);
                               }
                             }}
                           >
@@ -1768,7 +1771,7 @@ export default function Home() {
 
       {/* Floating Hover / Touch Image */}
       {hoveredPhoto && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             top: Math.max(10, mousePos.y),

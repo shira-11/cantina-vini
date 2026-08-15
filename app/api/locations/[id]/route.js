@@ -10,7 +10,7 @@ export async function PUT(request, { params }) {
     }
     const { id } = await params;
     const { name } = await request.json();
-    
+
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
@@ -19,7 +19,7 @@ export async function PUT(request, { params }) {
       where: { id: parseInt(id) },
       data: { name }
     });
-    
+
     syncEventEmitter.emit('db_update');
     return NextResponse.json(updatedLocation);
   } catch (error) {
@@ -36,16 +36,16 @@ export async function DELETE(request, { params }) {
     }
     const { id } = await params;
     const locationId = parseInt(id);
-    
+
     // Parse query params for migration
     const { searchParams } = new URL(request.url);
     const migrateToId = searchParams.get('migrateToId');
-    
+
     // Check if location exists
     const locationToDelete = await prisma.location.findUnique({
       where: { id: locationId }
     });
-    
+
     if (!locationToDelete) {
       return NextResponse.json({ error: "Location not found" }, { status: 404 });
     }
@@ -55,7 +55,7 @@ export async function DELETE(request, { params }) {
       const targetLocation = await prisma.location.findUnique({
         where: { id: newLocId }
       });
-      
+
       if (!targetLocation) {
         return NextResponse.json({ error: "Target migration location not found" }, { status: 404 });
       }
@@ -69,7 +69,7 @@ export async function DELETE(request, { params }) {
       for (const movement of movementsToUpdate) {
         const migrationNote = `(Migrato da: ${locationToDelete.name})`;
         const newNotes = movement.notes ? `${movement.notes} - ${migrationNote}` : migrationNote;
-        
+
         await prisma.movement.update({
           where: { id: movement.id },
           data: {
@@ -84,7 +84,7 @@ export async function DELETE(request, { params }) {
     await prisma.location.delete({
       where: { id: locationId }
     });
-    
+
     syncEventEmitter.emit('db_update');
     return NextResponse.json({ success: true });
   } catch (error) {

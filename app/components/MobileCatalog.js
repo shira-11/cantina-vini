@@ -42,21 +42,21 @@ export const MobileCatalog = ({
       alert("Il tuo telefono non supporta la ricerca vocale.");
       return;
     }
-    
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    
+
     recognition.lang = 'it-IT';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    
+
     recognition.onstart = () => {
       setIsListening(true);
     };
-    
+
     recognition.onresult = (event) => {
       let transcript = event.results[0][0].transcript.toLowerCase();
-      
+
       const newFilters = { ...filters };
 
       // Extract dynamic filters from existing wines data
@@ -101,7 +101,7 @@ export const MobileCatalog = ({
         "cantina levanzo": "Cantina Levanzo",
         "levanzo": "Cantina Levanzo"
       };
-      
+
       const catMap = {
         "bianco": "Bianco",
         "rosso": "Rosso",
@@ -116,7 +116,7 @@ export const MobileCatalog = ({
         "spumante secco": "Spumante Secco",
         "spumante dolce": "Spumante Dolce"
       };
-      
+
       for (const [key, val] of Object.entries(catMap)) {
         const regex = new RegExp(`\\\\b${key}\\\\b`, 'g');
         if (regex.test(transcript)) {
@@ -133,20 +133,20 @@ export const MobileCatalog = ({
           break;
         }
       }
-      
+
       setFilters(newFilters);
       setSearch(transcript);
     };
-    
+
     recognition.onerror = (event) => {
       console.error("Errore riconoscimento vocale:", event.error);
       setIsListening(false);
     };
-    
+
     recognition.onend = () => {
       setIsListening(false);
     };
-    
+
     recognition.start();
   };
 
@@ -175,7 +175,7 @@ export const MobileCatalog = ({
     <div style={{ padding: '1rem', backgroundColor: '#e2e8f0', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h1 
+        <h1
           onClick={() => {
             if (typeof window !== 'undefined' && window.location.pathname !== '/') {
               window.location.href = '/';
@@ -207,21 +207,21 @@ export const MobileCatalog = ({
           )}
           {currentUser?.role === 'admin' && (
             <>
-              <button 
+              <button
                 onClick={() => router.push('/wine/new')}
                 style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
                 title="Aggiungi Vino"
               >
                 <Plus size={22} />
               </button>
-              <button 
+              <button
                 onClick={() => setIsGlobalLogOpen(true)}
                 style={{ background: 'none', border: 'none', color: '#3b82f6', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
                 title="Cronologia Movimenti"
               >
                 <History size={22} />
               </button>
-              <button 
+              <button
                 onClick={() => router.push('/admin/users')}
                 style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
                 title="Gestione Utenti"
@@ -229,7 +229,7 @@ export const MobileCatalog = ({
                 <Shield size={18} />
                 <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>Utenti</span>
               </button>
-              <button 
+              <button
                 onClick={() => router.push('/admin/settings')}
                 style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
                 title="Impostazioni Visitatore"
@@ -239,7 +239,7 @@ export const MobileCatalog = ({
               </button>
             </>
           )}
-          <button 
+          <button
             onClick={async () => {
               await fetch('/api/auth/logout', { method: 'POST' });
               window.location.href = '/login';
@@ -251,7 +251,7 @@ export const MobileCatalog = ({
             <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: '600' }}>Esci</span>
           </button>
           {currentUser?.role !== 'viewer' && (
-            <button 
+            <button
               onClick={() => setForceDesktop(true)}
               style={{ background: 'none', border: 'none', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem' }}
               title="Passa alla visualizzazione Desktop"
@@ -267,7 +267,7 @@ export const MobileCatalog = ({
       <div style={{ position: 'relative', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1 }}>
           <Search size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-          <input 
+          <input
             type="text"
             placeholder="Cerca vino..."
             value={search}
@@ -275,7 +275,7 @@ export const MobileCatalog = ({
             style={{ width: '100%', padding: `0.75rem ${speechSupported ? '4rem' : '2.5rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
           />
           {speechSupported && (
-            <button 
+            <button
               onClick={startVoiceSearch}
               title="Ricerca vocale"
               style={{
@@ -303,7 +303,7 @@ export const MobileCatalog = ({
             </button>
           )}
         </div>
-        <button 
+        <button
           onClick={() => setShowFilters(true)}
           style={{ marginLeft: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.75rem', display: 'flex', alignItems: 'center', cursor: 'pointer', color: '#475569' }}
         >
@@ -330,74 +330,74 @@ export const MobileCatalog = ({
               Trovati {wines.length} vini
             </div>
             {visibleWines.map(wine => (
-            <div 
-              key={wine.id}
-              onClick={() => onWineClick(wine.id)}
-              style={{ background: 'white', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', gap: '1rem', cursor: 'pointer' }}
-            >
-              {/* Photo placeholder or image */}
-              <div style={{ width: '80px', height: '100px', backgroundColor: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                {wine.photo ? (
-                  <img src={wine.photo} alt={wine.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                ) : (
-                  <Wine size={32} color="#cbd5e1" />
-                )}
-              </div>
-              
-              {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {wine.name}
-                </h3>
-                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span>{getCountryFlag(wine.country)} {wine.country || ''}</span>
-                  {wine.category && <span className={getBadgeClass(wine.category)} style={{ transform: 'scale(0.8)', transformOrigin: 'left center' }}>{wine.category}</span>}
-                  {wine.vintage && <span style={{ fontWeight: '600', color: '#334155' }}>Annata: {wine.vintage}</span>}
-                </div>
-                <div style={{ fontSize: '0.9rem', color: '#475569' }}>
-                  Cantina: <span style={{ fontWeight: '500' }}>{wine.producerCellar || '-'}</span>
-                </div>
-                <div style={{ marginTop: '0.5rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.5rem' }}>
-                  {(() => {
-                    const breakdown = getStockBreakdown([wine]);
-                    if (breakdown.length === 0) {
-                      return (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Giacenza:</span>
-                          <span className="stock-zero" style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>0 bt.</span>
-                        </div>
-                      );
-                    }
-                    return breakdown.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                        <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '500' }}>{item.loc}</span>
-                        <span className="stock-positive" style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{item.qty} bt.</span>
-                      </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-            </div>
-          ))}
-          {visibleCount < wines.length && (
-            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-              <button
-                onClick={() => setVisibleCount(prev => prev + 20)}
-                style={{
-                  padding: '0.75rem 2rem',
-                  backgroundColor: '#f1f5f9',
-                  color: '#475569',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '24px',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
+              <div
+                key={wine.id}
+                onClick={() => onWineClick(wine.id)}
+                style={{ background: 'white', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', gap: '1rem', cursor: 'pointer' }}
               >
-                Mostra altri ({wines.length - visibleCount})
-              </button>
-            </div>
-          )}
+                {/* Photo placeholder or image */}
+                <div style={{ width: '80px', height: '100px', backgroundColor: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                  {wine.photo ? (
+                    <img src={wine.photo} alt={wine.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <Wine size={32} color="#cbd5e1" />
+                  )}
+                </div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {wine.name}
+                  </h3>
+                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span>{getCountryFlag(wine.country)} {wine.country || ''}</span>
+                    {wine.category && <span className={getBadgeClass(wine.category)} style={{ transform: 'scale(0.8)', transformOrigin: 'left center' }}>{wine.category}</span>}
+                    {wine.vintage && <span style={{ fontWeight: '600', color: '#334155' }}>Annata: {wine.vintage}</span>}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#475569' }}>
+                    Cantina: <span style={{ fontWeight: '500' }}>{wine.producerCellar || '-'}</span>
+                  </div>
+                  <div style={{ marginTop: '0.5rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.5rem' }}>
+                    {(() => {
+                      const breakdown = getStockBreakdown([wine]);
+                      if (breakdown.length === 0) {
+                        return (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Giacenza:</span>
+                            <span className="stock-zero" style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>0 bt.</span>
+                          </div>
+                        );
+                      }
+                      return breakdown.map((item, idx) => (
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                          <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '500' }}>{item.loc}</span>
+                          <span className="stock-positive" style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{item.qty} bt.</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {visibleCount < wines.length && (
+              <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+                <button
+                  onClick={() => setVisibleCount(prev => prev + 20)}
+                  style={{
+                    padding: '0.75rem 2rem',
+                    backgroundColor: '#f1f5f9',
+                    color: '#475569',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '24px',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Mostra altri ({wines.length - visibleCount})
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -664,7 +664,7 @@ export const MobileCatalog = ({
               )}
 
               <div style={{ marginTop: '1rem' }}>
-                <button 
+                <button
                   onClick={() => {
                     setFilters({ country: '', region: '', producerCellar: '', producer: '', classification: '', category: '', location: '', availability: '', photo: '', bottleType: '' });
                     setSearch('');
@@ -673,7 +673,7 @@ export const MobileCatalog = ({
                 >
                   🔄 Azzera Filtri
                 </button>
-                <button 
+                <button
                   onClick={() => setShowFilters(false)}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', backgroundColor: '#6366f1', color: 'white', border: 'none', fontSize: '1rem', fontWeight: '500', cursor: 'pointer' }}
                 >

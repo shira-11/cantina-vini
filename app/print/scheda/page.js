@@ -8,34 +8,44 @@ export default function PrintScheda() {
   const [locations, setLocations] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [groupBy, setGroupBy] = useState(null);
+  const [showOnlyDisp, setShowOnlyDisp] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [hideEmptyLocations, setHideEmptyLocations] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedNamesStr = sessionStorage.getItem('printWineNames');
+      let storedNames = null;
       if (storedNamesStr) {
-        const storedNames = JSON.parse(storedNamesStr);
+        try {
+          const parsed = JSON.parse(storedNamesStr);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            storedNames = parsed;
+          }
+        } catch(e) {}
+      }
 
-        // Scarichiamo i vini e TUTTE le cantine dal database
-        Promise.all([
-          fetch('/api/wines').then(res => res.json()),
-          fetch('/api/locations').then(res => res.json())
-        ])
-          .then(([allWines, allLocs]) => {
-            // Raggruppiamo i vini proprio come nella home page
-            const groupedMap = new Map();
-            for (const w of allWines) {
-              if (!storedNames.includes(w.name)) continue; // Teniamo solo quelli selezionati
+      // Scarichiamo i vini e TUTTE le cantine dal database
+      Promise.all([
+        fetch('/api/wines').then(res => res.json()),
+        fetch('/api/locations').then(res => res.json())
+      ])
+        .then(([allWines, allLocs]) => {
+          // Raggruppiamo i vini proprio come nella home page
+          const groupedMap = new Map();
+          for (const w of allWines) {
+            if (storedNames && !storedNames.includes(w.name)) continue; // Teniamo solo quelli selezionati se presenti
 
-              if (!groupedMap.has(w.name)) {
-                groupedMap.set(w.name, {
-                  name: w.name,
-                  country: w.country,
-                  category: w.category,
-                  wines: []
-                });
-              }
-              groupedMap.get(w.name).wines.push(w);
+            if (!groupedMap.has(w.name)) {
+              groupedMap.set(w.name, {
+                name: w.name,
+                country: w.country,
+                category: w.category,
+                wines: []
+              });
             }
+            groupedMap.get(w.name).wines.push(w);
+          }
 
             // Ordiniamo mantenendo l'ordine alfabetico
             const parsed = Array.from(groupedMap.values()).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -117,7 +127,6 @@ export default function PrintScheda() {
             console.error("Errore nel caricamento dati stampa:", err);
             alert("Errore nel caricamento dei dati per la stampa.");
           });
-      }
     }
   }, []);
 
@@ -259,7 +268,7 @@ export default function PrintScheda() {
       <style dangerouslySetInnerHTML={{
         __html: `
         @page {
-          size: landscape;
+          size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
           margin: 0mm;
         }
         body {
@@ -289,9 +298,9 @@ export default function PrintScheda() {
         .print-page {
           page-break-after: always;
           position: relative;
-          width: 190mm; /* A4 Portrait preview width */
+          width: ${isLandscape ? '277mm' : '190mm'};
           max-width: 96vw;
-          min-height: 260mm; /* Ridotto per evitare spillover */
+          min-height: ${isLandscape ? '180mm' : '260mm'};
           background: white;
           padding: 10mm;
           padding-bottom: 15mm;
@@ -309,7 +318,7 @@ export default function PrintScheda() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          height: 200mm !important;
+          height: ${isLandscape ? '160mm' : '200mm'} !important;
           page-break-after: always;
         }
         .cover-title {
@@ -336,16 +345,16 @@ export default function PrintScheda() {
             display: block;
           }
           @page {
-            size: A4 portrait !important;
+            size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'} !important;
             margin: 5mm !important;
           }
           .print-page {
             position: relative;
             box-shadow: none !important;
             margin: 0 auto !important;
-            width: 190mm !important;
-            max-width: 190mm !important;
-            min-height: 260mm !important; /* Ridotto per evitare spillover */
+            width: ${isLandscape ? '277mm' : '190mm'} !important;
+            max-width: ${isLandscape ? '277mm' : '190mm'} !important;
+            min-height: ${isLandscape ? '180mm' : '260mm'} !important;
             padding: 10mm !important;
             padding-bottom: 15mm !important;
             page-break-after: always;
@@ -448,22 +457,88 @@ export default function PrintScheda() {
         backgroundColor: 'rgba(82, 86, 89, 0.95)',
         backdropFilter: 'blur(5px)',
         width: '100%',
-        padding: '20px 0',
+        padding: '16px 0',
         marginBottom: '20px',
         boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
       }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', width: '100%', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div
               style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
               onClick={() => window.history.back()}
             >
-              <ArrowLeft size={36} color="white" />
-              <Wine size={28} color="var(--primary-color)" />
-              <h2 style={{ color: 'white', margin: 0 }}>CANTINA</h2>
+              <ArrowLeft size={32} color="white" />
+              <Wine size={26} color="var(--primary-color)" />
+              <h2 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>CANTINA</h2>
             </div>
 
-            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Tasto Orientamento Foglio */}
+              <button
+                onClick={() => setIsLandscape(!isLandscape)}
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  background: isLandscape ? '#8b5cf6' : '#334155',
+                  color: 'white',
+                  border: isLandscape ? '2px solid #a78bfa' : '1px solid #64748b',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+                title="Cambia orientamento foglio A4"
+              >
+                {isLandscape ? '↔️ A4 Orizzontale' : '↕️ A4 Verticale'}
+              </button>
+
+              {/* Tasto Vista Compatta (Solo Disp) */}
+              <button
+                onClick={() => setShowOnlyDisp(!showOnlyDisp)}
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  background: showOnlyDisp ? '#f59e0b' : '#334155',
+                  color: 'white',
+                  border: showOnlyDisp ? '2px solid #fcd34d' : '1px solid #64748b',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+                title="Attiva/disattiva vista compatta (nasconde colonna Usato)"
+              >
+                {showOnlyDisp ? '⚡ Compatta (Solo Disp.)' : '📊 Completa (Disp+Usato)'}
+              </button>
+
+              {/* Tasto Nascondi Cantine senza Giacenza */}
+              <button
+                onClick={() => setHideEmptyLocations(!hideEmptyLocations)}
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  background: hideEmptyLocations ? '#06b6d4' : '#334155',
+                  color: 'white',
+                  border: hideEmptyLocations ? '2px solid #67e8f9' : '1px solid #64748b',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+                title="Nascondi colonne delle cantine che non hanno giacenza per questo vino"
+              >
+                {hideEmptyLocations ? '🧹 Solo Cantine Attive' : '👁️ Mostra Tutte'}
+              </button>
+
               <button onClick={() => {
                 const originalTitle = document.title;
                 const fileName = getDynamicFileName();
@@ -474,9 +549,10 @@ export default function PrintScheda() {
                 setTimeout(() => {
                   document.title = originalTitle;
                 }, 2000);
-              }} style={{ padding: '10px 20px', fontSize: '16px', fontWeight: 'bold', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+              }} style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                 🖨️ Stampa
               </button>
+
               <button onClick={async () => {
                 try {
                   const btn = document.getElementById('btn-download-pdf');
@@ -499,7 +575,7 @@ export default function PrintScheda() {
                   const originalBg = document.body.style.backgroundColor;
                   document.body.style.backgroundColor = 'white';
 
-                  const pdf = new jsPDF('p', 'mm', 'a4');
+                  const pdf = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
                   const pdfWidth = pdf.internal.pageSize.getWidth();
                   
                   for (let i = 0; i < pages.length; i++) {
@@ -536,14 +612,14 @@ export default function PrintScheda() {
                   const btn = document.getElementById('btn-download-pdf');
                   if(btn) { btn.innerHTML = '📄 Scarica PDF'; btn.disabled = false; }
                 }
-              }} id="btn-download-pdf" style={{ padding: '10px 20px', fontSize: '16px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+              }} id="btn-download-pdf" style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                 📄 Scarica PDF
               </button>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 'bold', color: 'white' }}>Seleziona Cantine:</span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 'bold', color: 'white', fontSize: '13px' }}>Seleziona Cantine:</span>
           {locations.map(loc => {
             const isSelected = selectedLocations.includes(loc);
             return (
@@ -560,8 +636,9 @@ export default function PrintScheda() {
                   }
                 }}
                 style={{
-                  padding: '6px 12px',
+                  padding: '4px 10px',
                   borderRadius: '20px',
+                  fontSize: '12px',
                   border: isSelected ? '2px solid #10b981' : '1px solid #ccc',
                   background: isSelected ? '#ecfdf5' : 'white',
                   color: isSelected ? '#065f46' : '#666',
@@ -780,6 +857,7 @@ export default function PrintScheda() {
                           <div className="info-container">
                             <h1 className="wine-title">{getCountryFlag(mainWine.country)} {group.name}</h1>
                             <p className="wine-subtitle">
+                              {mainWine.country ? mainWine.country + ' - ' : ''}
                               {mainWine.producer ? mainWine.producer + ' - ' : ''}
                               {mainWine.classification ? (mainWine.classification.trim().startsWith('(') ? `${mainWine.classification} ` : `(${mainWine.classification}) `) : ''}
                               {mainWine.producerCellar && mainWine.producerCellar !== mainWine.producer ? mainWine.producerCellar : ''}
@@ -804,77 +882,91 @@ export default function PrintScheda() {
                         </div>
                       )}
                     </div>
-                    <div className="info-container" style={{ width: '100%' }}>
-                      <table className="inventory-table">
-                        <thead>
-                          <tr>
-                            <th colSpan="4" style={{ textAlign: 'left', borderRight: '2px solid #ccc' }}>Vino / Annate</th>
-                            {selectedLocations.map(loc => (
-                              <th colSpan="2" key={loc} style={{ borderRight: '2px solid #ccc' }}>
-                                {loc.replace(/cantina\s*/i, '').trim()}
-                              </th>
-                            ))}
-                          </tr>
-                          <tr>
-                            <th>Annata</th>
-                            <th>Formato</th>
-                            <th>Prezzo</th>
-                            <th style={{ borderRight: '2px solid #ccc' }}>Disp.Tot</th>
-                            {selectedLocations.map(loc => (
-                              <React.Fragment key={loc + '-sub'}>
-                                <th>Disp.</th>
-                                <th style={{ borderRight: '2px solid #ccc' }}>Usato</th>
-                              </React.Fragment>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {chunk.map((wine) => {
-                            let displayFormat = wine.bottleType || '';
-                            const btLower = displayFormat.toLowerCase();
-                            if (btLower.includes('0.75') || btLower.includes('0,75') || btLower.includes('normale')) {
-                              displayFormat = '';
-                            } else {
-                              const match = displayFormat.match(/(\d+(?:[.,]\d+)?\s*[Ll])/);
-                              if (match) {
-                                displayFormat = match[1].toUpperCase();
-                              }
-                            }
-                            return (
-                            <tr key={wine.id}>
-                              <td>{wine.vintage}</td>
-                              <td style={{ fontWeight: 'bold' }}>{displayFormat}</td>
-                              <td>{formatCurrency((() => {
-                                if (!wine.movements || wine.movements.length === 0) return null;
-                                const ingressi = wine.movements.filter(m => m.movementType === 'Ingresso' && m.price != null && m.price > 0 && m.quantity > 0);
-                                if (ingressi.length > 0) {
-                                  let totalCost = 0;
-                                  let totalQty = 0;
-                                  for (const m of ingressi) {
-                                    totalCost += m.price * m.quantity;
-                                    totalQty += m.quantity;
-                                  }
-                                  return totalCost / totalQty;
-                                }
-                                const movementsWithPrice = [...wine.movements].filter(m => m.price != null).sort((a, b) => new Date(b.date) - new Date(a.date));
-                                return movementsWithPrice.length > 0 ? movementsWithPrice[0].price : null;
-                              })())}</td>
-                              <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold' }}>{wine.totalStock || 0}</td>
-                              {selectedLocations.map(loc => {
-                                const stats = calculateLocationStats(wine, loc);
-                                return (
-                                  <React.Fragment key={loc + '-data'}>
-                                    <td>{stats.disp > 0 ? stats.disp : ''}</td>
-                                    <td style={{ borderRight: '2px solid #ccc' }}>{stats.usato > 0 ? stats.usato : ''}</td>
+                    {(() => {
+                      const locationsToRender = selectedLocations.filter(loc => {
+                        if (!hideEmptyLocations) return true;
+                        return group.wines.some(w => {
+                          const stats = calculateLocationStats(w, loc);
+                          return stats.disp > 0 || stats.usato > 0;
+                        });
+                      });
+
+                      return (
+                        <div className="info-container" style={{ width: '100%' }}>
+                          <table className="inventory-table">
+                            <thead>
+                              <tr>
+                                <th colSpan="5" style={{ textAlign: 'left', borderRight: '2px solid #ccc' }}>Vino / Annate</th>
+                                {locationsToRender.map(loc => (
+                                  <th colSpan={showOnlyDisp ? 1 : 2} key={loc} style={{ borderRight: '2px solid #ccc' }}>
+                                    {loc.replace(/cantina\s*/i, '').trim()}
+                                  </th>
+                                ))}
+                              </tr>
+                              <tr>
+                                <th>Annata</th>
+                                <th>Nazione</th>
+                                <th>Formato</th>
+                                <th>Prezzo</th>
+                                <th style={{ borderRight: '2px solid #ccc' }}>Disp.Tot</th>
+                                {locationsToRender.map(loc => (
+                                  <React.Fragment key={loc + '-sub'}>
+                                    <th style={showOnlyDisp ? { borderRight: '2px solid #ccc' } : {}}>Disp.</th>
+                                    {!showOnlyDisp && <th style={{ borderRight: '2px solid #ccc' }}>Usato</th>}
                                   </React.Fragment>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {chunk.map((wine) => {
+                                let displayFormat = wine.bottleType || '';
+                                const btLower = displayFormat.toLowerCase();
+                                if (btLower.includes('0.75') || btLower.includes('0,75') || btLower.includes('normale')) {
+                                  displayFormat = '';
+                                } else {
+                                  const match = displayFormat.match(/(\d+(?:[.,]\d+)?\s*[Ll])/);
+                                  if (match) {
+                                    displayFormat = match[1].toUpperCase();
+                                  }
+                                }
+                                return (
+                                <tr key={wine.id}>
+                                  <td>{wine.vintage}</td>
+                                  <td>{getCountryFlag(wine.country)} {wine.country || '-'}</td>
+                                  <td style={{ fontWeight: 'bold' }}>{displayFormat}</td>
+                                  <td>{formatCurrency((() => {
+                                    if (!wine.movements || wine.movements.length === 0) return null;
+                                    const ingressi = wine.movements.filter(m => m.movementType === 'Ingresso' && m.price != null && m.price > 0 && m.quantity > 0);
+                                    if (ingressi.length > 0) {
+                                      let totalCost = 0;
+                                      let totalQty = 0;
+                                      for (const m of ingressi) {
+                                        totalCost += m.price * m.quantity;
+                                        totalQty += m.quantity;
+                                      }
+                                      return totalCost / totalQty;
+                                    }
+                                    const movementsWithPrice = [...wine.movements].filter(m => m.price != null).sort((a, b) => new Date(b.date) - new Date(a.date));
+                                    return movementsWithPrice.length > 0 ? movementsWithPrice[0].price : null;
+                                  })())}</td>
+                                  <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold' }}>{wine.totalStock || 0}</td>
+                                  {locationsToRender.map(loc => {
+                                    const stats = calculateLocationStats(wine, loc);
+                                    return (
+                                      <React.Fragment key={loc + '-data'}>
+                                        <td style={showOnlyDisp ? { borderRight: '2px solid #ccc' } : {}}>{stats.disp > 0 ? stats.disp : ''}</td>
+                                        {!showOnlyDisp && <td style={{ borderRight: '2px solid #ccc' }}>{stats.usato > 0 ? stats.usato : ''}</td>}
+                                      </React.Fragment>
+                                    );
+                                  })}
+                                </tr>
                                 );
                               })}
-                            </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    })()}
                     <div className="print-page-footer">
                       <span style={{ flex: 1, textAlign: 'left' }}></span>
                       <span style={{ flex: 1, textAlign: 'center' }}>Pagina {pageNum} di {pageTotal}</span>

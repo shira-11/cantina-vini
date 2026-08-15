@@ -9,6 +9,9 @@ export default function PrintGiacenzeDettaglio() {
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortParam, setSortParam] = useState('name');
+  const [showOnlyDisp, setShowOnlyDisp] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(true);
+  const [hideEmptyLocations, setHideEmptyLocations] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -17,38 +20,42 @@ export default function PrintGiacenzeDettaglio() {
       const sort = query.get('sort') || 'name';
       setSortParam(sort);
 
-      if (storedNamesStr) {
-        const storedNames = JSON.parse(storedNamesStr);
-
-        Promise.all([
-          fetch('/api/wines').then(res => res.json()),
-          fetch('/api/locations').then(res => res.json())
-        ])
-          .then(([allWines, allLocs]) => {
-            let filtered = allWines.filter(w => storedNames.includes(w.name));
-            
-            // Sort A-Z based on requested parameter
-            filtered.sort((a, b) => {
-              let valA = (a[sort] || '').toString().toLowerCase();
-              let valB = (b[sort] || '').toString().toLowerCase();
-              if (valA < valB) return -1;
-              if (valA > valB) return 1;
-              return 0;
-            });
-
-            setWines(filtered);
-            const locNames = allLocs.map(l => l.name);
-            setLocations(locNames);
-            setSelectedLocations(locNames);
-            setLoading(false);
-          })
-          .catch(err => {
-            console.error(err);
-            setLoading(false);
+      Promise.all([
+        fetch('/api/wines').then(res => res.json()),
+        fetch('/api/locations').then(res => res.json())
+      ])
+        .then(([allWines, allLocs]) => {
+          let filtered = allWines;
+          if (storedNamesStr) {
+            try {
+              const storedNames = JSON.parse(storedNamesStr);
+              if (Array.isArray(storedNames) && storedNames.length > 0) {
+                filtered = allWines.filter(w => storedNames.includes(w.name));
+              }
+            } catch (e) {
+              console.error("Error parsing printWineNames:", e);
+            }
+          }
+          
+          // Sort A-Z based on requested parameter
+          filtered.sort((a, b) => {
+            let valA = (a[sort] || '').toString().toLowerCase();
+            let valB = (b[sort] || '').toString().toLowerCase();
+            if (valA < valB) return -1;
+            if (valA > valB) return 1;
+            return 0;
           });
-      } else {
-        setLoading(false);
-      }
+
+          setWines(filtered);
+          const locNames = allLocs.map(l => l.name);
+          setLocations(locNames);
+          setSelectedLocations(locNames);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
     }
   }, []);
 
@@ -65,12 +72,19 @@ export default function PrintGiacenzeDettaglio() {
   const sortLabel = sortLabelMap[sortParam] || 'Nome Vino';
 
   const activeLocations = locations.filter(l => selectedLocations.includes(l));
+  const locationsToRender = activeLocations.filter(loc => {
+    if (!hideEmptyLocations) return true;
+    return wines.some(w => {
+      if (!w.movements) return false;
+      return w.movements.some(m => m.location?.name === loc && (m.quantity || 0) > 0);
+    });
+  });
 
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
         @page {
-          size: A4 landscape;
+          size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'};
           margin: 10mm;
         }
         body {
@@ -90,12 +104,12 @@ export default function PrintGiacenzeDettaglio() {
           header.header { display: none !important; }
           main { padding: 0 !important; }
           body { background-color: white; padding: 0; margin: 0; display: block; }
-          @page { size: A4 landscape !important; margin: 15mm !important; }
+          @page { size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'} !important; margin: ${isLandscape ? '10mm' : '5mm'} !important; }
           .print-page {
             box-shadow: none !important;
             margin: 0 auto !important;
-            width: 100% !important;
-            max-width: 100% !important;
+            width: ${isLandscape ? '277mm' : '190mm'} !important;
+            max-width: ${isLandscape ? '277mm' : '190mm'} !important;
             min-height: auto !important;
             padding: 0 !important;
           }
@@ -106,9 +120,9 @@ export default function PrintGiacenzeDettaglio() {
         }
         .print-page {
           background: white;
-          width: 277mm;
+          width: ${isLandscape ? '277mm' : '190mm'};
           max-width: 96vw;
-          min-height: 190mm;
+          min-height: ${isLandscape ? '190mm' : '260mm'};
           padding: 10mm;
           margin-top: 20px;
           margin-bottom: 20px;
@@ -147,24 +161,90 @@ export default function PrintGiacenzeDettaglio() {
         backgroundColor: 'rgba(82, 86, 89, 0.95)',
         backdropFilter: 'blur(5px)',
         width: '100%',
-        padding: '20px 40px',
+        padding: '16px 30px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '15px',
+        gap: '12px',
         marginBottom: '20px',
         boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <div
             style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
             onClick={() => window.close()}
           >
-            <ArrowLeft size={36} color="white" />
-            <Wine size={28} color="#3b82f6" />
-            <h2 style={{ color: 'white', margin: 0 }}>TORNA INDIETRO</h2>
+            <ArrowLeft size={32} color="white" />
+            <Wine size={26} color="#3b82f6" />
+            <h2 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>TORNA INDIETRO</h2>
           </div>
 
-          <div style={{ display: 'flex', gap: '20px' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Tasto Orientamento Foglio */}
+            <button
+              onClick={() => setIsLandscape(!isLandscape)}
+              style={{
+                padding: '8px 12px',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                background: isLandscape ? '#8b5cf6' : '#334155',
+                color: 'white',
+                border: isLandscape ? '2px solid #a78bfa' : '1px solid #64748b',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+              title="Cambia orientamento foglio A4"
+            >
+              {isLandscape ? '↔️ A4 Orizzontale' : '↕️ A4 Verticale'}
+            </button>
+
+            {/* Tasto Vista Compatta (Solo Disp) */}
+            <button
+              onClick={() => setShowOnlyDisp(!showOnlyDisp)}
+              style={{
+                padding: '8px 12px',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                background: showOnlyDisp ? '#f59e0b' : '#334155',
+                color: 'white',
+                border: showOnlyDisp ? '2px solid #fcd34d' : '1px solid #64748b',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+              title="Attiva/disattiva vista compatta (nasconde colonna Usato)"
+            >
+              {showOnlyDisp ? '⚡ Compatta (Solo Disp.)' : '📊 Completa (Disp+Usato)'}
+            </button>
+
+            {/* Tasto Nascondi Cantine senza Giacenza */}
+            <button
+              onClick={() => setHideEmptyLocations(!hideEmptyLocations)}
+              style={{
+                padding: '8px 12px',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                background: hideEmptyLocations ? '#06b6d4' : '#334155',
+                color: 'white',
+                border: hideEmptyLocations ? '2px solid #67e8f9' : '1px solid #64748b',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+              title="Nascondi colonne delle cantine che non hanno movimentazioni"
+            >
+              {hideEmptyLocations ? '🧹 Solo Cantine Attive' : '👁️ Mostra Tutte'}
+            </button>
+
             <button onClick={() => {
               const originalTitle = document.title;
               const now = new Date();
@@ -174,14 +254,14 @@ export default function PrintGiacenzeDettaglio() {
                 window.print();
                 document.title = originalTitle;
               }, 100);
-            }} style={{ padding: '10px 20px', fontSize: '16px', fontWeight: 'bold', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            }} style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
               🖨️ Stampa / Salva PDF
             </button>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontWeight: 'bold', color: 'white' }}>Seleziona Cantine:</span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 'bold', color: 'white', fontSize: '13px' }}>Seleziona Cantine:</span>
           {locations.map(loc => {
             const isSelected = selectedLocations.includes(loc);
             return (
@@ -198,8 +278,9 @@ export default function PrintGiacenzeDettaglio() {
                   }
                 }}
                 style={{
-                  padding: '6px 12px',
+                  padding: '4px 10px',
                   borderRadius: '20px',
+                  fontSize: '12px',
                   border: isSelected ? '2px solid #10b981' : '1px solid #ccc',
                   background: isSelected ? '#ecfdf5' : 'white',
                   color: isSelected ? '#065f46' : '#666',
@@ -235,8 +316,8 @@ export default function PrintGiacenzeDettaglio() {
 
           const pages = [];
           let currentIdx = 0;
-          const rowsPerPageFirst = 16;
-          const rowsPerPageNext = 20;
+          const rowsPerPageFirst = isLandscape ? 16 : 24;
+          const rowsPerPageNext = isLandscape ? 20 : 28;
 
           while (currentIdx < wines.length) {
             const isFirstPage = pages.length === 0;
@@ -269,12 +350,12 @@ export default function PrintGiacenzeDettaglio() {
                     <th>Inventariato</th>
                     <th>Disponibile</th>
                     <th>Usato</th>
-                    {activeLocations.map(loc => {
+                    {locationsToRender.map(loc => {
                       const shortName = loc.replace(/cantina /i, '').trim();
                       return (
                         <React.Fragment key={loc}>
                           <th>Disp.<br/>{shortName}</th>
-                          <th>Usato<br/>{shortName}</th>
+                          {!showOnlyDisp && <th>Usato<br/>{shortName}</th>}
                         </React.Fragment>
                       );
                     })}
@@ -286,7 +367,7 @@ export default function PrintGiacenzeDettaglio() {
                     let globalUscita = 0;
                     
                     const locStats = {};
-                    activeLocations.forEach(loc => {
+                    locationsToRender.forEach(loc => {
                       locStats[loc] = { ingresso: 0, uscita: 0 };
                     });
 
@@ -296,7 +377,7 @@ export default function PrintGiacenzeDettaglio() {
                         const isIngresso = m.movementType === 'Ingresso';
                         const isUscita = m.movementType === 'Uscita';
                         
-                        if (m.location && m.location.name && activeLocations.includes(m.location.name)) {
+                        if (m.location && m.location.name && locationsToRender.includes(m.location.name)) {
                           const lName = m.location.name;
                           if (isIngresso) {
                             globalIngresso += qty;
@@ -314,21 +395,27 @@ export default function PrintGiacenzeDettaglio() {
 
                     return (
                       <tr key={w.id || idx}>
-                        {colLayout.map((col, i) => (
-                          <td key={col.key} className={i === 0 ? "text-left text-bold" : ""}>
-                            {w[col.key]}
-                          </td>
-                        ))}
+                        {colLayout.map((col, i) => {
+                          let val = w[col.key];
+                          if (col.key === 'country' && (!val || val.trim() === '')) {
+                            val = 'Non spec.';
+                          }
+                          return (
+                            <td key={col.key} className={i === 0 ? "text-left text-bold" : ""}>
+                              {val}
+                            </td>
+                          );
+                        })}
                         <td className="text-bold">{globalIngresso || ''}</td>
                         <td className="text-bold">{dispGlobale === 0 && globalUscita === 0 && globalIngresso === 0 ? '' : dispGlobale}</td>
                         <td className="text-bold">{globalUscita || ''}</td>
-                        {activeLocations.map(loc => {
+                        {locationsToRender.map(loc => {
                           const stats = locStats[loc];
                           const disp = stats.ingresso - stats.uscita;
                           return (
                             <React.Fragment key={loc + w.id}>
                               <td>{disp === 0 && stats.uscita === 0 && stats.ingresso === 0 ? '' : disp}</td>
-                              <td>{stats.uscita === 0 ? '' : stats.uscita}</td>
+                              {!showOnlyDisp && <td>{stats.uscita === 0 ? '' : stats.uscita}</td>}
                             </React.Fragment>
                           );
                         })}

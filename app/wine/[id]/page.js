@@ -506,11 +506,16 @@ export default function WineDetail({ params }) {
       try {
         const res = await fetch(`/api/wines/${vintageId}`, { method: 'DELETE' });
         if (res.ok) {
+          customAlert('\n❌ Annata eliminata con successo!\n');
           if (isCurrent) {
-            customAlert('\n❌ Annata eliminata con successo!\n');
-            router.push('/');
+            const remainingVintages = wine.allVintages ? wine.allVintages.filter(v => v.id !== vintageId) : [];
+            if (remainingVintages.length > 0) {
+              const nextVintage = remainingVintages[0];
+              router.push(`/wine/${nextVintage.id}`);
+            } else {
+              router.push('/');
+            }
           } else {
-            customAlert('\n❌ Annata eliminata con successo!\n');
             fetchWine(); // Refresh per aggiornare la tabella
           }
         } else {

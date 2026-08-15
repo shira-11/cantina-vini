@@ -12,29 +12,34 @@ export default function PrintElencoNazioni() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedNamesStr = sessionStorage.getItem('printWineNames');
-      if (storedNamesStr) {
-        const storedNames = JSON.parse(storedNamesStr);
 
-        Promise.all([
-          fetch('/api/wines').then(res => res.json()),
-          fetch('/api/locations').then(res => res.json())
-        ])
-          .then(([allWines, allLocs]) => {
-            const filtered = allWines.filter(w => storedNames.includes(w.name));
-            setWines(filtered);
-            
-            const locNames = allLocs.map(l => l.name).sort();
-            setLocations(locNames);
-            setSelectedLocations(locNames);
-            setLoading(false);
-          })
-          .catch(err => {
-            console.error(err);
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
-      }
+      Promise.all([
+        fetch('/api/wines').then(res => res.json()),
+        fetch('/api/locations').then(res => res.json())
+      ])
+        .then(([allWines, allLocs]) => {
+          let filtered = allWines;
+          if (storedNamesStr) {
+            try {
+              const storedNames = JSON.parse(storedNamesStr);
+              if (Array.isArray(storedNames) && storedNames.length > 0) {
+                filtered = allWines.filter(w => storedNames.includes(w.name));
+              }
+            } catch (e) {
+              console.error("Error parsing printWineNames:", e);
+            }
+          }
+          setWines(filtered);
+          
+          const locNames = allLocs.map(l => l.name).sort();
+          setLocations(locNames);
+          setSelectedLocations(locNames);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
     }
   }, []);
 
