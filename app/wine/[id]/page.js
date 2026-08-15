@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Trash, Image as ImageIcon, Edit2, List, FileText, ArrowRightLeft, Camera, Wine, Printer, RotateCw } from 'lucide-react';
+import { ArrowLeft, Save, Trash, Image as ImageIcon, Edit2, List, FileText, ArrowRightLeft, Camera, Wine, Printer, RotateCw, Crop } from 'lucide-react';
 import { use } from 'react';
+import PhotoCropModal from '../../components/PhotoCropModal';
 
 const getCountryFlag = (country) => {
   if (!country) return '';
@@ -51,6 +52,7 @@ export default function WineDetail({ params }) {
   const [toastMessage, setToastMessage] = useState('');
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [promptDialog, setPromptDialog] = useState(null);
+  const [cropModal, setCropModal] = useState({ isOpen: false, photoUrl: null, type: 'front' });
   const customAlert = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(''), 4000); };
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
@@ -462,6 +464,7 @@ export default function WineDetail({ params }) {
         } else {
           setWine(prev => ({ ...prev, photoBack: data.url }));
         }
+        setCropModal({ isOpen: true, photoUrl: data.url, type });
       } else {
         customAlert('Errore caricamento: ' + data.error);
       }
@@ -687,6 +690,21 @@ export default function WineDetail({ params }) {
 
   return (
     <div className="app-container" style={{ display: 'block', overflowY: 'auto', backgroundColor: '#f8fafc' }}>
+      <PhotoCropModal
+        isOpen={cropModal.isOpen}
+        photoUrl={cropModal.photoUrl}
+        type={cropModal.type}
+        wineName={wine.name}
+        vintage={wine.vintage}
+        onClose={() => setCropModal({ isOpen: false, photoUrl: null, type: 'front' })}
+        onSave={(croppedUrl, cropType) => {
+          if (cropType === 'front') {
+            setWine(prev => ({ ...prev, photo: croppedUrl }));
+          } else {
+            setWine(prev => ({ ...prev, photoBack: croppedUrl }));
+          }
+        }}
+      />
       {fullscreenImages && fullscreenImages.length > 0 && (
         <div
           style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', touchAction: 'none' }}
@@ -1849,6 +1867,7 @@ export default function WineDetail({ params }) {
                       }}
                     />
                     <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '0.5rem' }}>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '0.5rem', minWidth: 'auto', background: 'white', color: '#8b5cf6', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCropModal({ isOpen: true, photoUrl: wine.photo, type: 'front' }); }} title="Ritaglia e Zooma"><Crop size={16} /></button>
                       <button type="button" className="btn btn-secondary" style={{ padding: '0.5rem', minWidth: 'auto', background: 'white', color: 'black', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRotateImage(wine.photo, 'front'); }} title="Ruota 90°"><RotateCw size={16} /></button>
                       <button type="button" className="btn btn-danger" style={{ padding: '0.5rem', minWidth: 'auto', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWine({ ...wine, photo: null }); }} title="Elimina foto"><Trash size={16} /></button>
                     </div>
@@ -1892,6 +1911,7 @@ export default function WineDetail({ params }) {
                       }}
                     />
                     <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '0.5rem' }}>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '0.5rem', minWidth: 'auto', background: 'white', color: '#8b5cf6', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCropModal({ isOpen: true, photoUrl: wine.photoBack, type: 'back' }); }} title="Ritaglia e Zooma"><Crop size={16} /></button>
                       <button type="button" className="btn btn-secondary" style={{ padding: '0.5rem', minWidth: 'auto', background: 'white', color: 'black', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRotateImage(wine.photoBack, 'back'); }} title="Ruota 90°"><RotateCw size={16} /></button>
                       <button type="button" className="btn btn-danger" style={{ padding: '0.5rem', minWidth: 'auto', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWine({ ...wine, photoBack: null }); }} title="Elimina foto"><Trash size={16} /></button>
                     </div>
