@@ -11,10 +11,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showBg, setShowBg] = useState(true);
-  const [bgVersion, setBgVersion] = useState(Date.now());
+  const [bgVersion, setBgVersion] = useState('');
   const router = useRouter();
 
   useEffect(() => {
+    setBgVersion(Date.now().toString());
+
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('reason') === 'timeout') {
@@ -65,7 +67,7 @@ export default function LoginPage() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      background: showBg ? `url('/login-bg.png?v=${bgVersion}') center center / cover no-repeat` : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+      background: showBg ? `url('/login-bg.png${bgVersion ? `?v=${bgVersion}` : ''}') center center / cover no-repeat` : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
       position: 'relative',
       padding: '1rem'
     }}>
