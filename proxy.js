@@ -7,7 +7,16 @@ export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
   // Percorsi pubblici che non richiedono autenticazione
-  const isPublicPath = pathname === '/login' || pathname === '/recupero-pw' || pathname.startsWith('/_next') || pathname.startsWith('/foto_bottiglie') || pathname.startsWith('/uploads');
+  const isPublicPath = 
+    pathname === '/login' || 
+    pathname === '/recupero-pw' || 
+    pathname === '/login-bg.png' || 
+    pathname === '/manifest.json' ||
+    pathname === '/api/settings' || 
+    pathname.startsWith('/_next') || 
+    pathname.startsWith('/foto_bottiglie') || 
+    pathname.startsWith('/uploads') ||
+    /\.(png|jpg|jpeg|gif|svg|ico|webp|json)$/i.test(pathname);
   const isAuthApi = pathname.startsWith('/api/auth');
 
   if (isPublicPath || isAuthApi) {

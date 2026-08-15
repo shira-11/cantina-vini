@@ -24,6 +24,7 @@ export default function AdminSettingsPage() {
   const [allowedFilters, setAllowedFilters] = useState([]);
   const [allowWineDetails, setAllowWineDetails] = useState(true);
   const [loginPageBackground, setLoginPageBackground] = useState(true);
+  const [photoPreviewSeconds, setPhotoPreviewSeconds] = useState(3);
   const [uploadingBg, setUploadingBg] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -36,6 +37,7 @@ export default function AdminSettingsPage() {
           setAllowedFilters(data.visitorAllowedFilters || FILTER_OPTIONS.map(f => f.id));
           setAllowWineDetails(data.visitorAllowWineDetails !== false);
           setLoginPageBackground(data.loginPageBackground !== false);
+          setPhotoPreviewSeconds(data.photoPreviewSeconds || 3);
         } else if (res.status === 403) {
           router.push('/');
         }
@@ -75,7 +77,8 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({ 
           visitorAllowedFilters: allowedFilters,
           visitorAllowWineDetails: allowWineDetails,
-          loginPageBackground: loginPageBackground
+          loginPageBackground: loginPageBackground,
+          photoPreviewSeconds: photoPreviewSeconds
         })
       });
       
@@ -219,6 +222,30 @@ export default function AdminSettingsPage() {
                   {uploadingBg && <span style={{ marginLeft: '1rem', fontSize: '0.85rem', color: '#8b5cf6' }}>Caricamento in corso...</span>}
                 </div>
               )}
+            </div>
+
+            {/* Sezione Anteprima Foto Vino */}
+            <div>
+              <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Anteprima Foto Vino (Tablet / Touch / Mouse)</h3>
+              <div style={{ padding: '1rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>
+                  Durata anteprima foto al tocco del dito o click (secondi)
+                </label>
+                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                  Facendo un tocco col dito o cliccando sul nome del vino su tablet, iPad o computer, la foto della bottiglia rimarrà visibile per i secondi impostati e poi scomparirà da sola.
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <input 
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={photoPreviewSeconds}
+                    onChange={(e) => setPhotoPreviewSeconds(Math.max(1, parseInt(e.target.value) || 1))}
+                    style={{ width: '90px', padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '1rem', textAlign: 'center', fontWeight: 'bold' }}
+                  />
+                  <span style={{ fontSize: '0.95rem', color: '#334155', fontWeight: '500' }}>secondi</span>
+                </div>
+              </div>
             </div>
 
             {/* Sezione Filtri */}
