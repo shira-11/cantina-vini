@@ -838,27 +838,23 @@ export default function Home() {
               onClick={() => {
                 setShowArchive(false);
                 setSearch('');
-                setSelectedCategory('ALL');
-                setSelectedCountry('ALL');
-                setSelectedType('ALL');
                 setFilters({
-                  producer: 'ALL',
-                  wineName: 'ALL',
-                  region: 'ALL',
-                  subRegion: 'ALL',
-                  vintage: 'ALL',
-                  displayStockMin: '',
-                  displayStockMax: '',
-                  stockMin: '',
-                  stockMax: '',
-                  locationMin: '',
-                  locationMax: '',
-                  priceMin: '',
-                  priceMax: '',
-                  onlyInStock: false
+                  country: '',
+                  region: '',
+                  producerCellar: '',
+                  producer: '',
+                  classification: '',
+                  category: '',
+                  location: '',
+                  availability: '',
+                  photo: '',
+                  bottleType: ''
                 });
-                if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-                  window.location.href = '/';
+                if (typeof window !== 'undefined') {
+                  sessionStorage.removeItem('homeFilters');
+                  if (window.location.pathname !== '/') {
+                    window.location.href = '/';
+                  }
                 }
               }}
               title="Torna alla Home e resetta filtri"
@@ -1148,27 +1144,23 @@ export default function Home() {
               onClick={() => {
                 setShowArchive(false);
                 setSearch('');
-                setSelectedCategory('ALL');
-                setSelectedCountry('ALL');
-                setSelectedType('ALL');
                 setFilters({
-                  producer: 'ALL',
-                  wineName: 'ALL',
-                  region: 'ALL',
-                  subRegion: 'ALL',
-                  vintage: 'ALL',
-                  displayStockMin: '',
-                  displayStockMax: '',
-                  stockMin: '',
-                  stockMax: '',
-                  locationMin: '',
-                  locationMax: '',
-                  priceMin: '',
-                  priceMax: '',
-                  onlyInStock: false
+                  country: '',
+                  region: '',
+                  producerCellar: '',
+                  producer: '',
+                  classification: '',
+                  category: '',
+                  location: '',
+                  availability: '',
+                  photo: '',
+                  bottleType: ''
                 });
-                if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-                  window.location.href = '/';
+                if (typeof window !== 'undefined') {
+                  sessionStorage.removeItem('homeFilters');
+                  if (window.location.pathname !== '/') {
+                    window.location.href = '/';
+                  }
                 }
               }}
               title="Torna alla Home e resetta filtri"
