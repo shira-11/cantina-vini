@@ -4,13 +4,12 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const settings = await prisma.systemSettings.findMany({
-      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds'] } }
+      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background'] } }
     });
-    
+
     const filtersSetting = settings.find(s => s.key === 'visitor_allowed_filters');
     const wineDetailsSetting = settings.find(s => s.key === 'visitor_allow_wine_details');
     const loginBgSetting = settings.find(s => s.key === 'login_page_background');
-    const photoDurationSetting = settings.find(s => s.key === 'photo_preview_seconds');
 
     let allowedFilters = [
       'country', 'region', 'producerCellar', 'producer',
@@ -36,19 +35,10 @@ export async function GET() {
       loginPageBackground = loginBgSetting.value === 'true';
     }
 
-    let photoPreviewSeconds = 3;
-    if (photoDurationSetting && photoDurationSetting.value) {
-      const parsed = parseInt(photoDurationSetting.value, 10);
-      if (!isNaN(parsed) && parsed > 0) {
-        photoPreviewSeconds = parsed;
-      }
-    }
-
-    return NextResponse.json({ 
+    return NextResponse.json({
       visitorAllowedFilters: allowedFilters,
       visitorAllowWineDetails: allowWineDetails,
-      loginPageBackground,
-      photoPreviewSeconds
+      loginPageBackground
     });
   } catch (error) {
     console.error('Error fetching admin settings:', error);
@@ -59,7 +49,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { visitorAllowedFilters, visitorAllowWineDetails, loginPageBackground, photoPreviewSeconds } = body;
+    const { visitorAllowedFilters, visitorAllowWineDetails, loginPageBackground } = body;
 
     if (!Array.isArray(visitorAllowedFilters)) {
       return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
@@ -85,20 +75,11 @@ export async function POST(request) {
       create: { key: 'login_page_background', value: loginBgStr }
     });
 
-    const parsedSecs = parseInt(photoPreviewSeconds, 10);
-    const durationStr = (!isNaN(parsedSecs) && parsedSecs > 0) ? parsedSecs.toString() : '3';
-    const photoDurationSettings = await prisma.systemSettings.upsert({
-      where: { key: 'photo_preview_seconds' },
-      update: { value: durationStr },
-      create: { key: 'photo_preview_seconds', value: durationStr }
-    });
-
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       visitorAllowedFilters: JSON.parse(filterSettings.value),
       visitorAllowWineDetails: wineDetailsSettings.value === 'true',
-      loginPageBackground: loginBgSettings.value === 'true',
-      photoPreviewSeconds: parseInt(photoDurationSettings.value, 10)
+      loginPageBackground: loginBgSettings.value === 'true'
     });
   } catch (error) {
     console.error('Error updating admin settings:', error);

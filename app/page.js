@@ -114,41 +114,24 @@ export default function Home() {
     setMousePos({ x: e.clientX, y: e.clientY });
   };
 
-  const handleWineNameMouseEnter = (e, photoUrl) => {
+  const triggerPhotoPreview = (e, photoUrl) => {
     if (!photoUrl) return;
-    if (photoTimerRef.current) {
-      clearTimeout(photoTimerRef.current);
-      photoTimerRef.current = null;
-    }
-    setHoveredPhoto(photoUrl);
-    if (e.clientX || e.clientY) {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    }
-  };
+    if (e && e.stopPropagation) e.stopPropagation();
 
-  const handleWineNameMouseLeave = () => {
-    if (!photoTimerRef.current) {
-      setHoveredPhoto(null);
-    }
-  };
+    let posX = e ? e.clientX : 0;
+    let posY = e ? e.clientY : 0;
 
-  const handleWineNameTapOrClick = (e, photoUrl) => {
-    if (!photoUrl) return;
-    e.stopPropagation();
-
-    let posX = e.clientX;
-    let posY = e.clientY;
-    if (e.touches && e.touches.length > 0) {
+    if (e && e.touches && e.touches.length > 0) {
       posX = e.touches[0].clientX;
       posY = e.touches[0].clientY;
-    } else if ((!posX && !posY) && e.currentTarget) {
+    } else if ((!posX && !posY) && e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       posX = rect.left + rect.width / 2;
       posY = rect.top + rect.height;
     }
 
     if (posX || posY) {
-      setMousePos({ x: posX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200), y: posY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 200) });
+      setMousePos({ x: posX || 200, y: posY || 200 });
     }
 
     setHoveredPhoto(photoUrl);
@@ -185,7 +168,7 @@ export default function Home() {
   });
 
   const [sortOrder, setSortOrder] = useState('asc');
-  
+
   // Resizing state
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [isResizing, setIsResizing] = useState(false);
@@ -236,21 +219,21 @@ export default function Home() {
       alert("Il tuo browser non supporta la ricerca vocale.");
       return;
     }
-    
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    
+
     recognition.lang = 'it-IT';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    
+
     recognition.onstart = () => {
       setIsListening(true);
     };
-    
+
     recognition.onresult = (event) => {
       let transcript = event.results[0][0].transcript.toLowerCase();
-      
+
       const newFilters = { ...filters };
 
       // Extract dynamic filters from existing wines data
@@ -295,7 +278,7 @@ export default function Home() {
         "cantina levanzo": "Cantina Levanzo",
         "levanzo": "Cantina Levanzo"
       };
-      
+
       const catMap = {
         "bianco": "Bianco",
         "rosso": "Rosso",
@@ -310,7 +293,7 @@ export default function Home() {
         "spumante secco": "Spumante Secco",
         "spumante dolce": "Spumante Dolce"
       };
-      
+
       for (const [key, val] of Object.entries(catMap)) {
         const regex = new RegExp(`\\\\b${key}\\\\b`, 'g');
         if (regex.test(transcript)) {
@@ -327,20 +310,20 @@ export default function Home() {
           break;
         }
       }
-      
+
       setFilters(newFilters);
       setSearch(transcript);
     };
-    
+
     recognition.onerror = (event) => {
       console.error("Errore riconoscimento vocale:", event.error);
       setIsListening(false);
     };
-    
+
     recognition.onend = () => {
       setIsListening(false);
     };
-    
+
     recognition.start();
   };
 
@@ -415,7 +398,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchWines();
-    
+
     // Fetch user info
     fetch('/api/auth/me')
       .then(res => {
@@ -684,7 +667,7 @@ export default function Home() {
         body: formData
       });
       const data = await res.json();
-      
+
       if (res.ok && data.text) {
         // Parole comuni sulle etichette da ignorare
         const blacklist = ['denominazione', 'origine', 'controllata', 'garantita', 'imbottigliato', 'prodotto', 'italia', 'vendemmia', 'cantina', 'annata', 'contiene', 'solfiti', 'volume', 'alcol', 'viticoltori', 'agricola', 'tenuta', 'azienda', 'delle', 'della', 'degli', 'riserva', 'superiore', 'classico', 'docg', 'doc', 'igt'];
@@ -700,7 +683,7 @@ export default function Home() {
         wines.forEach(wine => {
           let score = 0;
           const wineString = `${wine.name} ${wine.producer} ${wine.producerCellar || ''}`.toLowerCase();
-          
+
           wordsArray.forEach(word => {
             if (wineString.includes(word.toLowerCase())) {
               // Parole più lunghe danno più punteggio
@@ -787,7 +770,7 @@ export default function Home() {
 
   if (isMobile && !forceDesktop) {
     return (
-      <MobileCatalog 
+      <MobileCatalog
         wines={filteredWines}
         loading={loading}
         search={search}
@@ -821,16 +804,16 @@ export default function Home() {
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
-      
+
       {showHelp && <HelpGuideModal onClose={() => setShowHelp(false)} />}
 
       {/* Sidebar Filters */}
       {!isSidebarCollapsed && (
-        <aside 
-          className={`sidebar ${isSidebarOpen ? 'open' : ''}`} 
+        <aside
+          className={`sidebar ${isSidebarOpen ? 'open' : ''}`}
           style={{ '--sidebar-width': `${sidebarWidth}px` }}
         >
-          <div 
+          <div
             onMouseDown={startResizing}
             style={{
               position: 'absolute',
@@ -874,224 +857,224 @@ export default function Home() {
           </div>
 
           <div className="filter-group">
-          <label>Cerca</label>
-          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={{ position: 'relative', width: '100%' }}>
-              <Search size={18} style={{ position: 'absolute', left: 10, top: 11, color: '#94a3b8' }} />
-              <input
-                type="text"
-                placeholder="Nome, produttore..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '3.5rem' : '2.25rem', width: '100%' }}
-              />
-              {speechSupported && (
-                <button 
-                  onClick={startVoiceSearch}
-                  title="Ricerca vocale"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: '0',
-                    cursor: 'pointer',
-                    position: 'absolute',
-                    right: '2.25rem',
-                    top: '11px',
-                    color: isListening ? '#ef4444' : '#64748b',
-                    animation: isListening ? 'pulse 1.5s infinite' : 'none'
-                  }}
-                >
-                  <Mic size={18} />
-                </button>
-              )}
-              {search && (
-                <X
-                  size={16}
-                  style={{ position: 'absolute', right: 10, top: 12, color: '#94a3b8', cursor: 'pointer' }}
-                  onClick={() => setSearch('')}
+            <label>Cerca</label>
+            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ position: 'relative', width: '100%' }}>
+                <Search size={18} style={{ position: 'absolute', left: 10, top: 11, color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Nome, produttore..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '3.5rem' : '2.25rem', width: '100%' }}
                 />
+                {speechSupported && (
+                  <button
+                    onClick={startVoiceSearch}
+                    title="Ricerca vocale"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: '0',
+                      cursor: 'pointer',
+                      position: 'absolute',
+                      right: '2.25rem',
+                      top: '11px',
+                      color: isListening ? '#ef4444' : '#64748b',
+                      animation: isListening ? 'pulse 1.5s infinite' : 'none'
+                    }}
+                  >
+                    <Mic size={18} />
+                  </button>
+                )}
+                {search && (
+                  <X
+                    size={16}
+                    style={{ position: 'absolute', right: 10, top: 12, color: '#94a3b8', cursor: 'pointer' }}
+                    onClick={() => setSearch('')}
+                  />
+                )}
+              </div>
+              {currentUser?.role !== 'viewer' && (
+                <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                  <div style={{ position: 'relative', flex: 1 }} title="Scatta foto all'etichetta">
+                    <input type="file" accept="image/*" capture="environment" onChange={handleVisualSearch} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={ocrLoading} />
+                    <button className="btn" style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border-color)', background: 'white', color: ocrLoading ? '#94a3b8' : 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      {ocrLoading ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+                    </button>
+                  </div>
+                  <div style={{ position: 'relative', flex: 1 }} title="Scegli dalla galleria">
+                    <input type="file" accept="image/*" onChange={handleVisualSearch} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={ocrLoading} />
+                    <button className="btn" style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border-color)', background: 'white', color: ocrLoading ? '#94a3b8' : 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      {ocrLoading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
-            {currentUser?.role !== 'viewer' && (
-              <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-                <div style={{ position: 'relative', flex: 1 }} title="Scatta foto all'etichetta">
-                  <input type="file" accept="image/*" capture="environment" onChange={handleVisualSearch} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={ocrLoading} />
-                  <button className="btn" style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border-color)', background: 'white', color: ocrLoading ? '#94a3b8' : 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    {ocrLoading ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
-                  </button>
-                </div>
-                <div style={{ position: 'relative', flex: 1 }} title="Scegli dalla galleria">
-                  <input type="file" accept="image/*" onChange={handleVisualSearch} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={ocrLoading} />
-                  <button className="btn" style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border-color)', background: 'white', color: ocrLoading ? '#94a3b8' : 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    {ocrLoading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
-                  </button>
-                </div>
-              </div>
+          </div>
+
+          {canViewFilter('country') && (
+            <div className="filter-group">
+              <label>Nazione</label>
+              <select value={filters.country} onChange={e => setFilters({ ...filters, country: e.target.value })}>
+                <option value="">Tutte</option>
+                {uniqueCountries.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          )}
+
+          {canViewFilter('region') && filters.country && (
+            <div className="filter-group">
+              <label>Regione</label>
+              <select value={filters.region} onChange={e => setFilters({ ...filters, region: e.target.value })}>
+                <option value="">Tutte</option>
+                {uniqueRegions.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+          )}
+
+          {canViewFilter('producerCellar') && (
+            <div className="filter-group">
+              <label>Cantina Produttrice</label>
+              <select value={filters.producerCellar} onChange={e => setFilters({ ...filters, producerCellar: e.target.value })}>
+                <option value="">Tutte</option>
+                {uniqueProducerCellars.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+          )}
+
+          {canViewFilter('producer') && (
+            <div className="filter-group">
+              <label>Produttore</label>
+              <select value={filters.producer} onChange={e => setFilters({ ...filters, producer: e.target.value })}>
+                <option value="">Tutti</option>
+                {uniqueProducers.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+          )}
+
+          {canViewFilter('classification') && (
+            <div className="filter-group">
+              <label>Classificazione</label>
+              <select value={filters.classification} onChange={e => setFilters({ ...filters, classification: e.target.value })}>
+                <option value="">Tutte</option>
+                {uniqueClassifications.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          )}
+
+          {canViewFilter('category') && (
+            <div className="filter-group">
+              <label>Categoria</label>
+              <select value={filters.category} onChange={e => setFilters({ ...filters, category: e.target.value })}>
+                <option value="">Tutte</option>
+                {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          )}
+
+          {canViewFilter('location') && (
+            <div className="filter-group">
+              <label>Cantina Fisica</label>
+              <select value={filters.location} onChange={e => setFilters({ ...filters, location: e.target.value })}>
+                <option value="">Tutte</option>
+                {uniqueLocations.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+          )}
+
+          {canViewFilter('availability') && (
+            <div className="filter-group">
+              <label>Disponibilità</label>
+              <select value={filters.availability} onChange={e => setFilters({ ...filters, availability: e.target.value })}>
+                <option value="">Tutte</option>
+                <option value="available">Solo Disponibili</option>
+                <option value="unavailable">Giacenze Non Disponibili</option>
+              </select>
+            </div>
+          )}
+
+          {canViewFilter('photo') && (
+            <div className="filter-group">
+              <label>Foto</label>
+              <select value={filters.photo || ''} onChange={e => setFilters({ ...filters, photo: e.target.value })}>
+                <option value="">Tutte</option>
+                <option value="with_photo">Con Foto</option>
+                <option value="without_photo">Senza Foto</option>
+              </select>
+            </div>
+          )}
+
+          {canViewFilter('bottleType') && (
+            <div className="filter-group">
+              <label>Tipo Bottiglia</label>
+              <select value={filters.bottleType || ''} onChange={e => setFilters({ ...filters, bottleType: e.target.value })}>
+                <option value="">Tutte</option>
+                {uniqueBottleTypes.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+          )}
+
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
+            <button
+              className="btn"
+              style={{ width: '100%', justifyContent: 'center', background: 'white', border: '1px solid var(--border-color)' }}
+              onClick={() => {
+                setSearch('');
+                setFilters({
+                  country: '',
+                  region: '',
+                  producerCellar: '',
+                  producer: '',
+                  classification: '',
+                  category: '',
+                  location: '',
+                  availability: '',
+                  photo: '',
+                  bottleType: ''
+                });
+                setSelectedGroups([]);
+              }}
+            >
+              🔄 Azzera Filtri
+            </button>
+          </div>
+
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <button
+              className="btn"
+              style={{ width: '100%', justifyContent: 'center', background: showArchive ? 'var(--primary-color)' : 'white', color: showArchive ? 'white' : 'inherit', border: '1px solid var(--border-color)' }}
+              onClick={() => {
+                setShowArchive(!showArchive);
+                setSelectedGroups([]);
+              }}
+            >
+              {showArchive ? '🗄️ Torna alla Cantina' : '🗄️ Vedi Archivio'}
+            </button>
+
+            {currentUser?.role === 'admin' && (
+              <>
+                <button
+                  className="btn"
+                  style={{ width: '100%', justifyContent: 'center', background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  onClick={() => router.push('/admin/settings')}
+                >
+                  <Settings size={18} color="var(--primary-color)" />
+                  <span>Impostazioni Visitatore</span>
+                </button>
+                <button
+                  className="btn"
+                  style={{ width: '100%', justifyContent: 'center', background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  onClick={() => router.push('/admin/users')}
+                >
+                  <Shield size={18} color="var(--primary-color)" />
+                  <span>Gestione Utenti</span>
+                </button>
+              </>
             )}
           </div>
-        </div>
-
-        {canViewFilter('country') && (
-          <div className="filter-group">
-            <label>Nazione</label>
-            <select value={filters.country} onChange={e => setFilters({ ...filters, country: e.target.value })}>
-              <option value="">Tutte</option>
-              {uniqueCountries.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-        )}
-
-        {canViewFilter('region') && filters.country && (
-          <div className="filter-group">
-            <label>Regione</label>
-            <select value={filters.region} onChange={e => setFilters({ ...filters, region: e.target.value })}>
-              <option value="">Tutte</option>
-              {uniqueRegions.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-        )}
-
-        {canViewFilter('producerCellar') && (
-          <div className="filter-group">
-            <label>Cantina Produttrice</label>
-            <select value={filters.producerCellar} onChange={e => setFilters({ ...filters, producerCellar: e.target.value })}>
-              <option value="">Tutte</option>
-              {uniqueProducerCellars.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-        )}
-
-        {canViewFilter('producer') && (
-          <div className="filter-group">
-            <label>Produttore</label>
-            <select value={filters.producer} onChange={e => setFilters({ ...filters, producer: e.target.value })}>
-              <option value="">Tutti</option>
-              {uniqueProducers.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-        )}
-
-        {canViewFilter('classification') && (
-          <div className="filter-group">
-            <label>Classificazione</label>
-            <select value={filters.classification} onChange={e => setFilters({ ...filters, classification: e.target.value })}>
-              <option value="">Tutte</option>
-              {uniqueClassifications.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-        )}
-
-        {canViewFilter('category') && (
-          <div className="filter-group">
-            <label>Categoria</label>
-            <select value={filters.category} onChange={e => setFilters({ ...filters, category: e.target.value })}>
-              <option value="">Tutte</option>
-              {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-        )}
-
-        {canViewFilter('location') && (
-          <div className="filter-group">
-            <label>Cantina Fisica</label>
-            <select value={filters.location} onChange={e => setFilters({ ...filters, location: e.target.value })}>
-              <option value="">Tutte</option>
-              {uniqueLocations.map(l => <option key={l} value={l}>{l}</option>)}
-            </select>
-          </div>
-        )}
-
-        {canViewFilter('availability') && (
-          <div className="filter-group">
-            <label>Disponibilità</label>
-            <select value={filters.availability} onChange={e => setFilters({ ...filters, availability: e.target.value })}>
-              <option value="">Tutte</option>
-              <option value="available">Solo Disponibili</option>
-              <option value="unavailable">Giacenze Non Disponibili</option>
-            </select>
-          </div>
-        )}
-
-        {canViewFilter('photo') && (
-          <div className="filter-group">
-            <label>Foto</label>
-            <select value={filters.photo || ''} onChange={e => setFilters({ ...filters, photo: e.target.value })}>
-              <option value="">Tutte</option>
-              <option value="with_photo">Con Foto</option>
-              <option value="without_photo">Senza Foto</option>
-            </select>
-          </div>
-        )}
-
-        {canViewFilter('bottleType') && (
-          <div className="filter-group">
-            <label>Tipo Bottiglia</label>
-            <select value={filters.bottleType || ''} onChange={e => setFilters({ ...filters, bottleType: e.target.value })}>
-              <option value="">Tutte</option>
-              {uniqueBottleTypes.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
-        )}
-
-        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
-          <button
-            className="btn"
-            style={{ width: '100%', justifyContent: 'center', background: 'white', border: '1px solid var(--border-color)' }}
-            onClick={() => {
-              setSearch('');
-              setFilters({
-                country: '',
-                region: '',
-                producerCellar: '',
-                producer: '',
-                classification: '',
-                category: '',
-                location: '',
-                availability: '',
-                photo: '',
-                bottleType: ''
-              });
-              setSelectedGroups([]);
-            }}
-          >
-            🔄 Azzera Filtri
-          </button>
-        </div>
-
-        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <button
-            className="btn"
-            style={{ width: '100%', justifyContent: 'center', background: showArchive ? 'var(--primary-color)' : 'white', color: showArchive ? 'white' : 'inherit', border: '1px solid var(--border-color)' }}
-            onClick={() => {
-              setShowArchive(!showArchive);
-              setSelectedGroups([]);
-            }}
-          >
-            {showArchive ? '🗄️ Torna alla Cantina' : '🗄️ Vedi Archivio'}
-          </button>
-
-          {currentUser?.role === 'admin' && (
-            <>
-              <button
-                className="btn"
-                style={{ width: '100%', justifyContent: 'center', background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                onClick={() => router.push('/admin/settings')}
-              >
-                <Settings size={18} color="var(--primary-color)" />
-                <span>Impostazioni Visitatore</span>
-              </button>
-              <button
-                className="btn"
-                style={{ width: '100%', justifyContent: 'center', background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                onClick={() => router.push('/admin/users')}
-              >
-                <Shield size={18} color="var(--primary-color)" />
-                <span>Gestione Utenti</span>
-              </button>
-            </>
-          )}
-        </div>
-      </aside>
+        </aside>
       )}
 
       {/* Main Content Area */}
@@ -1175,7 +1158,8 @@ export default function Home() {
                           onConfirm: async () => {
                             const targetIds = groupedWinesArray.filter(g => selectedGroups.includes(g.name)).flatMap(g => g.wines.map(w => w.id));
                             if (targetIds.length === 0) {
-                              alert("Nessun vino valido selezionato per l'eliminazione."); return; }
+                              alert("Nessun vino valido selezionato per l'eliminazione."); return;
+                            }
                             try {
                               const res = await fetch('/api/wines/batch', {
                                 method: 'POST',
@@ -1234,7 +1218,8 @@ export default function Home() {
                           onConfirm: async () => {
                             const targetIds = groupedWinesArray.filter(g => selectedGroups.includes(g.name)).flatMap(g => g.wines.map(w => w.id));
                             if (targetIds.length === 0) {
-                              alert("Nessun vino valido selezionato per l'eliminazione."); return; }
+                              alert("Nessun vino valido selezionato per l'eliminazione."); return;
+                            }
                             try {
                               const res = await fetch('/api/wines/batch', {
                                 method: 'POST',
@@ -1341,7 +1326,7 @@ export default function Home() {
                           { label: 'Cantina Produttrice (A-Z)', sort: 'producer' },
                           { label: 'Categoria (A-Z)', sort: 'category' }
                         ].map((opt, idx) => (
-                          <div 
+                          <div
                             key={idx}
                             style={{ padding: '12px 16px', fontSize: '14px', cursor: 'pointer', borderBottom: idx < 3 ? '1px solid #f1f5f9' : 'none' }}
                             onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
@@ -1378,7 +1363,7 @@ export default function Home() {
 
                       // 2. Prepara le intestazioni (Headers)
                       const headers = [
-                        "Nome Vino", "Annata", "Nazione", "Cantina produttore", 
+                        "Nome Vino", "Annata", "Nazione", "Cantina produttore",
                         "Categoria", "Classificazione", "Inventariato", "Disponibile", "Usato"
                       ];
                       locNames.forEach(loc => {
@@ -1394,7 +1379,7 @@ export default function Home() {
                         g.wines.forEach(w => {
                           let globalIngresso = 0;
                           let globalUscita = 0;
-                          
+
                           const locStats = {};
                           locNames.forEach(loc => {
                             locStats[loc] = { ingresso: 0, uscita: 0 };
@@ -1405,7 +1390,7 @@ export default function Home() {
                               const qty = m.quantity || 0;
                               const isIngresso = m.movementType === 'Ingresso';
                               const isUscita = m.movementType === 'Uscita';
-                              
+
                               if (isIngresso) globalIngresso += qty;
                               if (isUscita) globalUscita += qty;
 
@@ -1444,22 +1429,22 @@ export default function Home() {
 
                       // 4. Crea il foglio Excel
                       const ws = XLSX.utils.aoa_to_sheet(dataRows);
-                      
+
                       // 5. Imposta la larghezza delle colonne e l'orientamento
                       const wscols = [
-                        {wch: 32}, // Nome Vino
-                        {wch: 7},  // Annata
-                        {wch: 12}, // Nazione
-                        {wch: 22}, // Cantina
-                        {wch: 12}, // Categoria
-                        {wch: 14}, // Classificazione
-                        {wch: 11}, // Inventariato
-                        {wch: 11}, // Disponibile
-                        {wch: 8},  // Usato
+                        { wch: 32 }, // Nome Vino
+                        { wch: 7 },  // Annata
+                        { wch: 12 }, // Nazione
+                        { wch: 22 }, // Cantina
+                        { wch: 12 }, // Categoria
+                        { wch: 14 }, // Classificazione
+                        { wch: 11 }, // Inventariato
+                        { wch: 11 }, // Disponibile
+                        { wch: 8 },  // Usato
                       ];
                       locNames.forEach(() => {
-                        wscols.push({wch: 10}); // Disp Sede
-                        wscols.push({wch: 10}); // Usato Sede
+                        wscols.push({ wch: 10 }); // Disp Sede
+                        wscols.push({ wch: 10 }); // Usato Sede
                       });
                       ws['!cols'] = wscols;
 
@@ -1468,25 +1453,25 @@ export default function Home() {
 
                       const wb = XLSX.utils.book_new();
                       XLSX.utils.book_append_sheet(wb, ws, "Giacenze");
-                      
+
                       XLSX.writeFile(wb, "Elenco_Giacenze_Vino.xlsx");
 
-                    } catch(e) {
+                    } catch (e) {
                       console.error("Errore esportazione:", e);
                       alert("Errore durante l'esportazione: " + e.message);
                     }
                   }} title="Esporta in Excel">
                     <FileSpreadsheet size={24} color="#16a34a" />
                   </div>
-                  
+
                   <div className="toolbar-icon" onClick={() => setIsGlobalLogOpen(true)} title="Cronologia Movimenti">
                     <History size={24} color="#3b82f6" />
                   </div>
-                  
+
                   <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>
-                  
+
                   {!currentUser ? (
-                    <button 
+                    <button
                       onClick={() => router.push('/login')}
                       style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#3b82f6', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}
                       title="Effettua il Login con nome utente Shirantha"
@@ -1504,14 +1489,14 @@ export default function Home() {
 
                   {currentUser?.role === 'admin' && (
                     <>
-                      <div 
+                      <div
                         className="toolbar-icon"
                         onClick={() => router.push('/admin/users')}
                         title="Gestione Utenti e Accessi"
                       >
                         <Shield size={24} color="#0284c7" />
                       </div>
-                      <div 
+                      <div
                         className="toolbar-icon"
                         onClick={() => router.push('/admin/settings')}
                         title="Impostazioni Visitatore"
@@ -1538,9 +1523,9 @@ export default function Home() {
               <div>Etichette Trovate: <strong style={{ color: '#0284c7' }}>{groupedWinesArray.length}</strong></div>
               <div>Selezionate: <strong style={{ color: selectedGroups.length > 0 ? '#16a34a' : '#64748b' }}>{selectedGroups.length}</strong></div>
             </div>
-            
-            <button 
-              className="btn" 
+
+            <button
+              className="btn"
               style={{ padding: '0.5rem', background: '#e0f2fe', color: 'var(--primary-color)', border: '1px solid #bae6fd', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onClick={() => setShowHelp(true)}
               title="Guida all'uso"
@@ -1638,16 +1623,11 @@ export default function Home() {
                       <td style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         <div 
                           style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
-                          onMouseEnter={(e) => handleWineNameMouseEnter(e, group.photo)}
-                          onMouseLeave={handleWineNameMouseLeave}
+                          onMouseEnter={(e) => triggerPhotoPreview(e, group.photo)}
+                          onTouchStart={(e) => triggerPhotoPreview(e, group.photo)}
                           onClick={(e) => {
                             if (group.photo) {
-                              handleWineNameTapOrClick(e, group.photo);
-                            }
-                          }}
-                          onTouchStart={(e) => {
-                            if (group.photo) {
-                              handleWineNameTapOrClick(e, group.photo);
+                              triggerPhotoPreview(e, group.photo);
                             }
                           }}
                         >
@@ -1660,7 +1640,7 @@ export default function Home() {
                             {group.name}
                           </span>
                           {group.wines.length > 1 && <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>({group.wines.length})</span>}
-                          {group.photo && <span style={{ fontSize: '0.75rem', color: '#8b5cf6' }} title="Tocca o passa sopra per foto">📷</span>}
+                          {group.photo && <span style={{ fontSize: '0.75rem', color: '#8b5cf6' }} title="Passa sopra o tocca per foto">📷</span>}
                         </div>
                       </td>
                       <td style={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}>
@@ -1697,23 +1677,18 @@ export default function Home() {
                         <td style={{ paddingLeft: '2.5rem', fontSize: '0.9rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <div
                             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}
-                            onMouseEnter={(e) => handleWineNameMouseEnter(e, wine.photo)}
-                            onMouseLeave={handleWineNameMouseLeave}
+                            onMouseEnter={(e) => triggerPhotoPreview(e, wine.photo)}
+                            onTouchStart={(e) => triggerPhotoPreview(e, wine.photo)}
                             onClick={(e) => {
                               if (wine.photo) {
-                                handleWineNameTapOrClick(e, wine.photo);
-                              }
-                            }}
-                            onTouchStart={(e) => {
-                              if (wine.photo) {
-                                handleWineNameTapOrClick(e, wine.photo);
+                                triggerPhotoPreview(e, wine.photo);
                               }
                             }}
                           >
                             <span style={{ borderBottom: wine.photo ? '1px dotted #8b5cf6' : 'none' }}>
                               ↳ {wine.name} {wine.vintage ? `- ${wine.vintage}` : ''} {wine.bottleType ? `(${wine.bottleType})` : ''}
                             </span>
-                            {wine.photo && <span style={{ fontSize: '0.75rem', color: '#8b5cf6' }} title="Tocca o passa sopra per foto">📷</span>}
+                            {wine.photo && <span style={{ fontSize: '0.75rem', color: '#8b5cf6' }} title="Passa sopra o tocca per foto">📷</span>}
                           </div>
                         </td>
                         <td style={{ fontSize: '0.9rem', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}><StockCell winesArray={[wine]} displayStock={wine.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} /></td>
@@ -1744,7 +1719,7 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Floating Hover / Tap Image */}
+      {/* Floating Hover / Touch Image */}
       {hoveredPhoto && (
         <div 
           onClick={() => {
@@ -1771,7 +1746,7 @@ export default function Home() {
         >
           <img src={hoveredPhoto} alt="Anteprima bottiglia" style={{ maxWidth: '220px', maxHeight: '300px', width: 'auto', height: 'auto', borderRadius: '8px', display: 'block', objectFit: 'contain', margin: '0 auto' }} />
           <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748b', marginTop: '6px', fontWeight: '500' }}>
-            ⏱️ Scompare in {photoPreviewSeconds}s (o tocca per chiudere)
+            ⏱️ Scompare tra {photoPreviewSeconds}s (o tocca per chiudere)
           </div>
         </div>
       )}
@@ -1785,14 +1760,14 @@ export default function Home() {
             </h3>
             <p style={{ color: '#475569', lineHeight: 1.5, marginBottom: '2rem' }}>{confirmDialog.message}</p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-              <button 
+              <button
                 className="btn"
                 style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1' }}
                 onClick={() => setConfirmDialog(null)}>
                 Annulla
               </button>
-              <button 
-                className="btn" 
+              <button
+                className="btn"
                 style={{ backgroundColor: confirmDialog.isDanger ? '#ef4444' : '#3b82f6', color: 'white' }}
                 onClick={() => {
                   confirmDialog.onConfirm();

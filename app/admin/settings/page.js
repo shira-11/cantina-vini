@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, ArrowLeft, Check, X, Save } from 'lucide-react';
+import { Settings, ArrowLeft, Check, X, Save, Plus, Minus, Clock } from 'lucide-react';
 
 const FILTER_OPTIONS = [
   { id: 'country', label: 'Nazione' },
@@ -133,15 +133,14 @@ export default function AdminSettingsPage() {
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Settings size={28} color="var(--primary-color)" />
-            <h2>Impostazioni Visitatore</h2>
+            <h2>Impostazioni Visitatore e Sistema</h2>
           </div>
         </div>
       </div>
 
       <div className="admin-content" style={{ maxWidth: '600px', margin: '0 auto', paddingTop: '2rem' }}>
         <p style={{ marginBottom: '2rem', color: '#64748b', lineHeight: '1.5' }}>
-          Seleziona quali filtri vuoi rendere visibili agli utenti &quot;Visitatori&quot; (Viewer). 
-          Tutti i filtri spuntati appariranno nella loro barra laterale, mentre quelli non spuntati saranno nascosti.
+          Configura i permessi per i visitatori, la durata dell&apos;anteprima delle foto delle bottiglie e l&apos;estetica dell&apos;applicazione.
         </p>
 
         {loading ? (
@@ -151,6 +150,87 @@ export default function AdminSettingsPage() {
         ) : (
           <div className="form-card" style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
+            {/* Sezione Durata Anteprima Foto Vino */}
+            <div>
+              <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Clock size={20} color="#8b5cf6" /> Durata Anteprima Foto Vino (3 Secondi di Default)
+              </h3>
+              <div style={{ padding: '1.25rem', borderRadius: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <label style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '600' }}>
+                  Tempo di visualizzazione foto al passaggio mouse o tocco (secondi)
+                </label>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: '1.4' }}>
+                  Quando si passa il mouse o si fa un tocco col dito <strong>esclusivamente sul nome del vino</strong>, la foto della bottiglia rimane visibile per il numero di secondi impostato e poi scompare automaticamente.
+                </span>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPhotoPreviewSeconds(prev => Math.max(1, prev - 1))}
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      background: 'white',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#475569',
+                      fontWeight: 'bold'
+                    }}
+                    title="Diminuisci secondi"
+                  >
+                    <Minus size={18} />
+                  </button>
+
+                  <input 
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={photoPreviewSeconds}
+                    onChange={(e) => setPhotoPreviewSeconds(Math.max(1, parseInt(e.target.value) || 1))}
+                    style={{
+                      width: '70px',
+                      height: '38px',
+                      padding: '0.25rem',
+                      borderRadius: '8px',
+                      border: '1px solid #8b5cf6',
+                      fontSize: '1.1rem',
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      color: '#0f172a',
+                      background: 'white'
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setPhotoPreviewSeconds(prev => Math.min(20, prev + 1))}
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      background: 'white',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#475569',
+                      fontWeight: 'bold'
+                    }}
+                    title="Aumenta secondi"
+                  >
+                    <Plus size={18} />
+                  </button>
+
+                  <span style={{ fontSize: '1rem', color: '#334155', fontWeight: '600' }}>secondi</span>
+                </div>
+              </div>
+            </div>
+
             {/* Sezione Accesso Scheda Vino */}
             <div>
               <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Permessi Generali</h3>
@@ -224,77 +304,53 @@ export default function AdminSettingsPage() {
               )}
             </div>
 
-            {/* Sezione Anteprima Foto Vino */}
-            <div>
-              <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Anteprima Foto Vino (Tablet / Touch / Mouse)</h3>
-              <div style={{ padding: '1rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>
-                  Durata anteprima foto al tocco del dito o click (secondi)
-                </label>
-                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                  Facendo un tocco col dito o cliccando sul nome del vino su tablet, iPad o computer, la foto della bottiglia rimarrà visibile per i secondi impostati e poi scomparirà da sola.
-                </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-                  <input 
-                    type="number"
-                    min="1"
-                    max="30"
-                    value={photoPreviewSeconds}
-                    onChange={(e) => setPhotoPreviewSeconds(Math.max(1, parseInt(e.target.value) || 1))}
-                    style={{ width: '90px', padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '1rem', textAlign: 'center', fontWeight: 'bold' }}
-                  />
-                  <span style={{ fontSize: '0.95rem', color: '#334155', fontWeight: '500' }}>secondi</span>
-                </div>
-              </div>
-            </div>
-
             {/* Sezione Filtri */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
                 <h3 style={{ margin: 0 }}>Filtri di Ricerca</h3>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                <button 
-                  onClick={() => handleSelectAll(true)}
-                  style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.875rem' }}
-                >
-                  Seleziona Tutti
-                </button>
-                <button 
-                  onClick={() => handleSelectAll(false)}
-                  style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.875rem' }}
-                >
-                  Deseleziona Tutti
-                </button>
+                  <button 
+                    onClick={() => handleSelectAll(true)}
+                    style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.875rem' }}
+                  >
+                    Seleziona Tutti
+                  </button>
+                  <button 
+                    onClick={() => handleSelectAll(false)}
+                    style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.875rem' }}
+                  >
+                    Deseleziona Tutti
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {FILTER_OPTIONS.map(filter => (
+                  <label 
+                    key={filter.id} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '1rem', 
+                      padding: '0.75rem', 
+                      borderRadius: '8px', 
+                      cursor: 'pointer',
+                      background: allowedFilters.includes(filter.id) ? '#f8fafc' : 'transparent',
+                      border: '1px solid #e2e8f0',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={allowedFilters.includes(filter.id)}
+                      onChange={() => handleToggle(filter.id)}
+                      style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '1.05rem', color: '#1e293b' }}>{filter.label}</span>
+                  </label>
+                ))}
               </div>
             </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {FILTER_OPTIONS.map(filter => (
-                <label 
-                  key={filter.id} 
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '1rem', 
-                    padding: '0.75rem', 
-                    borderRadius: '8px', 
-                    cursor: 'pointer',
-                    background: allowedFilters.includes(filter.id) ? '#f8fafc' : 'transparent',
-                    border: '1px solid #e2e8f0',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <input 
-                    type="checkbox" 
-                    checked={allowedFilters.includes(filter.id)}
-                    onChange={() => handleToggle(filter.id)}
-                    style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-                  />
-                  <span style={{ fontSize: '1.05rem', color: '#1e293b' }}>{filter.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
 
             <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
