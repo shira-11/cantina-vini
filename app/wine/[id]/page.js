@@ -735,7 +735,14 @@ export default function WineDetail({ params }) {
             </button>
             <div
               style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', paddingRight: '1rem', borderRight: '1px solid var(--border-color)' }}
-              onClick={handleBack}
+              onClick={() => {
+                if (unwrappedParams.id === 'new' && (wine.name || wine.producer || wine.country || wine.region || wine.vintage)) {
+                  const abandon = window.confirm("Attenzione: stai per uscire senza salvare il nuovo vino. I dati inseriti andranno persi.\n\n- Premi OK per uscire senza salvare\n- Premi Annulla per restare qui");
+                  if (!abandon) return;
+                }
+                router.push('/');
+              }}
+              title="Torna alla Home"
             >
               <Wine size={28} color="var(--primary-color)" />
               <h2 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>CANTINA</h2>

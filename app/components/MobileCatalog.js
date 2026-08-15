@@ -177,18 +177,22 @@ export const MobileCatalog = ({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h1 
           onClick={() => {
-            setSearch('');
-            setFilters({
-              country: '',
-              region: '',
-              producerCellar: '',
-              producer: '',
-              classification: '',
-              category: '',
-              location: '',
-              bottleType: ''
-            });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+              window.location.href = '/';
+            } else {
+              setSearch('');
+              setFilters({
+                country: '',
+                region: '',
+                producerCellar: '',
+                producer: '',
+                classification: '',
+                category: '',
+                location: '',
+                bottleType: ''
+              });
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
           }}
           style={{ fontSize: '1.5rem', margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
           title="Torna alla Home e resetta filtri"

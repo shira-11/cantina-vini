@@ -835,7 +835,33 @@ export default function Home() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <div
               style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-              onClick={() => window.location.href = '/'}
+              onClick={() => {
+                setShowArchive(false);
+                setSearch('');
+                setSelectedCategory('ALL');
+                setSelectedCountry('ALL');
+                setSelectedType('ALL');
+                setFilters({
+                  producer: 'ALL',
+                  wineName: 'ALL',
+                  region: 'ALL',
+                  subRegion: 'ALL',
+                  vintage: 'ALL',
+                  displayStockMin: '',
+                  displayStockMax: '',
+                  stockMin: '',
+                  stockMax: '',
+                  locationMin: '',
+                  locationMax: '',
+                  priceMin: '',
+                  priceMax: '',
+                  onlyInStock: false
+                });
+                if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+                  window.location.href = '/';
+                }
+              }}
+              title="Torna alla Home e resetta filtri"
             >
               <Wine size={28} color="var(--primary-color)" />
               <h2 style={{ margin: 0 }}>{showArchive ? 'ARCHIVIO VINI' : 'CANTINA'}</h2>
@@ -1116,7 +1142,37 @@ export default function Home() {
             >
               <Menu size={28} />
             </button>
-            <h1 className="mobile-title">
+            <h1 
+              className="mobile-title"
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                setShowArchive(false);
+                setSearch('');
+                setSelectedCategory('ALL');
+                setSelectedCountry('ALL');
+                setSelectedType('ALL');
+                setFilters({
+                  producer: 'ALL',
+                  wineName: 'ALL',
+                  region: 'ALL',
+                  subRegion: 'ALL',
+                  vintage: 'ALL',
+                  displayStockMin: '',
+                  displayStockMax: '',
+                  stockMin: '',
+                  stockMax: '',
+                  locationMin: '',
+                  locationMax: '',
+                  priceMin: '',
+                  priceMax: '',
+                  onlyInStock: false
+                });
+                if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+                  window.location.href = '/';
+                }
+              }}
+              title="Torna alla Home e resetta filtri"
+            >
               {showArchive ? 'Archivio' : 'Cantina Vini'}
             </h1>
 
