@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wine, Search, Plus, Grape, MapPin, Loader2, Camera, FileText, List, FileSpreadsheet, History, ChevronDown, ChevronLeft, ChevronRight, X, Menu, Image as ImageIcon, User, LogOut, Shield, Settings, Mic, HelpCircle } from 'lucide-react';
+import { Wine, Search, Plus, Grape, MapPin, Loader2, Camera, FileText, List, FileSpreadsheet, History, ChevronDown, ChevronLeft, ChevronRight, X, Menu, Image as ImageIcon, User, LogOut, Shield, Settings, Mic, HelpCircle, CheckSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import * as XLSX from 'xlsx';
@@ -1519,6 +1519,10 @@ export default function Home() {
 
                   <div className="toolbar-icon" onClick={() => setIsGlobalLogOpen(true)} title="Cronologia Movimenti">
                     <History size={24} color="#3b82f6" />
+                  </div>
+
+                  <div className="toolbar-icon" onClick={() => router.push('/inventory')} title="Inventario Fisico (Conteggio e Rettifica)">
+                    <CheckSquare size={24} color="#10b981" />
                   </div>
 
                   <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>

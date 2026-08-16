@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Wine, Search, Monitor, Filter, X, Loader2, Plus, Settings, Shield, History, LogOut, Mic } from 'lucide-react';
+import { Wine, Search, Monitor, Filter, X, Loader2, Plus, Settings, Shield, History, LogOut, Mic, CheckSquare } from 'lucide-react';
 import { getCountryFlag, getBadgeClass, getStockBreakdown } from '../utils/wineHelpers';
 import { StockCell } from './StockCell';
 
@@ -220,6 +220,13 @@ export const MobileCatalog = ({
                 title="Cronologia Movimenti"
               >
                 <History size={22} />
+              </button>
+              <button
+                onClick={() => router.push('/inventory')}
+                style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
+                title="Inventario Fisico"
+              >
+                <CheckSquare size={22} />
               </button>
               <button
                 onClick={() => router.push('/admin/users')}

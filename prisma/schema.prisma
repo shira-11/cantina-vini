@@ -32,6 +32,7 @@ model Wine {
   grapeVarieties  GrapeVariety[]
   movements       Movement[]
   archivedPhotos  WinePhoto[]
+  inventoryItems  InventoryItem[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -50,7 +51,12 @@ model Location {
   id        Int        @id @default(autoincrement())
   name      String     @unique // es. "Cantina Arezzo", "Cantina Milano"
   
+  parentId  Int?
+  parent    Location?  @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Location[] @relation("LocationHierarchy")
+
   movements Movement[]
+  inventoryItems InventoryItem[]
 }
 
 model Movement {
@@ -114,4 +120,38 @@ model SystemSettings {
   id    Int    @id @default(autoincrement())
   key   String @unique
   value String
+}
+
+model InventorySession {
+  id          Int             @id @default(autoincrement())
+  title       String
+  year        Int             @default(2026)
+  status      String          @default("in_progress") // "in_progress", "completed", "cancelled"
+  notes       String?
+  createdBy   String?
+  createdAt   DateTime        @default(now())
+  completedAt DateTime?
+  updatedAt   DateTime        @updatedAt
+
+  items       InventoryItem[]
+}
+
+model InventoryItem {
+  id          Int              @id @default(autoincrement())
+  sessionId   Int
+  session     InventorySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  wineId      Int
+  wine        Wine             @relation(fields: [wineId], references: [id], onDelete: Cascade)
+  
+  locationId  Int?
+  location    Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  expectedQty Int              @default(0)
+  countedQty  Int?
+  isChecked   Boolean          @default(false)
+  notes       String?
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
