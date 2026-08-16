@@ -109,7 +109,8 @@ export default function InventoryPage() {
         await fetchSessions();
         await loadSessionDetails(newSess.id);
       } else {
-        alert("Errore durante la creazione della sessione d'inventario.");
+        const errData = await res.json().catch(() => ({}));
+        alert("Errore durante la creazione della sessione d'inventario: " + (errData.error || res.statusText));
       }
       setSaving(false);
     } catch (err) {

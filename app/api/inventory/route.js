@@ -128,26 +128,34 @@ export async function POST(request) {
       }
     }
 
-    // Create session along with all items
+    // 1. Create session first
     const session = await prisma.inventorySession.create({
       data: {
         title: sessionTitle,
         year: currentYear,
         status: 'in_progress',
         notes: notes || null,
-        createdBy: createdBy || null,
-        items: {
-          create: itemsToCreate
-        }
-      },
-      include: {
-        _count: { select: { items: true } }
+        createdBy: createdBy || null
       }
     });
+
+    // 2. Insert items in batches of 500 to stay well under SQL parameter limits
+    const itemsWithSessionId = itemsToCreate.map(item => ({
+      ...item,
+      sessionId: session.id
+    }));
+
+    const batchSize = 500;
+    for (let i = 0; i < itemsWithSessionId.length; i += batchSize) {
+      const batch = itemsWithSessionId.slice(i, i + batchSize);
+      await prisma.inventoryItem.createMany({
+        data: batch
+      });
+    }
 
     return NextResponse.json(session, { status: 201 });
   } catch (error) {
     console.error("Failed to create inventory session:", error);
-    return NextResponse.json({ error: "Failed to create inventory session: " + error.message }, { status: 500 });
+    return NextResponse.json({ error: "Errore creazione inventario: " + error.message }, { status: 500 });
   }
 }
