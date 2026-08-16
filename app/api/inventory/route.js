@@ -128,6 +128,10 @@ export async function POST(request) {
       }
     }
 
+    if (!prisma.inventorySession || !prisma.inventoryItem) {
+      throw new Error("I modelli di inventario non sono ancora stati caricati nell'istanza Prisma Client. Riavviare il server.");
+    }
+
     // 1. Create session first
     const session = await prisma.inventorySession.create({
       data: {
@@ -139,18 +143,25 @@ export async function POST(request) {
       }
     });
 
-    // 2. Insert items in batches of 500 to stay well under SQL parameter limits
+    // 2. Insert items in batches of 250 to stay well under SQL parameter limits
     const itemsWithSessionId = itemsToCreate.map(item => ({
       ...item,
       sessionId: session.id
     }));
 
-    const batchSize = 500;
+    const batchSize = 250;
     for (let i = 0; i < itemsWithSessionId.length; i += batchSize) {
       const batch = itemsWithSessionId.slice(i, i + batchSize);
-      await prisma.inventoryItem.createMany({
-        data: batch
-      });
+      try {
+        await prisma.inventoryItem.createMany({
+          data: batch
+        });
+      } catch (errMany) {
+        // Fallback to transaction if createMany fails
+        await prisma.$transaction(
+          batch.map(item => prisma.inventoryItem.create({ data: item }))
+        );
+      }
     }
 
     return NextResponse.json(session, { status: 201 });
