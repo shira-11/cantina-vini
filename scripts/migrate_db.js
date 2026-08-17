@@ -42,6 +42,52 @@ if (fs.existsSync(dbPath)) {
     } catch (e) {
       console.log('UserSession table status:', e.message);
     }
+
+    try {
+      db.prepare('ALTER TABLE Location ADD COLUMN parentId INTEGER').run();
+      console.log('Added parentId column to Location');
+    } catch (e) {
+      console.log('parentId column on Location exists or skipped');
+    }
+
+    try {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS InventorySession (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          year INTEGER NOT NULL DEFAULT 2026,
+          status TEXT NOT NULL DEFAULT 'in_progress',
+          notes TEXT,
+          createdBy TEXT,
+          createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          completedAt DATETIME,
+          updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('Created InventorySession table');
+    } catch (e) {
+      console.log('InventorySession table status:', e.message);
+    }
+
+    try {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS InventoryItem (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sessionId INTEGER NOT NULL,
+          wineId INTEGER NOT NULL,
+          locationId INTEGER,
+          expectedQty INTEGER NOT NULL DEFAULT 0,
+          countedQty INTEGER,
+          isChecked BOOLEAN NOT NULL DEFAULT 0,
+          notes TEXT,
+          createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('Created InventoryItem table');
+    } catch (e) {
+      console.log('InventoryItem table status:', e.message);
+    }
   } catch (err) {
     console.error('Migration execution error:', err);
   }
