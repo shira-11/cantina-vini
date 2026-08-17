@@ -14,13 +14,7 @@ import GlobalMovementLog from './components/GlobalMovementLog';
 
 export default function Home() {
   const router = useRouter();
-  const [wines, setWines] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const cached = sessionStorage.getItem('homeWines');
-      if (cached) return JSON.parse(cached);
-    }
-    return [];
-  });
+  const [wines, setWines] = useState([]);
   const [loading, setLoading] = useState(() => {
     if (typeof window !== 'undefined') {
       return !sessionStorage.getItem('homeWines');
@@ -471,13 +465,6 @@ export default function Home() {
       const data = await res.json();
       if (Array.isArray(data)) {
         setWines(data);
-        if (typeof window !== 'undefined') {
-          try {
-            sessionStorage.setItem('homeWines', JSON.stringify(data));
-          } catch (e) {
-            console.warn("Could not save to sessionStorage:", e);
-          }
-        }
       } else {
         console.error("API returned error:", data);
         setWines([]);
