@@ -49,6 +49,12 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('homeFilters');
+          sessionStorage.removeItem('homeSearch');
+          sessionStorage.removeItem('homeWines');
+          sessionStorage.removeItem('homeExpandedGroups');
+        }
         window.location.href = '/';
       } else {
         setError(data.error || 'Errore durante il login');

@@ -503,7 +503,7 @@ export default function Home() {
 
   const filteredWines = wines.map(w => {
     let displayStock = w.totalStock;
-    if (filters.location) {
+    if (canViewFilter('location') && filters.location) {
       let stockInLoc = 0;
       for (const m of w.movements) {
         if (m.location?.name === filters.location) {
@@ -515,25 +515,29 @@ export default function Home() {
     }
     return { ...w, displayStock };
   }).filter(w => {
-    if (filters.country && w.country !== filters.country) return false;
-    if (filters.region && w.region !== filters.region) return false;
-    if (filters.producerCellar && w.producerCellar !== filters.producerCellar) return false;
-    if (filters.producer && w.producer !== filters.producer) return false;
-    if (filters.classification && w.classification !== filters.classification) return false;
-    if (filters.category && w.category !== filters.category) return false;
+    if (canViewFilter('country') && filters.country && w.country !== filters.country) return false;
+    if (canViewFilter('region') && filters.region && w.region !== filters.region) return false;
+    if (canViewFilter('producerCellar') && filters.producerCellar && w.producerCellar !== filters.producerCellar) return false;
+    if (canViewFilter('producer') && filters.producer && w.producer !== filters.producer) return false;
+    if (canViewFilter('classification') && filters.classification && w.classification !== filters.classification) return false;
+    if (canViewFilter('category') && filters.category && w.category !== filters.category) return false;
 
-    if (filters.availability === 'available' && w.displayStock <= 0) return false;
-    if (filters.availability === 'unavailable' && w.displayStock > 0) return false;
-    if (filters.availability === 'was_in_stock') {
-      if (w.displayStock > 0) return false;
-      if (!w.movements || w.movements.length === 0) return false;
+    if (canViewFilter('availability')) {
+      if (filters.availability === 'available' && w.displayStock <= 0) return false;
+      if (filters.availability === 'unavailable' && w.displayStock > 0) return false;
+      if (filters.availability === 'was_in_stock') {
+        if (w.displayStock > 0) return false;
+        if (!w.movements || w.movements.length === 0) return false;
+      }
     }
-    if (filters.location && w.displayStock <= 0 && filters.availability !== 'unavailable' && filters.availability !== 'was_in_stock') return false;
+    if (canViewFilter('location') && filters.location && w.displayStock <= 0 && filters.availability !== 'unavailable' && filters.availability !== 'was_in_stock') return false;
 
-    if (filters.photo === 'with_photo' && !w.photo) return false;
-    if (filters.photo === 'without_photo' && w.photo) return false;
+    if (canViewFilter('photo')) {
+      if (filters.photo === 'with_photo' && !w.photo) return false;
+      if (filters.photo === 'without_photo' && w.photo) return false;
+    }
 
-    if (filters.bottleType) {
+    if (canViewFilter('bottleType') && filters.bottleType) {
       const hasMovementBottle = w.movements && w.movements.some(m => m.bottleType === filters.bottleType);
       if (w.bottleType !== filters.bottleType && !hasMovementBottle) {
         return false;
