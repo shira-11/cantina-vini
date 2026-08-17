@@ -24,6 +24,13 @@ if (fs.existsSync(dbPath)) {
     }
 
     try {
+      db.prepare('UPDATE Wine SET isArchived = 0 WHERE isArchived IS NULL').run();
+      console.log('Updated null isArchived values to 0');
+    } catch (e) {
+      console.log('isArchived update skipped:', e.message);
+    }
+
+    try {
       db.exec(`
         CREATE TABLE IF NOT EXISTS UserSession (
           id INTEGER PRIMARY KEY AUTOINCREMENT,

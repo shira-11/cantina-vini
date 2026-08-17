@@ -43,7 +43,7 @@ export async function GET(request) {
     // Fetch wines along with their movements to calculate total stock
     const wines = await prisma.wine.findMany({
       where: {
-        isArchived: showArchived,
+        ...(showArchived ? { isArchived: true } : { OR: [{ isArchived: false }, { isArchived: null }] }),
         ...(searchConditions.length > 0 ? { AND: searchConditions } : {})
       },
       include: {
