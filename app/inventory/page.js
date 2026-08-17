@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, Wine, CheckCircle2, AlertTriangle, Plus, Search,
   Printer, Save, Check, RefreshCw, XCircle, FileText, Calendar,
-  ChevronDown, ChevronUp, Layers, CheckSquare, ShieldCheck
+  ChevronDown, ChevronUp, Layers, CheckSquare, ShieldCheck, Camera
 } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -15,6 +15,62 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [locations, setLocations] = useState([]);
+
+  // Photo preview hover state
+  const [hoveredPhoto, setHoveredPhoto] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const photoTimerRef = useRef(null);
+  const [photoPreviewSeconds, setPhotoPreviewSeconds] = useState(3);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.photoPreviewSeconds) {
+          setPhotoPreviewSeconds(data.photoPreviewSeconds);
+        }
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  const showWinePhotoNearElement = (e, photoUrl) => {
+    if (!photoUrl) return;
+    if (e && e.stopPropagation) e.stopPropagation();
+
+    if (photoTimerRef.current) {
+      clearTimeout(photoTimerRef.current);
+      photoTimerRef.current = null;
+    }
+
+    let posX = 0;
+    let posY = 0;
+
+    if (e && e.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      posY = rect.bottom + 12;
+      posX = Math.max(10, rect.left + 20);
+
+      if (typeof window !== 'undefined' && posX + 250 > window.innerWidth) {
+        posX = Math.max(10, window.innerWidth - 260);
+      }
+    } else if (e) {
+      posX = e.clientX + 20;
+      posY = e.clientY + 20;
+    }
+
+    setMousePos({ x: posX || 200, y: posY || 200 });
+    setHoveredPhoto(photoUrl);
+  };
+
+  const startPhotoHideTimerAfterLeave = () => {
+    if (photoTimerRef.current) {
+      clearTimeout(photoTimerRef.current);
+    }
+    photoTimerRef.current = setTimeout(() => {
+      setHoveredPhoto(null);
+      photoTimerRef.current = null;
+    }, photoPreviewSeconds * 1000);
+  };
   
   // Modal for new inventory
   const [showNewModal, setShowNewModal] = useState(false);
@@ -744,36 +800,64 @@ export default function InventoryPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {Array.from(groupedItems.entries()).map(([wineName, itemsInGroup]) => (
-                  <div
-                    key={wineName}
-                    style={{
-                      background: 'white',
-                      borderRadius: '12px',
-                      border: '1px solid #e2e8f0',
-                      overflow: 'hidden',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
-                    }}
-                  >
-                    {/* Wine Group Title */}
-                    <div style={{
-                      backgroundColor: '#f8fafc',
-                      padding: '12px 16px',
-                      borderBottom: '1px solid #e2e8f0',
-                      display: 'flex',
-                      justify: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Wine size={20} color="#3b82f6" />
-                        <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a', fontWeight: 'bold' }}>
-                          {wineName}
-                        </h3>
-                        <span style={{ fontSize: '12px', color: '#64748b', background: '#e2e8f0', padding: '2px 8px', borderRadius: '10px' }}>
-                          {itemsInGroup.length} {itemsInGroup.length === 1 ? 'annata/formato' : 'annate/formati'}
-                        </span>
+                {Array.from(groupedItems.entries()).map(([wineName, itemsInGroup]) => {
+                  const groupPhoto = itemsInGroup.find(i => i.wine?.photo)?.wine?.photo;
+                  return (
+                    <div
+                      key={wineName}
+                      style={{
+                        background: 'white',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        overflow: 'hidden',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                      }}
+                    >
+                      {/* Wine Group Title */}
+                      <div style={{
+                        backgroundColor: '#f8fafc',
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #e2e8f0',
+                        display: 'flex',
+                        justify: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Wine size={20} color="#3b82f6" />
+                          <h3
+                            onClick={(e) => groupPhoto && showWinePhotoNearElement(e, groupPhoto)}
+                            onMouseEnter={(e) => groupPhoto && showWinePhotoNearElement(e, groupPhoto)}
+                            onMouseLeave={startPhotoHideTimerAfterLeave}
+                            style={{
+                              margin: 0,
+                              fontSize: '1.1rem',
+                              color: groupPhoto ? '#1e40af' : '#0f172a',
+                              fontWeight: 'bold',
+                              cursor: groupPhoto ? 'pointer' : 'default',
+                              textDecoration: groupPhoto ? 'underline' : 'none',
+                              textDecorationStyle: 'dotted',
+                              textUnderlineOffset: '4px'
+                            }}
+                            title={groupPhoto ? "Passa il mouse o tocca per vedere la foto della bottiglia" : ""}
+                          >
+                            {wineName}
+                          </h3>
+                          {groupPhoto && (
+                            <span
+                              onClick={(e) => showWinePhotoNearElement(e, groupPhoto)}
+                              onMouseEnter={(e) => showWinePhotoNearElement(e, groupPhoto)}
+                              onMouseLeave={startPhotoHideTimerAfterLeave}
+                              style={{ cursor: 'pointer', fontSize: '15px' }}
+                              title="Foto disponibile (passa il mouse o tocca)"
+                            >
+                              📷
+                            </span>
+                          )}
+                          <span style={{ fontSize: '12px', color: '#64748b', background: '#e2e8f0', padding: '2px 8px', borderRadius: '10px' }}>
+                            {itemsInGroup.length} {itemsInGroup.length === 1 ? 'annata/formato' : 'annate/formati'}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
                     {/* Vintages Checklist Rows */}
                     <div style={{ divideY: '1px solid #f1f5f9' }}>
@@ -822,14 +906,21 @@ export default function InventoryPage() {
 
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{
-                                    fontSize: '13px',
-                                    fontWeight: 'bold',
-                                    padding: '2px 8px',
-                                    backgroundColor: '#e0f2fe',
-                                    color: '#0369a1',
-                                    borderRadius: '4px'
-                                  }}>
+                                  <span
+                                    onClick={(e) => (wine.photo || groupPhoto) && showWinePhotoNearElement(e, wine.photo || groupPhoto)}
+                                    onMouseEnter={(e) => (wine.photo || groupPhoto) && showWinePhotoNearElement(e, wine.photo || groupPhoto)}
+                                    onMouseLeave={startPhotoHideTimerAfterLeave}
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: 'bold',
+                                      padding: '2px 8px',
+                                      backgroundColor: '#e0f2fe',
+                                      color: '#0369a1',
+                                      borderRadius: '4px',
+                                      cursor: (wine.photo || groupPhoto) ? 'pointer' : 'default'
+                                    }}
+                                    title={(wine.photo || groupPhoto) ? "Passa il mouse o tocca per vedere la foto" : ""}
+                                  >
                                     Annata {wine.vintage || 'S.A.'}
                                   </span>
 
@@ -971,7 +1062,8 @@ export default function InventoryPage() {
                       })}
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
             )}
           </div>
@@ -1143,6 +1235,51 @@ export default function InventoryPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Bottle Photo Preview Popup */}
+      {hoveredPhoto && (
+        <div
+          onMouseEnter={() => {
+            if (photoTimerRef.current) {
+              clearTimeout(photoTimerRef.current);
+              photoTimerRef.current = null;
+            }
+          }}
+          onMouseLeave={() => {
+            setHoveredPhoto(null);
+          }}
+          onClick={() => setHoveredPhoto(null)}
+          style={{
+            position: 'fixed',
+            left: `${mousePos.x}px`,
+            top: `${mousePos.y}px`,
+            zIndex: 99999,
+            backgroundColor: 'white',
+            padding: '8px',
+            borderRadius: '12px',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
+            pointerEvents: 'auto',
+            cursor: 'pointer',
+            border: '2px solid #3b82f6',
+            maxWidth: '240px'
+          }}
+        >
+          <img
+            src={hoveredPhoto}
+            alt="Anteprima bottiglia"
+            style={{
+              maxWidth: '220px',
+              maxHeight: '300px',
+              width: 'auto',
+              height: 'auto',
+              borderRadius: '8px',
+              display: 'block',
+              objectFit: 'contain',
+              margin: '0 auto'
+            }}
+          />
         </div>
       )}
     </div>
