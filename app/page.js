@@ -493,6 +493,11 @@ export default function Home() {
     fetchWinesRef.current = fetchWines;
   }, [search, showArchive, wines.length]);
 
+  const canViewFilter = (filterId) => {
+    if (!currentUser || currentUser.role !== 'viewer') return true;
+    return visitorAllowedFilters.includes(filterId);
+  };
+
   const getBadgeClass = (category) => {
     const cat = category?.toLowerCase() || '';
     if (cat.includes('ross')) return 'badge red';
@@ -763,11 +768,6 @@ export default function Home() {
   if (!isMounted) {
     return null;
   }
-
-  const canViewFilter = (filterId) => {
-    if (!currentUser || currentUser.role !== 'viewer') return true;
-    return visitorAllowedFilters.includes(filterId);
-  };
 
   const handleWineClick = (wineId) => {
     if (currentUser?.role === 'viewer' && !visitorAllowWineDetails) {
