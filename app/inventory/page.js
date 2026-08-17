@@ -1,4 +1,5 @@
 'use client';
+// Version 1.0.4 - Clean Wine Titles without Camera Icon or Underline
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
