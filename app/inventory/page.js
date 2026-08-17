@@ -831,28 +831,14 @@ export default function InventoryPage() {
                             style={{
                               margin: 0,
                               fontSize: '1.1rem',
-                              color: groupPhoto ? '#1e40af' : '#0f172a',
+                              color: '#0f172a',
                               fontWeight: 'bold',
-                              cursor: groupPhoto ? 'pointer' : 'default',
-                              textDecoration: groupPhoto ? 'underline' : 'none',
-                              textDecorationStyle: 'dotted',
-                              textUnderlineOffset: '4px'
+                              cursor: groupPhoto ? 'pointer' : 'default'
                             }}
                             title={groupPhoto ? "Passa il mouse o tocca per vedere la foto della bottiglia" : ""}
                           >
                             {wineName}
                           </h3>
-                          {groupPhoto && (
-                            <span
-                              onClick={(e) => showWinePhotoNearElement(e, groupPhoto)}
-                              onMouseEnter={(e) => showWinePhotoNearElement(e, groupPhoto)}
-                              onMouseLeave={startPhotoHideTimerAfterLeave}
-                              style={{ cursor: 'pointer', fontSize: '15px' }}
-                              title="Foto disponibile (passa il mouse o tocca)"
-                            >
-                              📷
-                            </span>
-                          )}
                           <span style={{ fontSize: '12px', color: '#64748b', background: '#e2e8f0', padding: '2px 8px', borderRadius: '10px' }}>
                             {itemsInGroup.length} {itemsInGroup.length === 1 ? 'annata/formato' : 'annate/formati'}
                           </span>
