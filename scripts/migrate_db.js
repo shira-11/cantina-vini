@@ -95,6 +95,25 @@ if (fs.existsSync(dbPath)) {
     } catch (e) {
       console.log('InventoryItem table status:', e.message);
     }
+
+    try {
+      const locationsToEnsure = [
+        'Cantina Arezzo',
+        'Cantina Milano',
+        'Cantina Saint Moritz',
+        'Cantina Levanzo',
+        'Casa Nera'
+      ];
+      for (const locName of locationsToEnsure) {
+        const existing = db.prepare('SELECT id FROM Location WHERE name = ?').get(locName);
+        if (!existing) {
+          db.prepare('INSERT INTO Location (name) VALUES (?)').run(locName);
+          console.log(`Inserted missing location: ${locName}`);
+        }
+      }
+    } catch (e) {
+      console.log('Location sync status:', e.message);
+    }
   } catch (err) {
     console.error('Migration execution error:', err);
   }
