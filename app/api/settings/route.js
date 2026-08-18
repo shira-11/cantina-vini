@@ -49,6 +49,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching settings:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || String(error), stack: error?.stack }, { status: 500 });
   }
 }
