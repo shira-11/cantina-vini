@@ -363,27 +363,33 @@ export default function PrintScheda() {
             margin: 5mm !important;
           }
           .print-page {
-            position: relative;
+            position: relative !important;
             box-shadow: none !important;
             margin: 0 auto !important;
             width: 100% !important;
             max-width: 100% !important;
-            min-height: auto !important;
+            height: ${isLandscape ? '190mm' : '275mm'} !important;
+            max-height: ${isLandscape ? '190mm' : '275mm'} !important;
             padding: 5mm !important;
-            padding-bottom: 10mm !important;
-            page-break-after: always;
-            page-break-inside: avoid;
-            box-sizing: border-box;
-            display: block !important;
-            overflow: visible !important;
+            padding-bottom: 12mm !important;
+            break-after: page !important;
+            page-break-after: always !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
           }
           .print-page:last-child {
+            break-after: auto !important;
             page-break-after: auto !important;
           }
           thead {
             display: table-header-group;
           }
           tr {
+            break-inside: avoid;
             page-break-inside: avoid;
           }
         }
@@ -392,22 +398,28 @@ export default function PrintScheda() {
         }
         .header-section {
           display: flex;
-          gap: 2rem;
-          margin-bottom: 15px;
+          gap: 1.5rem;
+          margin-bottom: 12px;
+          break-inside: avoid;
+          page-break-inside: avoid;
         }
         .photo-container {
-          width: 300px;
-          height: 400px;
+          width: 240px;
+          height: 310px;
           flex-shrink: 0;
           display: flex;
           align-items: center;
           justify-content: center;
           border: 1px solid #f1f5f9;
           background: #f8fafc;
+          break-inside: avoid;
+          page-break-inside: avoid;
         }
         .photo-container img {
           max-width: 100%;
           max-height: 100%;
+          object-fit: contain;
+        }
           object-fit: contain;
         }
         .info-container {
@@ -796,8 +808,8 @@ export default function PrintScheda() {
               };
 
               const pages = [];
-              const ROWS_FIRST = 13;
-              const ROWS_NEXT = 30;
+              const ROWS_FIRST = 10;
+              const ROWS_NEXT = 25;
 
               const sortedGroups = [...section.groups].sort((a, b) => {
                 const catA = (a.category || 'ALTRE CATEGORIE').toUpperCase();
