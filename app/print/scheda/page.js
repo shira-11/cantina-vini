@@ -575,80 +575,129 @@ export default function PrintScheda() {
                 {hideEmptyLocations ? '🧹 Solo Cantine Attive' : '👁️ Mostra Tutte'}
               </button>
 
-              <button onClick={() => {
-                const originalTitle = document.title;
-                const fileName = getDynamicFileName();
-                document.title = fileName;
-                
-                window.print();
-                
-                setTimeout(() => {
-                  document.title = originalTitle;
-                }, 2000);
-              }} style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+              <button
+                id="btn-print-main"
+                onClick={async () => {
+                  try {
+                    const btn = document.getElementById('btn-print-main');
+                    const originalHtml = btn ? btn.innerHTML : '🖨️ Stampa';
+                    if (btn) { btn.innerHTML = '⏳ Preparazione Stampa...'; btn.disabled = true; }
+
+                    const { jsPDF } = await import('jspdf');
+                    const html2canvas = (await import('html2canvas')).default;
+                    const pages = document.querySelectorAll('.print-page');
+
+                    if (pages.length === 0) {
+                      if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+                      return;
+                    }
+
+                    const originalBg = document.body.style.backgroundColor;
+                    document.body.style.backgroundColor = 'white';
+
+                    const pdf = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    
+                    for (let i = 0; i < pages.length; i++) {
+                      if (btn) btn.innerHTML = `⏳ Pagina ${i+1}/${pages.length}...`;
+                      const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true, logging: false });
+                      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                      
+                      const imgProps = pdf.getImageProperties(imgData);
+                      const height = (imgProps.height * pdfWidth) / imgProps.width;
+                      
+                      if (i > 0) pdf.addPage();
+                      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, height);
+                    }
+
+                    pdf.autoPrint();
+                    const blobUrl = pdf.output('bloburl');
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.src = blobUrl;
+                    document.body.appendChild(iframe);
+                    iframe.onload = () => {
+                      setTimeout(() => {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                      }, 300);
+                    };
+
+                    document.body.style.backgroundColor = originalBg;
+                    if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+                  } catch (err) {
+                    console.error(err);
+                    window.print();
+                    const btn = document.getElementById('btn-print-main');
+                    if (btn) { btn.disabled = false; }
+                  }
+                }}
+                style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+              >
                 🖨️ Stampa
               </button>
 
-              <button onClick={async () => {
-                try {
-                  const btn = document.getElementById('btn-download-pdf');
-                  const originalHtml = btn.innerHTML;
-                  btn.innerHTML = '⏳ Generazione...';
-                  btn.disabled = true;
+              <button
+                id="btn-download-pdf"
+                onClick={async () => {
+                  try {
+                    const btn = document.getElementById('btn-download-pdf');
+                    const originalHtml = btn ? btn.innerHTML : '📄 Scarica PDF';
+                    if (btn) { btn.innerHTML = '⏳ Generazione PDF...'; btn.disabled = true; }
 
-                  const fileName = getDynamicFileName() + '.pdf';
+                    const fileName = getDynamicFileName() + '.pdf';
 
-                  const { jsPDF } = await import('jspdf');
-                  const html2canvas = (await import('html2canvas')).default;
-                  const pages = document.querySelectorAll('.print-page');
+                    const { jsPDF } = await import('jspdf');
+                    const html2canvas = (await import('html2canvas')).default;
+                    const pages = document.querySelectorAll('.print-page');
 
-                  if (pages.length === 0) {
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                    return;
-                  }
+                    if (pages.length === 0) {
+                      if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+                      return;
+                    }
 
-                  const originalBg = document.body.style.backgroundColor;
-                  document.body.style.backgroundColor = 'white';
+                    const originalBg = document.body.style.backgroundColor;
+                    document.body.style.backgroundColor = 'white';
 
-                  const pdf = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
-                  const pdfWidth = pdf.internal.pageSize.getWidth();
-                  
-                  for (let i = 0; i < pages.length; i++) {
-                    btn.innerHTML = `⏳ Pagina ${i+1}/${pages.length}...`;
-                    const canvas = await html2canvas(pages[i], { scale: 1.5, useCORS: true, logging: false });
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    const pdf = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
                     
-                    const imgProps = pdf.getImageProperties(imgData);
-                    const height = (imgProps.height * pdfWidth) / imgProps.width;
-                    
-                    if (i > 0) pdf.addPage();
-                    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, height);
+                    for (let i = 0; i < pages.length; i++) {
+                      if (btn) btn.innerHTML = `⏳ Pagina ${i+1}/${pages.length}...`;
+                      const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true, logging: false });
+                      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                      
+                      const imgProps = pdf.getImageProperties(imgData);
+                      const height = (imgProps.height * pdfWidth) / imgProps.width;
+                      
+                      if (i > 0) pdf.addPage();
+                      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, height);
+                    }
+
+                    const blob = pdf.output('blob');
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }, 1000);
+
+                    document.body.style.backgroundColor = originalBg;
+                    if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+                  } catch (err) {
+                    console.error(err);
+                    alert("Errore durante la generazione. Usa il bottone Stampa.");
+                    const btn = document.getElementById('btn-download-pdf');
+                    if (btn) { btn.disabled = false; }
                   }
-
-                  const blob = pdf.output('blob');
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.style.display = 'none';
-                  a.href = url;
-                  a.download = fileName;
-                  document.body.appendChild(a);
-                  a.click();
-                  setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                  }, 1000);
-
-                  document.body.style.backgroundColor = originalBg;
-                  btn.innerHTML = originalHtml;
-                  btn.disabled = false;
-                } catch (err) {
-                  console.error(err);
-                  alert("Errore durante la generazione automatica. Usa il bottone Stampa.");
-                  const btn = document.getElementById('btn-download-pdf');
-                  if(btn) { btn.innerHTML = '📄 Scarica PDF'; btn.disabled = false; }
-                }
-              }} id="btn-download-pdf" style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                }}
+                style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+              >
                 📄 Scarica PDF
               </button>
             </div>
