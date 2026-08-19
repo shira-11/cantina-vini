@@ -189,7 +189,7 @@ export const MobileCatalog = ({
 
 
   return (
-    <div style={{ padding: '1rem', backgroundColor: '#e2e8f0', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ padding: '1rem', backgroundColor: '#e2e8f0', minHeight: '100vh', fontFamily: 'system-ui, sans-serif', maxWidth: '900px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h1
