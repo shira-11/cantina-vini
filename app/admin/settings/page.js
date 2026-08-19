@@ -1,4 +1,5 @@
 'use client';
+// Version 1.0.5 - Clean Visitor Settings & Header Buttons Permissions
 
 export const dynamic = 'force-dynamic';
 
