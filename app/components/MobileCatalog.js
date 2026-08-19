@@ -165,149 +165,174 @@ export const MobileCatalog = ({
 
   return (
     <div style={{ padding: '1rem', backgroundColor: '#e2e8f0', minHeight: '100vh', fontFamily: 'system-ui, sans-serif', maxWidth: '900px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h1
-          onClick={() => {
-            if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-              window.location.href = '/';
-            } else {
-              setSearch('');
-              setFilters({
-                country: '',
-                region: '',
-                producerCellar: '',
-                producer: '',
-                classification: '',
-                category: '',
-                location: '',
-                bottleType: ''
-              });
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-          }}
-          style={{ fontSize: '1.5rem', margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
-          title="Torna alla Home e resetta filtri"
-        >
-          <Wine size={24} color="#6366f1" /> CANTINA
-        </h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {currentUser?.username && (
-            <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569', backgroundColor: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
-              {currentUser.username}
-            </span>
-          )}
-          {currentUser?.role === 'admin' && (
-            <>
-              <button
-                onClick={() => router.push('/wine/new')}
-                style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
-                title="Aggiungi Vino"
-              >
-                <Plus size={22} />
-              </button>
-              <button
-                onClick={() => setIsGlobalLogOpen(true)}
-                style={{ background: 'none', border: 'none', color: '#3b82f6', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
-                title="Cronologia Movimenti"
-              >
-                <History size={22} />
-              </button>
-              <button
-                onClick={() => router.push('/inventory')}
-                style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
-                title="Inventario Fisico"
-              >
-                <CheckSquare size={22} />
-              </button>
-              <button
-                onClick={() => router.push('/admin/users')}
-                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
-                title="Gestione Utenti"
-              >
-                <Shield size={18} />
-                <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>Utenti</span>
-              </button>
-              <button
-                onClick={() => router.push('/admin/settings')}
-                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
-                title="Impostazioni Visitatore"
-              >
-                <Settings size={18} />
-                <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>Impostazioni</span>
-              </button>
-            </>
-          )}
-          <button
-            onClick={async () => {
-              await fetch('/api/auth/logout', { method: 'POST' });
-              window.location.href = '/login';
+      {/* Sticky Header & Search Area */}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        backgroundColor: '#e2e8f0',
+        paddingTop: '0.75rem',
+        paddingBottom: '0.75rem',
+        marginTop: '-1rem',
+        marginLeft: '-1rem',
+        marginRight: '-1rem',
+        paddingLeft: '1rem',
+        paddingRight: '1rem',
+        borderBottom: '2px solid #cbd5e1',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+        marginBottom: '1rem'
+      }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h1
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+                window.location.href = '/';
+              } else {
+                setSearch('');
+                setFilters({
+                  country: '',
+                  region: '',
+                  producerCellar: '',
+                  producer: '',
+                  classification: '',
+                  category: '',
+                  location: '',
+                  bottleType: ''
+                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
             }}
-            style={{ background: 'none', border: 'none', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem' }}
-            title="Esci dal gestionale"
+            style={{ fontSize: '1.5rem', margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+            title="Torna alla Home e resetta filtri"
           >
-            <LogOut size={22} color="#ef4444" />
-            <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: '600' }}>Esci</span>
-          </button>
-          {currentUser?.role !== 'viewer' && (
+            <Wine size={24} color="#6366f1" /> CANTINA
+          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {currentUser?.username && (
+              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569', backgroundColor: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                {currentUser.username}
+              </span>
+            )}
+            {currentUser?.role === 'admin' && (
+              <>
+                <button
+                  onClick={() => router.push('/wine/new')}
+                  style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
+                  title="Aggiungi Vino"
+                >
+                  <Plus size={22} />
+                </button>
+                <button
+                  onClick={() => setIsGlobalLogOpen(true)}
+                  style={{ background: 'none', border: 'none', color: '#3b82f6', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
+                  title="Cronologia Movimenti"
+                >
+                  <History size={22} />
+                </button>
+                <button
+                  onClick={() => router.push('/inventory')}
+                  style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
+                  title="Inventario Fisico"
+                >
+                  <CheckSquare size={22} />
+                </button>
+                <button
+                  onClick={() => router.push('/admin/users')}
+                  style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
+                  title="Gestione Utenti"
+                >
+                  <Shield size={18} />
+                  <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>Utenti</span>
+                </button>
+                <button
+                  onClick={() => router.push('/admin/settings')}
+                  style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
+                  title="Impostazioni Visitatore"
+                >
+                  <Settings size={18} />
+                  <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>Impostazioni</span>
+                </button>
+              </>
+            )}
             <button
-              onClick={() => setForceDesktop(true)}
-              style={{ background: 'none', border: 'none', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem' }}
-              title="Passa alla visualizzazione Desktop"
-            >
-              <Monitor size={20} />
-              <span style={{ fontSize: '0.85rem' }}>Desktop</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div style={{ position: 'relative', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1 }}>
-          <Search size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-          <input
-            type="text"
-            placeholder="Cerca vino..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ width: '100%', padding: `0.75rem ${speechSupported ? '4rem' : '2.5rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
-          />
-          {speechSupported && (
-            <button
-              onClick={startVoiceSearch}
-              title="Ricerca vocale"
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '0',
-                cursor: 'pointer',
-                position: 'absolute',
-                right: search ? '36px' : '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: isListening ? '#ef4444' : '#94a3b8',
-                animation: isListening ? 'pulse 1.5s infinite' : 'none'
+              onClick={async () => {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
               }}
+              style={{ background: 'none', border: 'none', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem' }}
+              title="Esci dal gestionale"
             >
-              <Mic size={18} />
+              <LogOut size={22} color="#ef4444" />
+              <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: '600' }}>Esci</span>
             </button>
-          )}
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 0 }}
-            >
-              <X size={18} />
-            </button>
-          )}
+            {currentUser?.role !== 'viewer' && (
+              <button
+                onClick={() => setForceDesktop(true)}
+                style={{ background: 'none', border: 'none', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem' }}
+                title="Passa alla visualizzazione Desktop"
+              >
+                <Monitor size={20} />
+                <span style={{ fontSize: '0.85rem' }}>Desktop</span>
+              </button>
+            )}
+          </div>
         </div>
-        <button
-          onClick={() => setShowFilters(true)}
-          style={{ marginLeft: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.75rem', display: 'flex', alignItems: 'center', cursor: 'pointer', color: '#475569' }}
-        >
-          <Filter size={20} />
-        </button>
+
+        {/* Search Bar */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <input
+              type="text"
+              placeholder="Cerca vino..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ width: '100%', padding: `0.75rem ${speechSupported ? '4rem' : '2.5rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
+            />
+            {speechSupported && (
+              <button
+                onClick={startVoiceSearch}
+                title="Ricerca vocale"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '0',
+                  cursor: 'pointer',
+                  position: 'absolute',
+                  right: search ? '36px' : '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: isListening ? '#ef4444' : '#94a3b8',
+                  animation: isListening ? 'pulse 1.5s infinite' : 'none'
+                }}
+              >
+                <Mic size={18} />
+              </button>
+            )}
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 0 }}
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => setShowFilters(true)}
+            style={{ marginLeft: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.75rem', display: 'flex', alignItems: 'center', cursor: 'pointer', color: '#475569' }}
+          >
+            <Filter size={20} />
+          </button>
+        </div>
+
+        {/* Wine Count Line */}
+        {!loading && (
+          <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600' }}>
+            Trovati {wines.length} vini
+          </div>
+        )}
       </div>
 
       {/* Wine List */}
@@ -325,9 +350,6 @@ export const MobileCatalog = ({
           </div>
         ) : (
           <>
-            <div style={{ marginBottom: '1rem', fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-              Trovati {wines.length} vini
-            </div>
             {visibleWines.map(wine => (
               <div
                 key={wine.id}
