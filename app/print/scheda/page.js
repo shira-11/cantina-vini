@@ -295,6 +295,12 @@ export default function PrintScheda() {
         main {
           padding: 0 !important;
         }
+        #pdf-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+        }
         .print-page {
           page-break-after: always;
           position: relative;
@@ -304,7 +310,7 @@ export default function PrintScheda() {
           background: white;
           padding: 10mm;
           padding-bottom: 15mm;
-          margin-bottom: 20px;
+          margin: 0 auto 20px auto;
           box-shadow: 0 4px 6px rgba(0,0,0,0.1);
           box-sizing: border-box;
           display: flex;

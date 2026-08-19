@@ -124,8 +124,7 @@ export default function PrintGiacenzeDettaglio() {
           max-width: 96vw;
           min-height: ${isLandscape ? '190mm' : '260mm'};
           padding: 10mm;
-          margin-top: 20px;
-          margin-bottom: 20px;
+          margin: 20px auto;
           box-shadow: 0 4px 10px rgba(0,0,0,0.5);
           box-sizing: border-box;
           overflow-x: auto;

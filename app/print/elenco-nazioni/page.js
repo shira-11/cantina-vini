@@ -167,8 +167,7 @@ export default function PrintElencoNazioni() {
           max-width: 96vw;
           min-height: 260mm;
           padding: 15mm;
-          margin-top: 20px;
-          margin-bottom: 20px;
+          margin: 20px auto;
           box-shadow: 0 4px 10px rgba(0,0,0,0.5);
           box-sizing: border-box;
           border-radius: 8px;
