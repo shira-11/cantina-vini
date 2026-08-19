@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import * as XLSX from 'xlsx';
 
-import { getCountryFlag, getBadgeClass } from './utils/wineHelpers';
+import { getCountryFlag, getBadgeClass, correctSpokenWineTranscript } from './utils/wineHelpers';
 import { StockCell } from './components/StockCell';
 import { MobileCatalog } from './components/MobileCatalog';
 import HelpGuideModal from './components/HelpGuideModal';
@@ -262,19 +262,25 @@ export default function Home() {
 
     recognition.lang = 'it-IT';
     recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.maxAlternatives = 5;
 
     recognition.onstart = () => {
       setIsListening(true);
     };
 
     recognition.onresult = (event) => {
-      let transcript = event.results[0][0].transcript.toLowerCase().trim();
+      let rawTranscript = event.results[0][0].transcript;
+      if (event.results[0].length > 1) {
+        for (let k = 0; k < event.results[0].length; k++) {
+          const alt = event.results[0][k].transcript;
+          if (alt) {
+            rawTranscript = alt;
+            break;
+          }
+        }
+      }
 
-      // Clean up common spoken prefixes
-      transcript = transcript
-        .replace(/^(cerca|trova|trovami|mostra|mostrami|fammi vedere)\s+/gi, '')
-        .trim();
+      let transcript = correctSpokenWineTranscript(rawTranscript, wines);
 
       const newFilters = { ...filters };
 

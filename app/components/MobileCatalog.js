@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wine, Search, Monitor, Filter, X, Loader2, Plus, Settings, Shield, History, LogOut, Mic, CheckSquare } from 'lucide-react';
-import { getCountryFlag, getBadgeClass, getStockBreakdown } from '../utils/wineHelpers';
+import { getCountryFlag, getBadgeClass, getStockBreakdown, correctSpokenWineTranscript } from '../utils/wineHelpers';
 import { StockCell } from './StockCell';
 
 export const MobileCatalog = ({
@@ -65,19 +65,25 @@ export const MobileCatalog = ({
 
     recognition.lang = 'it-IT';
     recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.maxAlternatives = 5;
 
     recognition.onstart = () => {
       setIsListening(true);
     };
 
     recognition.onresult = (event) => {
-      let transcript = event.results[0][0].transcript.toLowerCase().trim();
+      let rawTranscript = event.results[0][0].transcript;
+      if (event.results[0].length > 1) {
+        for (let k = 0; k < event.results[0].length; k++) {
+          const alt = event.results[0][k].transcript;
+          if (alt) {
+            rawTranscript = alt;
+            break;
+          }
+        }
+      }
 
-      // Clean up common spoken prefixes
-      transcript = transcript
-        .replace(/^(cerca|trova|trovami|mostra|mostrami|fammi vedere)\s+/gi, '')
-        .trim();
+      let transcript = correctSpokenWineTranscript(rawTranscript, wines);
 
       const newFilters = { ...filters };
 

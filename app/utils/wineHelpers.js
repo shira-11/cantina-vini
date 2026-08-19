@@ -55,3 +55,99 @@ export const getStockBreakdown = (winesArray) => {
     .sort((a, b) => b[1] - a[1])
     .map(([loc, qty]) => ({ loc, qty }));
 };
+
+export function levenshteinDistance(a, b) {
+  if (!a) return b ? b.length : 0;
+  if (!b) return a.length;
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+export function correctSpokenWineTranscript(rawTranscript, winesList = []) {
+  if (!rawTranscript) return '';
+  let transcript = rawTranscript.toLowerCase().trim();
+
+  // 1. Clean up spoken Italian search prefixes
+  transcript = transcript
+    .replace(/^(cerca|trova|trovami|mostra|mostrami|fammi vedere|voglio|vorrei)\s+/gi, '')
+    .trim();
+
+  // 2. Phonetic Italian Wine Dictionary (common speech-to-text misspellings)
+  const phoneticMap = {
+    "turiga": "turriga", "torriga": "turriga", "turiga 2008": "turriga 2008",
+    "capra": "caprai", "capria": "caprai", "arnaldo capra": "arnaldo caprai",
+    "volsem": "volxem", "volksen": "volxem", "folxem": "volxem",
+    "sassi caia": "sassicaia", "sassi caja": "sassicaia",
+    "tignanelo": "tignanello", "tinanello": "tignanello",
+    "ornelaia": "ornellaia", "ornelaja": "ornellaia",
+    "brunelo": "brunello", "barolo": "barolo",
+    "cannonao": "cannonau", "canonau": "cannonau", "cannona": "cannonau",
+    "nuragi": "nuraghi",
+    "argiolas": "argiolas", "arjiolas": "argiolas",
+    "san giovese": "sangiovese",
+    "quintareli": "quintarelli",
+    "val policella": "valpolicella",
+    "francia corta": "franciacorta",
+    "spagnolo": "spagna", "spagnola": "spagna",
+    "francese": "francia",
+    "tedesco": "germania", "tedesca": "germania",
+    "italiano": "italia", "italiana": "italia"
+  };
+
+  for (const [misheard, correction] of Object.entries(phoneticMap)) {
+    const regex = new RegExp(`\\b${misheard}\\b`, 'gi');
+    transcript = transcript.replace(regex, correction);
+  }
+
+  // 3. Dynamic Levenshtein fuzzy match spoken tokens against database wine terms
+  if (Array.isArray(winesList) && winesList.length > 0) {
+    const knownWords = new Set();
+    winesList.forEach(w => {
+      [w.name, w.producer, w.producerCellar, w.region, w.country, w.classification]
+        .filter(Boolean)
+        .forEach(field => {
+          field.toLowerCase().split(/[\s,/-]+/).forEach(word => {
+            if (word.length >= 4) knownWords.add(word);
+          });
+        });
+    });
+
+    const spokenTokens = transcript.split(/\s+/);
+    const correctedTokens = spokenTokens.map(token => {
+      if (token.length < 4 || knownWords.has(token)) return token;
+
+      let bestMatch = token;
+      let minDistance = 3; // Allow max 2 edits
+
+      for (const known of knownWords) {
+        if (Math.abs(known.length - token.length) > 2) continue;
+        const dist = levenshteinDistance(token, known);
+        if (dist < minDistance) {
+          minDistance = dist;
+          bestMatch = known;
+        }
+      }
+      return bestMatch;
+    });
+
+    transcript = correctedTokens.join(' ');
+  }
+
+  return transcript;
+}
