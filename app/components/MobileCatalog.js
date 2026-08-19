@@ -29,6 +29,8 @@ export const MobileCatalog = ({
   const [showFilters, setShowFilters] = useState(false);
   const [visibleCount, setVisibleCount] = useState(30);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
 
   // Compute top matching autocomplete suggestions based on search text
   const suggestions = React.useMemo(() => {
