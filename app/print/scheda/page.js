@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Wine, ArrowLeft } from 'lucide-react';
 
 export default function PrintScheda() {
+  const router = useRouter();
   const [sections, setSections] = useState([]);
   const [locations, setLocations] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
@@ -501,7 +503,8 @@ export default function PrintScheda() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div
               style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-              onClick={() => window.history.back()}
+              onClick={() => router.push('/')}
+              title="Torna alla Home Cantina"
             >
               <ArrowLeft size={32} color="white" />
               <Wine size={26} color="var(--primary-color)" />

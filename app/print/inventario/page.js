@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Wine, Printer } from 'lucide-react';
 
 export default function PrintInventarioPage() {
+  const router = useRouter();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -160,11 +162,12 @@ export default function PrintInventarioPage() {
       }}>
         <div
           style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-          onClick={() => window.close()}
+          onClick={() => router.push('/')}
+          title="Torna alla Home Cantina"
         >
           <ArrowLeft size={32} color="white" />
           <Wine size={26} color="#3b82f6" />
-          <h2 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>CHIUDI STAMPA</h2>
+          <h2 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>CANTINA</h2>
         </div>
 
         <button onClick={() => window.print()} style={{ padding: '8px 18px', fontSize: '15px', fontWeight: 'bold', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>

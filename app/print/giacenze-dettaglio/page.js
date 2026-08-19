@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Wine } from 'lucide-react';
 
 export default function PrintGiacenzeDettaglio() {
+  const router = useRouter();
   const [wines, setWines] = useState([]);
   const [locations, setLocations] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
@@ -195,7 +197,8 @@ export default function PrintGiacenzeDettaglio() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <div
             style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-            onClick={() => window.close()}
+            onClick={() => router.push('/')}
+            title="Torna alla Home Cantina"
           >
             <ArrowLeft size={32} color="white" />
             <Wine size={26} color="#3b82f6" />
