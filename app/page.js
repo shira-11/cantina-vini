@@ -122,6 +122,16 @@ export default function Home() {
     if (!photoUrl) return;
     if (e && e.stopPropagation) e.stopPropagation();
 
+    // Toggle off if clicking the currently visible photo
+    if (hoveredPhoto === photoUrl) {
+      if (photoTimerRef.current) {
+        clearTimeout(photoTimerRef.current);
+        photoTimerRef.current = null;
+      }
+      setHoveredPhoto(null);
+      return;
+    }
+
     if (photoTimerRef.current) {
       clearTimeout(photoTimerRef.current);
       photoTimerRef.current = null;
@@ -132,8 +142,6 @@ export default function Home() {
 
     if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
-      // Position top edge of photo preview strictly BELOW the bottom of the wine name text (rect.bottom + 12px)
-      // so it opens lower down ("in basso") and NEVER covers the wine name at the top!
       posY = rect.bottom + 12;
       posX = Math.max(10, rect.left + 30);
 
@@ -147,16 +155,24 @@ export default function Home() {
 
     setMousePos({ x: posX || 200, y: posY || 200 });
     setHoveredPhoto(photoUrl);
-  };
 
-  const startPhotoHideTimerAfterLeave = () => {
-    if (photoTimerRef.current) {
-      clearTimeout(photoTimerRef.current);
-    }
+    // Automatically trigger hide timer based on photoPreviewSeconds from settings
+    const seconds = photoPreviewSeconds || 3;
     photoTimerRef.current = setTimeout(() => {
       setHoveredPhoto(null);
       photoTimerRef.current = null;
-    }, photoPreviewSeconds * 1000);
+    }, seconds * 1000);
+  };
+
+  const startPhotoHideTimerAfterLeave = () => {
+    // Kept for mouseleave compatibility, ensures timer continues or refreshes
+    if (!photoTimerRef.current && hoveredPhoto) {
+      const seconds = photoPreviewSeconds || 3;
+      photoTimerRef.current = setTimeout(() => {
+        setHoveredPhoto(null);
+        photoTimerRef.current = null;
+      }, seconds * 1000);
+    }
   };
 
   const [metadata, setMetadata] = useState(null);
@@ -1802,12 +1818,19 @@ export default function Home() {
       {/* Floating Hover / Touch Image */}
       {hoveredPhoto && (
         <div
+          onClick={() => {
+            if (photoTimerRef.current) {
+              clearTimeout(photoTimerRef.current);
+              photoTimerRef.current = null;
+            }
+            setHoveredPhoto(null);
+          }}
           style={{
             position: 'fixed',
             top: Math.max(10, mousePos.y),
             left: Math.min((typeof window !== 'undefined' ? window.innerWidth : 1200) - 250, Math.max(10, mousePos.x)),
             zIndex: 9999,
-            pointerEvents: 'none',
+            cursor: 'pointer',
             backgroundColor: 'white',
             padding: '6px',
             borderRadius: '12px',
@@ -1815,6 +1838,7 @@ export default function Home() {
             border: '2px solid #8b5cf6',
             maxWidth: '240px'
           }}
+          title="Clicca per chiudere subito"
         >
           <img src={hoveredPhoto} alt="Anteprima bottiglia" style={{ maxWidth: '220px', maxHeight: '300px', width: 'auto', height: 'auto', borderRadius: '8px', display: 'block', objectFit: 'contain', margin: '0 auto' }} />
         </div>
