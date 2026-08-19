@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wine, Search, Monitor, Filter, X, Loader2, Plus, Settings, Shield, History, LogOut, Mic, CheckSquare } from 'lucide-react';
-import { getCountryFlag, getBadgeClass, getStockBreakdown, correctSpokenWineTranscript } from '../utils/wineHelpers';
+import { getCountryFlag, getBadgeClass, getStockBreakdown, correctSpokenWineTranscript, getWineSearchSuggestions } from '../utils/wineHelpers';
 import { StockCell } from './StockCell';
 
 export const MobileCatalog = ({
@@ -30,6 +30,9 @@ export const MobileCatalog = ({
   const [visibleCount, setVisibleCount] = useState(30);
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const suggestions = getWineSearchSuggestions(search, wines, 8);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -274,7 +277,7 @@ export const MobileCatalog = ({
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar with Autocomplete Suggestions */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
@@ -282,7 +285,12 @@ export const MobileCatalog = ({
               type="text"
               placeholder="Cerca vino..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setShowSuggestions(true);
+              }}
               style={{ width: '100%', padding: `0.75rem ${speechSupported ? '4rem' : '2.5rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
             />
             {speechSupported && (
@@ -307,11 +315,64 @@ export const MobileCatalog = ({
             )}
             {search && (
               <button
-                onClick={() => setSearch('')}
+                onClick={() => {
+                  setSearch('');
+                  setShowSuggestions(false);
+                }}
                 style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 0 }}
               >
                 <X size={18} />
               </button>
+            )}
+
+            {/* Google-style Autocomplete Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '6px',
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.18)',
+                  border: '1px solid #cbd5e1',
+                  maxHeight: '260px',
+                  overflowY: 'auto',
+                  zIndex: 2000
+                }}
+              >
+                {suggestions.map((s, idx) => (
+                  <div
+                    key={idx}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setSearch(s.text);
+                      setShowSuggestions(false);
+                    }}
+                    style={{
+                      padding: '0.65rem 1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      cursor: 'pointer',
+                      borderBottom: idx === suggestions.length - 1 ? 'none' : '1px solid #f1f5f9',
+                      fontSize: '0.95rem',
+                      color: '#0f172a',
+                      backgroundColor: 'white'
+                    }}
+                  >
+                    <Wine size={16} color="#8b5cf6" style={{ flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600 }}>{s.text}</span>
+                    {s.subtext && (
+                      <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
+                        {s.subtext}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
           <button

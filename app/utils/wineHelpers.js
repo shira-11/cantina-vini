@@ -151,3 +151,66 @@ export function correctSpokenWineTranscript(rawTranscript, winesList = []) {
 
   return transcript;
 }
+
+export function getWineSearchSuggestions(searchQuery, winesList = [], maxResults = 8) {
+  if (!searchQuery || !searchQuery.trim()) return [];
+  const q = searchQuery.toLowerCase().trim();
+
+  const suggestionsMap = new Map();
+
+  for (const w of winesList) {
+    if (!w) continue;
+
+    // 1. Check wine name
+    if (w.name && w.name.toLowerCase().includes(q)) {
+      const key = `wine:${w.name.toLowerCase()}`;
+      if (!suggestionsMap.has(key)) {
+        suggestionsMap.set(key, {
+          text: w.name,
+          subtext: w.producer ? `Vino • ${w.producer}` : 'Vino',
+          type: 'wine'
+        });
+      }
+    }
+
+    // 2. Check producer
+    if (w.producer && w.producer.toLowerCase().includes(q)) {
+      const key = `producer:${w.producer.toLowerCase()}`;
+      if (!suggestionsMap.has(key)) {
+        suggestionsMap.set(key, {
+          text: w.producer,
+          subtext: 'Produttore',
+          type: 'producer'
+        });
+      }
+    }
+
+    // 3. Check producerCellar
+    if (w.producerCellar && w.producerCellar.toLowerCase().includes(q)) {
+      const key = `cellar:${w.producerCellar.toLowerCase()}`;
+      if (!suggestionsMap.has(key)) {
+        suggestionsMap.set(key, {
+          text: w.producerCellar,
+          subtext: 'Cantina Produttrice',
+          type: 'cellar'
+        });
+      }
+    }
+
+    // 4. Check region
+    if (w.region && w.region.toLowerCase().includes(q)) {
+      const key = `region:${w.region.toLowerCase()}`;
+      if (!suggestionsMap.has(key)) {
+        suggestionsMap.set(key, {
+          text: w.region,
+          subtext: 'Regione',
+          type: 'region'
+        });
+      }
+    }
+
+    if (suggestionsMap.size >= maxResults * 2) break;
+  }
+
+  return Array.from(suggestionsMap.values()).slice(0, maxResults);
+}

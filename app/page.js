@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import * as XLSX from 'xlsx';
 
-import { getCountryFlag, getBadgeClass, correctSpokenWineTranscript } from './utils/wineHelpers';
+import { getCountryFlag, getBadgeClass, correctSpokenWineTranscript, getWineSearchSuggestions } from './utils/wineHelpers';
 import { StockCell } from './components/StockCell';
 import { MobileCatalog } from './components/MobileCatalog';
 import HelpGuideModal from './components/HelpGuideModal';
@@ -46,6 +46,9 @@ export default function Home() {
   const photoTimerRef = useRef(null);
   const lastPhotoOpenTimeRef = useRef(0);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const suggestions = getWineSearchSuggestions(search, wines, 8);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -899,7 +902,12 @@ export default function Home() {
                   type="text"
                   placeholder="Nome, produttore..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setShowSuggestions(true);
+                  }}
                   style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '3.5rem' : '2.25rem', width: '100%' }}
                 />
                 {speechSupported && (
@@ -925,8 +933,61 @@ export default function Home() {
                   <X
                     size={16}
                     style={{ position: 'absolute', right: 10, top: 12, color: '#94a3b8', cursor: 'pointer' }}
-                    onClick={() => setSearch('')}
+                    onClick={() => {
+                      setSearch('');
+                      setShowSuggestions(false);
+                    }}
                   />
+                )}
+
+                {/* Google-style Autocomplete Suggestions Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      marginTop: '4px',
+                      backgroundColor: 'white',
+                      borderRadius: '10px',
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.18)',
+                      border: '1px solid var(--border-color)',
+                      maxHeight: '260px',
+                      overflowY: 'auto',
+                      zIndex: 2000
+                    }}
+                  >
+                    {suggestions.map((s, idx) => (
+                      <div
+                        key={idx}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setSearch(s.text);
+                          setShowSuggestions(false);
+                        }}
+                        style={{
+                          padding: '0.6rem 0.85rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          cursor: 'pointer',
+                          borderBottom: idx === suggestions.length - 1 ? 'none' : '1px solid #f1f5f9',
+                          fontSize: '0.9rem',
+                          color: '#0f172a',
+                          backgroundColor: 'white'
+                        }}
+                      >
+                        <Wine size={15} color="#8b5cf6" style={{ flexShrink: 0 }} />
+                        <span style={{ fontWeight: 600 }}>{s.text}</span>
+                        {s.subtext && (
+                          <span style={{ fontSize: '0.78rem', color: '#64748b', marginLeft: 'auto' }}>
+                            {s.subtext}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
               {currentUser?.role !== 'viewer' && (
