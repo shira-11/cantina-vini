@@ -164,24 +164,19 @@ export const MobileCatalog = ({
 
 
   return (
-    <div style={{ padding: '1rem', backgroundColor: '#e2e8f0', minHeight: '100vh', fontFamily: 'system-ui, sans-serif', maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ backgroundColor: '#e2e8f0', minHeight: '100vh', fontFamily: 'system-ui, sans-serif', maxWidth: '900px', margin: '0 auto' }}>
       {/* Sticky Header & Search Area */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backgroundColor: '#e2e8f0',
-        paddingTop: '0.75rem',
-        paddingBottom: '0.75rem',
-        marginTop: '-1rem',
-        marginLeft: '-1rem',
-        marginRight: '-1rem',
-        paddingLeft: '1rem',
-        paddingRight: '1rem',
-        borderBottom: '2px solid #cbd5e1',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-        marginBottom: '1rem'
-      }}>
+      <div
+        className="sticky-top-header"
+        style={{
+          paddingTop: '0.75rem',
+          paddingBottom: '0.75rem',
+          paddingLeft: '1rem',
+          paddingRight: '1rem',
+          borderBottom: '2px solid #cbd5e1',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+        }}
+      >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <h1
@@ -336,7 +331,7 @@ export const MobileCatalog = ({
       </div>
 
       {/* Wine List */}
-      <div style={{ paddingBottom: '2rem' }}>
+      <div style={{ padding: '1rem', paddingBottom: '2rem' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
             <Loader2 className="spinner" size={32} style={{ animation: 'spin 1s linear infinite', margin: '0 auto' }} />

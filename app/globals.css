@@ -37,6 +37,13 @@ body {
 }
 
 /* Sidebar styling */
+.sticky-top-header {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #e2e8f0;
+}
 .sidebar {
   width: var(--sidebar-width, 300px);
   position: relative;
