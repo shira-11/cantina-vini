@@ -166,6 +166,16 @@ async function migrateAndUpload() {
     InventoryItem: () => prisma.inventoryItem.findMany()
   };
 
+  // Wipe Turso tables first in reverse dependency order for 100% exact 1-to-1 sync
+  const deleteOrder = ['InventoryItem', 'InventorySession', 'UserSession', 'WinePhoto', 'Movement', 'GrapeVariety', 'Wine', 'SystemSettings', 'User', 'Location'];
+  for (const tbl of deleteOrder) {
+    try {
+      await tursoClient.execute(`DELETE FROM ${tbl};`);
+    } catch (e) {
+      console.log(`Note clearing ${tbl}:`, e.message);
+    }
+  }
+
   for (const [tableName, fetcher] of Object.entries(modelMap)) {
     const rows = await fetcher();
     console.log(`Uploading ${rows.length} rows for table ${tableName}...`);
