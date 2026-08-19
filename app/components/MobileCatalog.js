@@ -28,8 +28,40 @@ export const MobileCatalog = ({
   const router = useRouter();
   const [showFilters, setShowFilters] = useState(false);
   const [visibleCount, setVisibleCount] = useState(30);
-  const [isListening, setIsListening] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Compute top matching autocomplete suggestions based on search text
+  const suggestions = React.useMemo(() => {
+    if (!search || search.trim().length < 1) return [];
+    const q = search.toLowerCase().trim();
+
+    const results = [];
+    const added = new Set();
+
+    // 1. Match Wine Names
+    for (const w of wines) {
+      if (!w.name) continue;
+      const nameLower = w.name.toLowerCase();
+      if (nameLower.includes(q) && !added.has(w.name)) {
+        added.add(w.name);
+        results.push({ text: w.name, type: 'Vino' });
+        if (results.length >= 8) break;
+      }
+    }
+
+    // 2. Match Producers if space left
+    if (results.length < 8) {
+      for (const w of wines) {
+        if (w.producer && w.producer.toLowerCase().includes(q) && !added.has(w.producer)) {
+          added.add(w.producer);
+          results.push({ text: w.producer, type: 'Produttore' });
+          if (results.length >= 8) break;
+        }
+      }
+    }
+
+    return results;
+  }, [search, wines]);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -282,7 +314,11 @@ export const MobileCatalog = ({
               type="text"
               placeholder="Cerca vino..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setShowSuggestions(true);
+              }}
               style={{ width: '100%', padding: `0.75rem ${speechSupported ? '4rem' : '2.5rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
             />
             {speechSupported && (
@@ -307,11 +343,64 @@ export const MobileCatalog = ({
             )}
             {search && (
               <button
-                onClick={() => setSearch('')}
+                onClick={() => {
+                  setSearch('');
+                  setShowSuggestions(false);
+                }}
                 style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 0 }}
               >
                 <X size={18} />
               </button>
+            )}
+
+            {/* Google-style Autocomplete Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                  border: '1px solid #cbd5e1',
+                  marginTop: '6px',
+                  zIndex: 1001,
+                  overflow: 'hidden'
+                }}
+              >
+                {suggestions.map((item, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setSearch(item.text);
+                      setShowSuggestions(false);
+                    }}
+                    style={{
+                      padding: '0.75rem 1rem',
+                      borderBottom: idx === suggestions.length - 1 ? 'none' : '1px solid #f1f5f9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      backgroundColor: 'white'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                      <Search size={14} color="#94a3b8" />
+                      <span style={{ fontSize: '0.95rem', fontWeight: '500', color: '#0f172a' }}>
+                        {item.text}
+                      </span>
+                    </div>
+                    {item.type && (
+                      <span style={{ fontSize: '0.75rem', color: '#6366f1', backgroundColor: '#e0e7ff', padding: '0.15rem 0.5rem', borderRadius: '6px', fontWeight: '600' }}>
+                        {item.type}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
           <button
