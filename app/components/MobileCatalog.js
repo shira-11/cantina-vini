@@ -27,7 +27,7 @@ export const MobileCatalog = ({
 }) => {
   const router = useRouter();
   const [showFilters, setShowFilters] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [visibleCount, setVisibleCount] = useState(30);
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
 
@@ -36,6 +36,23 @@ export const MobileCatalog = ({
       setSpeechSupported('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
     }
   }, []);
+
+  // Infinite scroll automatic loading
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+        setVisibleCount(prev => (prev < wines.length ? Math.min(prev + 30, wines.length) : prev));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [wines.length]);
+
+  // Reset count when filters change
+  React.useEffect(() => {
+    setVisibleCount(30);
+  }, [filters, wines.length]);
 
   const startVoiceSearch = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -387,21 +404,25 @@ export const MobileCatalog = ({
               </div>
             ))}
             {visibleCount < wines.length && (
-              <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+              <div style={{ textAlign: 'center', marginTop: '1.5rem', marginBottom: '2rem' }}>
                 <button
-                  onClick={() => setVisibleCount(prev => prev + 20)}
+                  onClick={() => setVisibleCount(prev => Math.min(prev + 40, wines.length))}
                   style={{
                     padding: '0.75rem 2rem',
                     backgroundColor: '#f1f5f9',
                     color: '#475569',
                     border: '1px solid #cbd5e1',
                     borderRadius: '24px',
-                    fontSize: '1rem',
+                    fontSize: '0.95rem',
                     fontWeight: '500',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                   }}
                 >
-                  Mostra altri ({wines.length - visibleCount})
+                  <span>🔄 Caricamento automatico... ({wines.length - visibleCount} rimanenti)</span>
                 </button>
               </div>
             )}
