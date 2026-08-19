@@ -72,52 +72,14 @@ export const MobileCatalog = ({
     };
 
     recognition.onresult = (event) => {
-      let transcript = event.results[0][0].transcript.toLowerCase();
+      let transcript = event.results[0][0].transcript.toLowerCase().trim();
+
+      // Clean up common spoken prefixes
+      transcript = transcript
+        .replace(/^(cerca|trova|trovami|mostra|mostrami|fammi vedere)\s+/gi, '')
+        .trim();
 
       const newFilters = { ...filters };
-
-      // Extract dynamic filters from existing wines data
-      const extractDynamicFilter = (field, list) => {
-        // Sort by length descending to match longest phrases first (e.g. "Pinot Nero" before "Pinot")
-        const sortedList = [...list].sort((a, b) => b.length - a.length);
-        for (const item of sortedList) {
-          if (!item) continue;
-          // Escape regex characters
-          const safeItem = item.toLowerCase().replace(/[-\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&');
-          const regex = new RegExp(`\\\\b${safeItem}\\\\b`, 'g');
-          if (regex.test(transcript)) {
-            newFilters[field] = item;
-            transcript = transcript.replace(regex, '').replace(/\\s+/g, ' ').trim();
-            break;
-          }
-        }
-      };
-
-      const uniqueCountries = [...new Set(wines.map(w => w.country).filter(Boolean))];
-      const uniqueRegions = [...new Set(wines.map(w => w.region).filter(Boolean))];
-      const uniqueClassifications = [...new Set(wines.map(w => w.classification).filter(Boolean))];
-      const uniqueBottleTypes = [...new Set(wines.map(w => w.bottleType).filter(Boolean))];
-      const uniqueProducerCellars = [...new Set(wines.map(w => w.producerCellar).filter(Boolean))];
-      const uniqueProducers = [...new Set(wines.map(w => w.producer).filter(Boolean))];
-
-      extractDynamicFilter('country', uniqueCountries);
-      extractDynamicFilter('region', uniqueRegions);
-      extractDynamicFilter('classification', uniqueClassifications);
-      extractDynamicFilter('bottleType', uniqueBottleTypes);
-      extractDynamicFilter('producerCellar', uniqueProducerCellars);
-      extractDynamicFilter('producer', uniqueProducers);
-
-      // Handle specific mappings for locations and categories (synonyms)
-      const locMap = {
-        "cantina milano": "Cantina Milano",
-        "milano": "Cantina Milano",
-        "cantina arezzo": "Cantina Arezzo",
-        "arezzo": "Cantina Arezzo",
-        "cantina saint moritz": "Cantina Saint Moritz",
-        "saint moritz": "Cantina Saint Moritz",
-        "cantina levanzo": "Cantina Levanzo",
-        "levanzo": "Cantina Levanzo"
-      };
 
       const catMap = {
         "bianco": "Bianco",
@@ -135,18 +97,25 @@ export const MobileCatalog = ({
       };
 
       for (const [key, val] of Object.entries(catMap)) {
-        const regex = new RegExp(`\\\\b${key}\\\\b`, 'g');
+        const regex = new RegExp(`\\b${key}\\b`, 'gi');
         if (regex.test(transcript)) {
           newFilters.category = val;
-          transcript = transcript.replace(regex, '').replace(/\\s+/g, ' ').trim();
+          transcript = transcript.replace(regex, '').replace(/\s+/g, ' ').trim();
           break;
         }
       }
 
+      const locMap = {
+        "cantina milano": "Cantina Milano",
+        "cantina arezzo": "Cantina Arezzo",
+        "cantina saint moritz": "Cantina Saint Moritz",
+        "cantina levanzo": "Cantina Levanzo"
+      };
+
       for (const [key, val] of Object.entries(locMap)) {
         if (transcript.includes(key)) {
           newFilters.location = val;
-          transcript = transcript.replace(key, '').replace(/\\s+/g, ' ').trim();
+          transcript = transcript.replace(key, '').replace(/\s+/g, ' ').trim();
           break;
         }
       }
