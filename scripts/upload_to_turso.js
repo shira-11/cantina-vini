@@ -1,10 +1,11 @@
+require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const { createClient } = require('@libsql/client');
 
 const prisma = new PrismaClient();
 
-const tursoUrl = 'libsql://cantina-vini-shira-11.aws-eu-west-1.turso.io';
-const tursoToken = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODcwOTA3ODEsImlkIjoiMDFhMDE2ZTQtZGQwMS03ZTUxLWIyMmEtMWJhNDQ3MjE5NWIxIiwia2lkIjoiSHc3R0dMbmtHd1YwdUs1OW9ZSGc2QnhHdlZqWWkya0ZHQzU0UTlkRW9ycyIsInJpZCI6ImNkNGE5YWVlLTQ0MDAtNDFkYS05YWZhLWY0MjNhYzlmNzEwMiJ9.P2tjJLvzc_P9p-c66kaixjFxeiWQaApSMV6t3uDOYLxkEoFJtTc9nIBNfbDJ2_0o4yn7aQNUd-JQ94p1zBP9Dw';
+const tursoUrl = process.env.TURSO_DATABASE_URL || 'libsql://cantina-vini-shira-11.aws-eu-west-1.turso.io';
+const tursoToken = process.env.TURSO_AUTH_TOKEN;
 
 const tursoClient = createClient({
   url: tursoUrl,
