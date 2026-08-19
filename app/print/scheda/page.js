@@ -372,6 +372,8 @@ export default function PrintScheda() {
             min-height: auto !important;
             padding: 5mm !important;
             padding-bottom: 10mm !important;
+            page-break-before: always !important;
+            break-before: page !important;
             page-break-after: always !important;
             break-after: page !important;
             page-break-inside: avoid !important;
@@ -379,6 +381,10 @@ export default function PrintScheda() {
             box-sizing: border-box !important;
             display: block !important;
             overflow: visible !important;
+          }
+          .print-page:first-of-type, .print-page:first-child {
+            page-break-before: auto !important;
+            break-before: auto !important;
           }
           .print-page:last-child {
             break-after: auto !important;

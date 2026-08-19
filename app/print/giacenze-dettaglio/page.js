@@ -127,10 +127,16 @@ export default function PrintGiacenzeDettaglio() {
             border-radius: 0 !important;
             display: block !important;
             overflow: visible !important;
-            break-after: page !important;
+            page-break-before: always !important;
+            break-before: page !important;
             page-break-after: always !important;
-            break-inside: avoid !important;
+            break-after: page !important;
             page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .print-page:first-of-type, .print-page:first-child {
+            page-break-before: auto !important;
+            break-before: auto !important;
           }
           table { page-break-inside: auto; }
           tr { page-break-inside: avoid; page-break-after: auto; }
