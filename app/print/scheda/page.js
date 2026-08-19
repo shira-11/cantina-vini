@@ -321,14 +321,17 @@ export default function PrintScheda() {
         }
         .cover-page {
           display: flex !important;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: ${isLandscape ? '160mm' : '200mm'} !important;
-          page-break-after: always;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
+          min-height: ${isLandscape ? '160mm' : '230mm'} !important;
+          padding: 20mm 10mm !important;
+          box-sizing: border-box !important;
+          break-after: page !important;
+          page-break-after: always !important;
         }
         .cover-title {
-          font-size: 80px;
+          font-size: 64px;
           font-weight: bold;
           margin: 0;
           text-align: center;
@@ -336,9 +339,9 @@ export default function PrintScheda() {
           letter-spacing: 2px;
         }
         .cover-subtitle {
-          font-size: 40px;
+          font-size: 32px;
           font-weight: normal;
-          margin-top: 20px;
+          margin-top: 15px;
           text-align: center;
           text-transform: uppercase;
           color: #333;
