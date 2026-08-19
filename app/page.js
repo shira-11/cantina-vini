@@ -778,7 +778,10 @@ export default function Home() {
     router.push(`/wine/${wineId}`);
   };
 
-  if (isMobile && !forceDesktop) {
+  const isVisitorUser = !currentUser || currentUser?.role === 'viewer';
+  const shouldShowMobileView = isVisitorUser ? isMobile : (typeof window !== 'undefined' && window.innerWidth < 640);
+
+  if (shouldShowMobileView && !forceDesktop) {
     return (
       <MobileCatalog
         wines={filteredWines}
