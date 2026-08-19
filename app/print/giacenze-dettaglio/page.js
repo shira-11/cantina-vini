@@ -114,20 +114,19 @@ export default function PrintGiacenzeDettaglio() {
           }
           .no-print { display: none !important; }
           header, footer, nav, .sidebar { display: none !important; }
-          @page { size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'} !important; margin: 0 !important; }
+          @page { size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'} !important; margin: 5mm !important; }
           .print-page {
             box-shadow: none !important;
             margin: 0 auto !important;
-            width: ${isLandscape ? '297mm' : '210mm'} !important;
-            max-width: ${isLandscape ? '297mm' : '210mm'} !important;
-            height: ${isLandscape ? '210mm' : '297mm'} !important;
-            max-height: ${isLandscape ? '210mm' : '297mm'} !important;
-            padding: 10mm !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: auto !important;
+            padding: 5mm !important;
             border: none !important;
             border-radius: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
+            display: block !important;
+            overflow: visible !important;
             break-after: page !important;
             page-break-after: always !important;
             break-inside: avoid !important;
