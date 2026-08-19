@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Wine, Search, Plus, Grape, MapPin, Loader2, Camera, FileText, List, FileSpreadsheet, History, ChevronDown, ChevronLeft, ChevronRight, X, Menu, Image as ImageIcon, User, LogOut, Shield, Settings, Mic, HelpCircle, CheckSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
