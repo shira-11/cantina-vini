@@ -254,7 +254,74 @@ export default function PrintGiacenzeDettaglio() {
                 document.title = originalTitle;
               }, 100);
             }} style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-              🖨️ Stampa / Salva PDF
+              🖨️ Stampa
+            </button>
+
+            <button
+              id="btn-download-pdf"
+              onClick={async () => {
+                try {
+                  const btn = document.getElementById('btn-download-pdf');
+                  const originalHtml = btn.innerHTML;
+                  btn.innerHTML = '⏳ Generazione...';
+                  btn.disabled = true;
+
+                  const dateStr = new Date().toLocaleDateString('it-IT').replace(/\//g, '-');
+                  const fileName = `Giacenze_${sortParam.toUpperCase()}_${dateStr}.pdf`;
+
+                  const { jsPDF } = await import('jspdf');
+                  const html2canvas = (await import('html2canvas')).default;
+                  const page = document.querySelector('.print-page');
+
+                  if (!page) {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                    return;
+                  }
+
+                  const originalBg = document.body.style.backgroundColor;
+                  document.body.style.backgroundColor = 'white';
+
+                  const canvas = await html2canvas(page, { scale: 2, useCORS: true, logging: false });
+                  const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+                  const pdf = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
+                  const pdfWidth = pdf.internal.pageSize.getWidth();
+                  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+                  const imgProps = pdf.getImageProperties(imgData);
+                  const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                  pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, Math.min(imgHeight, pdfHeight));
+
+                  pdf.save(fileName);
+
+                  document.body.style.backgroundColor = originalBg;
+                  btn.innerHTML = originalHtml;
+                  btn.disabled = false;
+                } catch (err) {
+                  console.error(err);
+                  alert("Errore durante la generazione automatica. Usa il bottone Stampa.");
+                  const btn = document.getElementById('btn-download-pdf');
+                  if (btn) { btn.innerHTML = '📄 Scarica PDF'; btn.disabled = false; }
+                }
+              }}
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+              }}
+            >
+              📄 Scarica PDF
             </button>
           </div>
         </div>
