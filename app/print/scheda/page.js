@@ -344,12 +344,20 @@ export default function PrintScheda() {
           color: #333;
         }
         @media print {
-          body {
-            background-color: white;
-            padding: 0;
-            margin: 0;
-            display: block;
+          html, body, main {
+            background-color: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+            width: 100% !important;
+            position: static !important;
           }
+          .no-print { display: none !important; }
+          header, footer, nav, .sidebar { display: none !important; }
           @page {
             size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'} !important;
             margin: 5mm !important;
@@ -358,14 +366,16 @@ export default function PrintScheda() {
             position: relative;
             box-shadow: none !important;
             margin: 0 auto !important;
-            width: ${isLandscape ? '277mm' : '190mm'} !important;
-            max-width: ${isLandscape ? '277mm' : '190mm'} !important;
-            min-height: ${isLandscape ? '180mm' : '260mm'} !important;
-            padding: 10mm !important;
-            padding-bottom: 15mm !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: auto !important;
+            padding: 5mm !important;
+            padding-bottom: 10mm !important;
             page-break-after: always;
             page-break-inside: avoid;
             box-sizing: border-box;
+            display: block !important;
+            overflow: visible !important;
           }
           .print-page:last-child {
             page-break-after: auto !important;

@@ -100,18 +100,32 @@ export default function PrintGiacenzeDettaglio() {
           print-color-adjust: exact;
         }
         @media print {
+          html, body, main {
+            background-color: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+            width: 100% !important;
+            position: static !important;
+          }
           .no-print { display: none !important; }
-          header.header { display: none !important; }
-          main { padding: 0 !important; }
-          body { background-color: white; padding: 0; margin: 0; display: block; }
-          @page { size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'} !important; margin: ${isLandscape ? '10mm' : '5mm'} !important; }
+          header, footer, nav, .sidebar { display: none !important; }
+          @page { size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'} !important; margin: ${isLandscape ? '8mm' : '5mm'} !important; }
           .print-page {
             box-shadow: none !important;
             margin: 0 auto !important;
-            width: ${isLandscape ? '277mm' : '190mm'} !important;
-            max-width: ${isLandscape ? '277mm' : '190mm'} !important;
+            width: 100% !important;
+            max-width: 100% !important;
             min-height: auto !important;
             padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            display: block !important;
+            overflow: visible !important;
           }
           table { page-break-inside: auto; }
           tr { page-break-inside: avoid; page-break-after: auto; }

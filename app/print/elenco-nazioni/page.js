@@ -141,19 +141,32 @@ export default function PrintElencoNazioni() {
           print-color-adjust: exact;
         }
         @media print {
+          html, body, main {
+            background-color: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+            width: 100% !important;
+            position: static !important;
+          }
           .no-print { display: none !important; }
-          header.header { display: none !important; }
-          main { padding: 0 !important; }
-          body { background-color: white; padding: 0; margin: 0; display: block; overflow: visible; }
-          @page { size: A4 portrait !important; margin: 10mm !important; }
+          header, footer, nav, .sidebar { display: none !important; }
+          @page { size: A4 portrait !important; margin: 8mm !important; }
           .print-page {
             box-shadow: none !important;
             margin: 0 auto !important;
-            width: 190mm !important;
-            max-width: 190mm !important;
-            min-height: 260mm !important;
-            padding: 10mm !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: auto !important;
+            padding: 0 !important;
+            border: none !important;
             border-radius: 0 !important;
+            display: block !important;
+            overflow: visible !important;
           }
           .table-wrapper {
             overflow: visible !important;
