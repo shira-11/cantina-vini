@@ -63,6 +63,10 @@ export async function GET() {
       visitorAllowWineDetails: allowWineDetails,
       loginPageBackground,
       photoPreviewSeconds
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+      }
     });
   } catch (error) {
     console.error('Error fetching settings:', error);
