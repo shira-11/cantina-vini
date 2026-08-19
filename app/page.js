@@ -44,6 +44,7 @@ export default function Home() {
   const [hoveredPhoto, setHoveredPhoto] = useState(null);
   const [photoPreviewSeconds, setPhotoPreviewSeconds] = useState(3);
   const photoTimerRef = useRef(null);
+  const lastPhotoOpenTimeRef = useRef(0);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -122,8 +123,13 @@ export default function Home() {
     if (!photoUrl) return;
     if (e && e.stopPropagation) e.stopPropagation();
 
-    // Toggle off if clicking the currently visible photo
+    const now = Date.now();
+
+    // Prevent Safari touchscreen double-event bug (mouseenter + click firing within 400ms)
     if (hoveredPhoto === photoUrl) {
+      if (now - lastPhotoOpenTimeRef.current < 400) {
+        return; // Ignore second event fired by touch
+      }
       if (photoTimerRef.current) {
         clearTimeout(photoTimerRef.current);
         photoTimerRef.current = null;
@@ -136,6 +142,8 @@ export default function Home() {
       clearTimeout(photoTimerRef.current);
       photoTimerRef.current = null;
     }
+
+    lastPhotoOpenTimeRef.current = now;
 
     let posX = 0;
     let posY = 0;
