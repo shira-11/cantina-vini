@@ -38,6 +38,7 @@ export default function AdminSettingsPage() {
   const [allowWineDetails, setAllowWineDetails] = useState(true);
   const [loginPageBackground, setLoginPageBackground] = useState(true);
   const [photoPreviewSeconds, setPhotoPreviewSeconds] = useState(3);
+  const [enableSearchAutocomplete, setEnableSearchAutocomplete] = useState(true);
   const [uploadingBg, setUploadingBg] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -51,6 +52,7 @@ export default function AdminSettingsPage() {
           setAllowedButtons(data.visitorAllowedButtons || HEADER_BUTTON_OPTIONS.map(b => b.id));
           setAllowWineDetails(data.visitorAllowWineDetails !== false);
           setLoginPageBackground(data.loginPageBackground !== false);
+          setEnableSearchAutocomplete(data.enableSearchAutocomplete !== false);
           if (data.photoPreviewSeconds !== undefined) {
             setPhotoPreviewSeconds(data.photoPreviewSeconds);
           }
@@ -111,7 +113,8 @@ export default function AdminSettingsPage() {
           visitorAllowedButtons: allowedButtons,
           visitorAllowWineDetails: allowWineDetails,
           loginPageBackground: loginPageBackground,
-          photoPreviewSeconds: photoPreviewSeconds
+          photoPreviewSeconds: photoPreviewSeconds,
+          enableSearchAutocomplete: enableSearchAutocomplete
         })
       });
 
@@ -150,24 +153,128 @@ export default function AdminSettingsPage() {
         setMessage({ text: 'Errore durante il caricamento dello sfondo', type: 'error' });
       }
     } catch (err) {
-      setMessage({ text: 'Errore di connessione', type: 'error' });
+      setMessage({ text: 'Errore di caricamento', type: 'error' });
     } finally {
       setUploadingBg(false);
-      setTimeout(() => setMessage({ text: '', type: '' }), 4000);
+      setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     }
   };
 
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'system-ui' }}>
+        <p>Caricamento impostazioni...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="admin-container">
-      <div className="admin-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="icon-btn" onClick={() => router.push('/')}>
-            <ArrowLeft size={24} />
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Settings size={28} color="var(--primary-color)" />
-            <h2>Impostazioni Visitatore</h2>
+    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'system-ui' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <button
+          onClick={() => router.push('/')}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#64748b' }}
+        >
+          <ArrowLeft size={20} /> Torna alla Home
+        </button>
+        <h1 style={{ margin: 0, fontSize: '1.75rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Settings size={28} color="#6366f1" /> Impostazioni Gestionale
+        </h1>
+      </div>
+
+      {message.text && (
+        <div style={{
+          padding: '1rem',
+          borderRadius: '8px',
+          marginBottom: '1.5rem',
+          backgroundColor: message.type === 'success' ? '#dcfce7' : message.type === 'error' ? '#fee2e2' : '#e0f2fe',
+          color: message.type === 'success' ? '#166534' : message.type === 'error' ? '#991b1b' : '#075985',
+          fontWeight: '500'
+        }}>
+          {message.text}
+        </div>
+      )}
+
+      <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {/* Sezione Autocompletamento Ricerca */}
+          <div>
+            <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Ricerca & Suggerimenti</h3>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '1rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                background: enableSearchAutocomplete ? '#f8fafc' : 'transparent',
+                border: '1px solid #e2e8f0',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={enableSearchAutocomplete}
+                onChange={() => setEnableSearchAutocomplete(!enableSearchAutocomplete)}
+                style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>Suggerimenti di Ricerca Automatici (stile Google)</span>
+                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Se attivo, digitando nella barra di ricerca comparirà il menu con i nomi dei vini e produttori corrispondenti. Se disattivato, il menu dei suggerimenti non apparirà.</span>
+              </div>
+            </label>
           </div>
+
+          {/* Sezione Accesso Scheda Vino */}
+          <div>
+            <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Permessi Generali</h3>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '1rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                background: allowWineDetails ? '#f8fafc' : 'transparent',
+                border: '1px solid #e2e8f0',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={allowWineDetails}
+                onChange={() => setAllowWineDetails(!allowWineDetails)}
+                style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>Consenti accesso alla Scheda Vino</span>
+                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Se disattivato, i visitatori non potranno cliccare sui vini per vedere giacenze e movimenti.</span>
+              </div>
+            </label>
+          </div>
+          
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              padding: '0.75rem 1.5rem',
+              background: '#6366f1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            {saving ? 'Salvataggio...' : <><Save size={18} /> Salva Modifiche</>}
+          </button>
         </div>
       </div>
 

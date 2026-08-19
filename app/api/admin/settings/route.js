@@ -8,7 +8,7 @@ export const revalidate = 0;
 export async function GET() {
   try {
     const settings = await prisma.systemSettings.findMany({
-      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds', 'visitor_allowed_buttons'] } }
+      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds', 'visitor_allowed_buttons', 'enable_search_autocomplete'] } }
     });
 
     const filtersSetting = settings.find(s => s.key === 'visitor_allowed_filters');
@@ -16,6 +16,7 @@ export async function GET() {
     const loginBgSetting = settings.find(s => s.key === 'login_page_background');
     const photoSecSetting = settings.find(s => s.key === 'photo_preview_seconds');
     const buttonsSetting = settings.find(s => s.key === 'visitor_allowed_buttons');
+    const autoSetting = settings.find(s => s.key === 'enable_search_autocomplete');
 
     let allowedFilters = [
       'country', 'region', 'producerCellar', 'producer',
@@ -59,12 +60,18 @@ export async function GET() {
       photoPreviewSeconds = parseInt(photoSecSetting.value, 10) || 3;
     }
 
+    let enableSearchAutocomplete = true;
+    if (autoSetting && autoSetting.value) {
+      enableSearchAutocomplete = autoSetting.value === 'true';
+    }
+
     return NextResponse.json({
       visitorAllowedFilters: allowedFilters,
       visitorAllowedButtons: allowedButtons,
       visitorAllowWineDetails: allowWineDetails,
-      loginPageBackground,
-      photoPreviewSeconds
+      loginPageBackground: loginPageBackground,
+      photoPreviewSeconds: photoPreviewSeconds,
+      enableSearchAutocomplete: enableSearchAutocomplete
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
@@ -79,7 +86,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { visitorAllowedFilters, visitorAllowedButtons, visitorAllowWineDetails, loginPageBackground, photoPreviewSeconds } = body;
+    const { visitorAllowedFilters, visitorAllowedButtons, visitorAllowWineDetails, loginPageBackground, photoPreviewSeconds, enableSearchAutocomplete } = body;
 
     if (!Array.isArray(visitorAllowedFilters)) {
       return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
@@ -122,13 +129,21 @@ export async function POST(request) {
       create: { key: 'photo_preview_seconds', value: photoSecStr }
     });
 
+    let enableAutoStr = enableSearchAutocomplete === false ? 'false' : 'true';
+    const autoSettings = await prisma.systemSettings.upsert({
+      where: { key: 'enable_search_autocomplete' },
+      update: { value: enableAutoStr },
+      create: { key: 'enable_search_autocomplete', value: enableAutoStr }
+    });
+
     return NextResponse.json({
       success: true,
       visitorAllowedFilters: JSON.parse(filterSettings.value),
       visitorAllowedButtons: JSON.parse(buttonSettings.value),
       visitorAllowWineDetails: wineDetailsSettings.value === 'true',
       loginPageBackground: loginBgSettings.value === 'true',
-      photoPreviewSeconds: parseInt(photoSecSettings.value, 10) || 3
+      photoPreviewSeconds: parseInt(photoSecSettings.value, 10) || 3,
+      enableSearchAutocomplete: autoSettings.value === 'true'
     });
   } catch (error) {
     console.error('Error updating admin settings:', error);

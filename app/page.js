@@ -99,6 +99,7 @@ export default function Home() {
     'export_excel', 'history_log', 'inventory'
   ]);
   const [visitorAllowWineDetails, setVisitorAllowWineDetails] = useState(true);
+  const [enableSearchAutocomplete, setEnableSearchAutocomplete] = useState(true);
 
   useEffect(() => {
     fetch('/api/settings').then(res => res.json()).then(data => {
@@ -110,6 +111,9 @@ export default function Home() {
       }
       if (data.visitorAllowWineDetails !== undefined) {
         setVisitorAllowWineDetails(data.visitorAllowWineDetails);
+      }
+      if (data.enableSearchAutocomplete !== undefined) {
+        setEnableSearchAutocomplete(data.enableSearchAutocomplete);
       }
       if (data.photoPreviewSeconds) {
         setPhotoPreviewSeconds(data.photoPreviewSeconds);
@@ -806,6 +810,7 @@ export default function Home() {
         currentUser={currentUser}
         setIsGlobalLogOpen={setIsGlobalLogOpen}
         winesArray={groupedWinesArray}
+        enableSearchAutocomplete={enableSearchAutocomplete}
       />
     );
   }
@@ -941,7 +946,7 @@ export default function Home() {
                 )}
 
                 {/* Google-style Autocomplete Suggestions Dropdown */}
-                {showSuggestions && suggestions.length > 0 && (
+                {enableSearchAutocomplete !== false && showSuggestions && suggestions.length > 0 && (
                   <div
                     style={{
                       position: 'absolute',

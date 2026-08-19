@@ -23,7 +23,8 @@ export const MobileCatalog = ({
   uniqueLocations,
   uniqueBottleTypes,
   currentUser,
-  setIsGlobalLogOpen
+  setIsGlobalLogOpen,
+  enableSearchAutocomplete = true
 }) => {
   const router = useRouter();
   const [showFilters, setShowFilters] = useState(false);
@@ -326,7 +327,7 @@ export const MobileCatalog = ({
             )}
 
             {/* Google-style Autocomplete Dropdown */}
-            {showSuggestions && suggestions.length > 0 && (
+            {enableSearchAutocomplete !== false && showSuggestions && suggestions.length > 0 && (
               <div
                 style={{
                   position: 'absolute',
