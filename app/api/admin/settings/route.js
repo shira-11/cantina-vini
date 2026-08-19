@@ -4,25 +4,39 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const settings = await prisma.systemSettings.findMany({
-      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds'] } }
+      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds', 'visitor_allowed_buttons'] } }
     });
 
     const filtersSetting = settings.find(s => s.key === 'visitor_allowed_filters');
     const wineDetailsSetting = settings.find(s => s.key === 'visitor_allow_wine_details');
     const loginBgSetting = settings.find(s => s.key === 'login_page_background');
     const photoSecSetting = settings.find(s => s.key === 'photo_preview_seconds');
+    const buttonsSetting = settings.find(s => s.key === 'visitor_allowed_buttons');
 
     let allowedFilters = [
       'country', 'region', 'producerCellar', 'producer',
       'classification', 'category', 'location', 'availability',
       'photo', 'bottleType'
-    ]; // Default: all allowed
+    ];
 
     if (filtersSetting && filtersSetting.value) {
       try {
         allowedFilters = JSON.parse(filtersSetting.value);
       } catch (e) {
         console.error("Error parsing settings JSON", e);
+      }
+    }
+
+    let allowedButtons = [
+      'print_scheda', 'print_nazioni', 'print_pdf',
+      'export_excel', 'history_log', 'inventory'
+    ];
+
+    if (buttonsSetting && buttonsSetting.value) {
+      try {
+        allowedButtons = JSON.parse(buttonsSetting.value);
+      } catch (e) {
+        console.error("Error parsing allowedButtons JSON", e);
       }
     }
 
@@ -43,6 +57,7 @@ export async function GET() {
 
     return NextResponse.json({
       visitorAllowedFilters: allowedFilters,
+      visitorAllowedButtons: allowedButtons,
       visitorAllowWineDetails: allowWineDetails,
       loginPageBackground,
       photoPreviewSeconds
@@ -56,7 +71,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { visitorAllowedFilters, visitorAllowWineDetails, loginPageBackground, photoPreviewSeconds } = body;
+    const { visitorAllowedFilters, visitorAllowedButtons, visitorAllowWineDetails, loginPageBackground, photoPreviewSeconds } = body;
 
     if (!Array.isArray(visitorAllowedFilters)) {
       return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
@@ -66,6 +81,16 @@ export async function POST(request) {
       where: { key: 'visitor_allowed_filters' },
       update: { value: JSON.stringify(visitorAllowedFilters) },
       create: { key: 'visitor_allowed_filters', value: JSON.stringify(visitorAllowedFilters) }
+    });
+
+    const targetButtons = Array.isArray(visitorAllowedButtons) ? visitorAllowedButtons : [
+      'print_scheda', 'print_nazioni', 'print_pdf',
+      'export_excel', 'history_log', 'inventory'
+    ];
+    const buttonSettings = await prisma.systemSettings.upsert({
+      where: { key: 'visitor_allowed_buttons' },
+      update: { value: JSON.stringify(targetButtons) },
+      create: { key: 'visitor_allowed_buttons', value: JSON.stringify(targetButtons) }
     });
 
     let allowWineDetailsStr = visitorAllowWineDetails === false ? 'false' : 'true';
@@ -92,6 +117,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       visitorAllowedFilters: JSON.parse(filterSettings.value),
+      visitorAllowedButtons: JSON.parse(buttonSettings.value),
       visitorAllowWineDetails: wineDetailsSettings.value === 'true',
       loginPageBackground: loginBgSettings.value === 'true',
       photoPreviewSeconds: parseInt(photoSecSettings.value, 10) || 3

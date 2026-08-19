@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, Wine, CheckCircle2, AlertTriangle, Plus, Search,
   Printer, Save, Check, RefreshCw, XCircle, FileText, Calendar,
-  ChevronDown, ChevronUp, Layers, CheckSquare, ShieldCheck, Camera
+  ChevronDown, ChevronUp, Layers, CheckSquare, ShieldCheck, Camera, Trash2
 } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -292,6 +292,37 @@ export default function InventoryPage() {
     }
   };
 
+  const handleDeleteSession = async (sessionIdToDelete, e) => {
+    if (e) e.stopPropagation();
+    const idToDelete = sessionIdToDelete || activeSession?.id;
+    if (!idToDelete) return;
+
+    if (!confirm("Sei sicuro di voler eliminare definitivamente questa sessione d'inventario e tutte le sue righe? L'operazione è irreversibile.")) return;
+
+    try {
+      setSaving(true);
+      const res = await fetch(`/api/inventory/${idToDelete}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        alert("Sessione d'inventario eliminata con successo!");
+        if (activeSession && activeSession.id === idToDelete) {
+          setActiveSession(null);
+          setItems([]);
+        }
+        await fetchSessions();
+      } else {
+        alert("Errore durante l'eliminazione dell'inventario.");
+      }
+      setSaving(false);
+    } catch (err) {
+      console.error(err);
+      alert("Errore elimina inventario: " + err.message);
+      setSaving(false);
+    }
+  };
+
   // Filter items
   const filteredItems = items.filter(item => {
     const wine = item.wine || {};
@@ -473,6 +504,9 @@ export default function InventoryPage() {
                         </div>
 
                         <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', color: '#0f172a' }}>{s.title}</h3>
+                        <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#4338ca', backgroundColor: '#e0e7ff', border: '1px solid #c7d2fe', padding: '3px 8px', borderRadius: '6px', display: 'inline-block', marginBottom: '10px' }}>
+                          📍 Cantina: {s.locationName || 'Tutte le Cantine'}
+                        </div>
                         {s.notes && <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>{s.notes}</div>}
 
                         <div style={{ margin: '16px 0' }}>
@@ -494,22 +528,41 @@ export default function InventoryPage() {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => loadSessionDetails(s.id)}
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          marginTop: '12px',
-                          backgroundColor: isInProgress ? '#3b82f6' : '#f1f5f9',
-                          color: isInProgress ? 'white' : '#1e293b',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontWeight: 'bold',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {isInProgress ? '📱 Continua Conteggio' : '👁️ Visualizza Dettagli'}
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                        <button
+                          onClick={() => loadSessionDetails(s.id)}
+                          style={{
+                            flex: 1,
+                            padding: '10px',
+                            backgroundColor: isInProgress ? '#3b82f6' : '#f1f5f9',
+                            color: isInProgress ? 'white' : '#1e293b',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {isInProgress ? '📱 Continua Conteggio' : '👁️ Visualizza Dettagli'}
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteSession(s.id, e)}
+                          title="Elimina Inventario"
+                          style={{
+                            padding: '10px 14px',
+                            backgroundColor: '#fff1f2',
+                            color: '#e11d48',
+                            border: '1px solid #fecdd3',
+                            borderRadius: '6px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Trash2 size={16} /> Elimina
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -541,6 +594,17 @@ export default function InventoryPage() {
                       color: activeSession.status === 'in_progress' ? '#047857' : '#1d4ed8'
                     }}>
                       {activeSession.status === 'in_progress' ? '🔄 In Corso' : '✅ Completato'}
+                    </span>
+                    <span style={{
+                      padding: '4px 10px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      backgroundColor: '#e0e7ff',
+                      color: '#4338ca',
+                      border: '1px solid #c7d2fe'
+                    }}>
+                      📍 Cantina: {activeSession.locationName || (items[0]?.location?.name || 'Tutte le Cantine')}
                     </span>
                   </div>
                   <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
@@ -1083,6 +1147,31 @@ export default function InventoryPage() {
 
             <form onSubmit={handleCreateSession} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#1e293b' }}>
+                  🏬 Seleziona Cantina / Posizione da Inventariare:
+                </label>
+                <select
+                  value={newLocId}
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    setNewLocId(selectedId);
+                    const selectedLoc = locations.find(l => String(l.id) === String(selectedId));
+                    if (selectedLoc) {
+                      setNewTitle(`Inventario ${newYear} - ${selectedLoc.name}`);
+                    } else {
+                      setNewTitle(`Inventario ${newYear}`);
+                    }
+                  }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '2px solid #6366f1', fontSize: '14px', boxSizing: 'border-box', background: '#f8fafc', fontWeight: 'bold', color: '#312e81' }}
+                >
+                  <option value="">🏢 Tutte le Cantine (Generale)</option>
+                  {locations.map(l => (
+                    <option key={l.id} value={l.id}>📍 {l.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>
                   Titolo Sessione Inventario:
                 </label>
@@ -1105,22 +1194,6 @@ export default function InventoryPage() {
                   onChange={e => setNewYear(parseInt(e.target.value) || new Date().getFullYear())}
                   style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
                 />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>
-                  Limita ad una Cantina / Posizione (Opzionale):
-                </label>
-                <select
-                  value={newLocId}
-                  onChange={e => setNewLocId(e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box', background: 'white' }}
-                >
-                  <option value="">Tutte le Cantine (Raccomandato)</option>
-                  {locations.map(l => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
-                  ))}
-                </select>
               </div>
 
               <div>

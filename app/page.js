@@ -88,12 +88,19 @@ export default function Home() {
     'classification', 'category', 'location', 'availability',
     'photo', 'bottleType'
   ]);
+  const [visitorAllowedButtons, setVisitorAllowedButtons] = useState([
+    'print_scheda', 'print_nazioni', 'print_pdf',
+    'export_excel', 'history_log', 'inventory'
+  ]);
   const [visitorAllowWineDetails, setVisitorAllowWineDetails] = useState(true);
 
   useEffect(() => {
     fetch('/api/settings').then(res => res.json()).then(data => {
       if (data.visitorAllowedFilters) {
         setVisitorAllowedFilters(data.visitorAllowedFilters);
+      }
+      if (data.visitorAllowedButtons) {
+        setVisitorAllowedButtons(data.visitorAllowedButtons);
       }
       if (data.visitorAllowWineDetails !== undefined) {
         setVisitorAllowWineDetails(data.visitorAllowWineDetails);
@@ -103,6 +110,11 @@ export default function Home() {
       }
     }).catch(console.error);
   }, []);
+
+  const canViewButton = (btnId) => {
+    if (!currentUser || currentUser?.role === 'admin') return true;
+    return visitorAllowedButtons.includes(btnId);
+  };
 
   const showWinePhotoNearElement = (e, photoUrl) => {
     if (!photoUrl) return;
@@ -1293,228 +1305,246 @@ export default function Home() {
               {!showArchive && (
                 <>
                   {/* Pulsante SCHEDA */}
-                  <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
-                    try {
-                      const targetGroups = selectedGroups.length > 0
-                        ? groupedWinesArray.filter(g => selectedGroups.includes(g.name))
-                        : groupedWinesArray;
+                  {canViewButton('print_scheda') && (
+                    <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
+                      try {
+                        const targetGroups = selectedGroups.length > 0
+                          ? groupedWinesArray.filter(g => selectedGroups.includes(g.name))
+                          : groupedWinesArray;
 
-                      if (targetGroups.length === 0) {
-                        alert('Nessun vino selezionato o filtrato.');
-                        return;
+                        if (targetGroups.length === 0) {
+                          alert('Nessun vino selezionato o filtrato.');
+                          return;
+                        }
+
+                        const namesToPrint = targetGroups.map(g => g.name);
+                        sessionStorage.setItem('printWineNames', JSON.stringify(namesToPrint));
+                        sessionStorage.setItem('printGroupBy', 'filtri_attivi');
+
+                        const newWin = window.open('/print/scheda', '_blank');
+                        if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+                          window.location.href = '/print/scheda';
+                        }
+                      } catch (err) {
+                        alert("Errore nell'apertura della stampa: " + err.message);
                       }
-
-                      const namesToPrint = targetGroups.map(g => g.name);
-                      sessionStorage.setItem('printWineNames', JSON.stringify(namesToPrint));
-                      sessionStorage.setItem('printGroupBy', 'filtri_attivi');
-
-                      const newWin = window.open('/print/scheda', '_blank');
-                      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
-                        window.location.href = '/print/scheda';
-                      }
-                    } catch (err) {
-                      alert("Errore nell'apertura della stampa: " + err.message);
-                    }
-                  }} title="Stampa Schede Vino (Copertine da Filtri)">
-                    <FileText size={24} color="#475569" />
-                  </div>
+                    }} title="Stampa Schede Vino (Copertine da Filtri)">
+                      <FileText size={24} color="#475569" />
+                    </div>
+                  )}
 
                   {/* Pulsante ELENCO GIACENZE */}
-                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }}></div>
-                  <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
-                    const targetGroups = selectedGroups.length > 0 ? groupedWinesArray.filter(g => selectedGroups.includes(g.name)) : groupedWinesArray;
-                    if (targetGroups.length === 0) { alert('Nessun vino selezionato/filtrato.'); return; }
-                    sessionStorage.setItem('printWineNames', JSON.stringify(targetGroups.map(g => g.name)));
-                    const newWin = window.open('/print/elenco-nazioni', '_blank');
-                    if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
-                      window.location.href = '/print/elenco-nazioni';
-                    }
-                  }} title="Elenco giacenze vini per paese">
-                    <List size={24} color="#475569" />
-                  </div>
+                  {canViewButton('print_nazioni') && (
+                    <>
+                      <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }}></div>
+                      <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
+                        const targetGroups = selectedGroups.length > 0 ? groupedWinesArray.filter(g => selectedGroups.includes(g.name)) : groupedWinesArray;
+                        if (targetGroups.length === 0) { alert('Nessun vino selezionato/filtrato.'); return; }
+                        sessionStorage.setItem('printWineNames', JSON.stringify(targetGroups.map(g => g.name)));
+                        const newWin = window.open('/print/elenco-nazioni', '_blank');
+                        if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+                          window.location.href = '/print/elenco-nazioni';
+                        }
+                      }} title="Elenco giacenze vini per paese">
+                        <List size={24} color="#475569" />
+                      </div>
+                    </>
+                  )}
 
                   {/* Pulsante STAMPA DETTAGLIATA PDF */}
-                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }}></div>
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <div className="toolbar-icon" onClick={() => {
-                      const targetGroups = selectedGroups.length > 0 ? groupedWinesArray.filter(g => selectedGroups.includes(g.name)) : groupedWinesArray;
-                      if (targetGroups.length === 0) { alert('Nessun vino selezionato/filtrato.'); return; }
-                      sessionStorage.setItem('printWineNames', JSON.stringify(targetGroups.map(g => g.name)));
-                      setShowPdfMenu(!showPdfMenu);
-                    }} title="Stampa Elenco Giacenze Dettagliato (PDF)">
-                      <FileText size={24} color="#f43f5e" />
-                    </div>
-                    {showPdfMenu && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        marginTop: '8px',
-                        background: 'white',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                        zIndex: 9999,
-                        minWidth: '240px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 'bold', backgroundColor: '#f1f5f9', borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
-                          ORDINA PDF PER:
+                  {canViewButton('print_pdf') && (
+                    <>
+                      <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }}></div>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <div className="toolbar-icon" onClick={() => {
+                          const targetGroups = selectedGroups.length > 0 ? groupedWinesArray.filter(g => selectedGroups.includes(g.name)) : groupedWinesArray;
+                          if (targetGroups.length === 0) { alert('Nessun vino selezionato/filtrato.'); return; }
+                          sessionStorage.setItem('printWineNames', JSON.stringify(targetGroups.map(g => g.name)));
+                          setShowPdfMenu(!showPdfMenu);
+                        }} title="Stampa Elenco Giacenze Dettagliato (PDF)">
+                          <FileText size={24} color="#f43f5e" />
                         </div>
-                        {[
-                          { label: 'Nome Vino (A-Z)', sort: 'name' },
-                          { label: 'Nazione (A-Z)', sort: 'country' },
-                          { label: 'Cantina Produttrice (A-Z)', sort: 'producer' },
-                          { label: 'Categoria (A-Z)', sort: 'category' }
-                        ].map((opt, idx) => (
-                          <div
-                            key={idx}
-                            style={{ padding: '12px 16px', fontSize: '14px', cursor: 'pointer', borderBottom: idx < 3 ? '1px solid #f1f5f9' : 'none' }}
-                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
-                            onClick={() => {
-                              setShowPdfMenu(false);
-                              const newWin = window.open(`/print/giacenze-dettaglio?sort=${opt.sort}`, '_blank');
-                              if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
-                                window.location.href = `/print/giacenze-dettaglio?sort=${opt.sort}`;
-                              }
-                            }}
-                          >
-                            {opt.label}
+                        {showPdfMenu && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            marginTop: '8px',
+                            background: 'white',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                            zIndex: 9999,
+                            minWidth: '240px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            overflow: 'hidden'
+                          }}>
+                            <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 'bold', backgroundColor: '#f1f5f9', borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
+                              ORDINA PDF PER:
+                            </div>
+                            {[
+                              { label: 'Nome Vino (A-Z)', sort: 'name' },
+                              { label: 'Nazione (A-Z)', sort: 'country' },
+                              { label: 'Cantina Produttrice (A-Z)', sort: 'producer' },
+                              { label: 'Categoria (A-Z)', sort: 'category' }
+                            ].map((opt, idx) => (
+                              <div
+                                key={idx}
+                                style={{ padding: '12px 16px', fontSize: '14px', cursor: 'pointer', borderBottom: idx < 3 ? '1px solid #f1f5f9' : 'none' }}
+                                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+                                onClick={() => {
+                                  setShowPdfMenu(false);
+                                  const newWin = window.open(`/print/giacenze-dettaglio?sort=${opt.sort}`, '_blank');
+                                  if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+                                    window.location.href = `/print/giacenze-dettaglio?sort=${opt.sort}`;
+                                  }
+                                }}
+                              >
+                                {opt.label}
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
 
                   {/* Pulsante EXCEL */}
-                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }}></div>
-                  <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={async () => {
-                    const targetGroups = selectedGroups.length > 0 ? groupedWinesArray.filter(g => selectedGroups.includes(g.name)) : groupedWinesArray;
-                    if (targetGroups.length === 0) { alert('Nessun vino selezionato/filtrato.'); return; }
+                  {canViewButton('export_excel') && (
+                    <>
+                      <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)' }}></div>
+                      <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={async () => {
+                        const targetGroups = selectedGroups.length > 0 ? groupedWinesArray.filter(g => selectedGroups.includes(g.name)) : groupedWinesArray;
+                        if (targetGroups.length === 0) { alert('Nessun vino selezionato/filtrato.'); return; }
 
-                    try {
-                      // 1. Fetch locations per colonne dinamiche
-                      const res = await fetch('/api/locations');
-                      let locationsData = [];
-                      if (res.ok) {
-                        locationsData = await res.json();
-                      }
-                      const locNames = locationsData.map(l => l.name);
-
-                      // 2. Prepara le intestazioni (Headers)
-                      const headers = [
-                        "Nome Vino", "Annata", "Nazione", "Cantina produttore",
-                        "Categoria", "Classificazione", "Inventariato", "Disponibile", "Usato"
-                      ];
-                      locNames.forEach(loc => {
-                        const shortName = loc.replace(/cantina /i, '').trim();
-                        headers.push(`Disp. ${shortName}`);
-                        headers.push(`Usato ${shortName}`);
-                      });
-
-                      const dataRows = [headers];
-
-                      // 3. Processa i vini per calcolare giacenze e consumi globali e per sede
-                      targetGroups.forEach(g => {
-                        g.wines.forEach(w => {
-                          let globalIngresso = 0;
-                          let globalUscita = 0;
-
-                          const locStats = {};
-                          locNames.forEach(loc => {
-                            locStats[loc] = { ingresso: 0, uscita: 0 };
-                          });
-
-                          if (w.movements && w.movements.length > 0) {
-                            w.movements.forEach(m => {
-                              const qty = m.quantity || 0;
-                              const isIngresso = m.movementType === 'Ingresso';
-                              const isUscita = m.movementType === 'Uscita';
-
-                              if (isIngresso) globalIngresso += qty;
-                              if (isUscita) globalUscita += qty;
-
-                              if (m.location && m.location.name) {
-                                const lName = m.location.name;
-                                if (locStats[lName]) {
-                                  if (isIngresso) locStats[lName].ingresso += qty;
-                                  if (isUscita) locStats[lName].uscita += qty;
-                                }
-                              }
-                            });
+                        try {
+                          // 1. Fetch locations per colonne dinamiche
+                          const res = await fetch('/api/locations');
+                          let locationsData = [];
+                          if (res.ok) {
+                            locationsData = await res.json();
                           }
+                          const locNames = locationsData.map(l => l.name);
 
-                          const row = [
-                            w.name || "",
-                            w.vintage || "",
-                            w.country || "",
-                            w.producer || "",
-                            w.category || "",
-                            w.classification || "",
-                            globalIngresso,
-                            globalIngresso - globalUscita,
-                            globalUscita
+                          // 2. Prepara le intestazioni (Headers)
+                          const headers = [
+                            "Nome Vino", "Annata", "Nazione", "Cantina produttore",
+                            "Categoria", "Classificazione", "Inventariato", "Disponibile", "Usato"
                           ];
-
                           locNames.forEach(loc => {
-                            const stats = locStats[loc];
-                            const disp = stats.ingresso - stats.uscita;
-                            row.push(disp === 0 && stats.uscita === 0 && stats.ingresso === 0 ? "" : disp);
-                            row.push(stats.uscita === 0 ? "" : stats.uscita);
+                            const shortName = loc.replace(/cantina /i, '').trim();
+                            headers.push(`Disp. ${shortName}`);
+                            headers.push(`Usato ${shortName}`);
                           });
 
-                          dataRows.push(row);
-                        });
-                      });
+                          const dataRows = [headers];
 
-                      // 4. Crea il foglio Excel
-                      const ws = XLSX.utils.aoa_to_sheet(dataRows);
+                          // 3. Processa i vini per calcolare giacenze e consumi globali e per sede
+                          targetGroups.forEach(g => {
+                            g.wines.forEach(w => {
+                              let globalIngresso = 0;
+                              let globalUscita = 0;
 
-                      // 5. Imposta la larghezza delle colonne e l'orientamento
-                      const wscols = [
-                        { wch: 32 }, // Nome Vino
-                        { wch: 7 },  // Annata
-                        { wch: 12 }, // Nazione
-                        { wch: 22 }, // Cantina
-                        { wch: 12 }, // Categoria
-                        { wch: 14 }, // Classificazione
-                        { wch: 11 }, // Inventariato
-                        { wch: 11 }, // Disponibile
-                        { wch: 8 },  // Usato
-                      ];
-                      locNames.forEach(() => {
-                        wscols.push({ wch: 10 }); // Disp Sede
-                        wscols.push({ wch: 10 }); // Usato Sede
-                      });
-                      ws['!cols'] = wscols;
+                              const locStats = {};
+                              locNames.forEach(loc => {
+                                locStats[loc] = { ingresso: 0, uscita: 0 };
+                              });
 
-                      // Imposta la pagina A4 in orizzontale
-                      ws['!pageSetup'] = { orientation: 'landscape' };
+                              if (w.movements && w.movements.length > 0) {
+                                w.movements.forEach(m => {
+                                  const qty = m.quantity || 0;
+                                  const isIngresso = m.movementType === 'Ingresso';
+                                  const isUscita = m.movementType === 'Uscita';
 
-                      const wb = XLSX.utils.book_new();
-                      XLSX.utils.book_append_sheet(wb, ws, "Giacenze");
+                                  if (isIngresso) globalIngresso += qty;
+                                  if (isUscita) globalUscita += qty;
 
-                      XLSX.writeFile(wb, "Elenco_Giacenze_Vino.xlsx");
+                                  if (m.location && m.location.name) {
+                                    const lName = m.location.name;
+                                    if (locStats[lName]) {
+                                      if (isIngresso) locStats[lName].ingresso += qty;
+                                      if (isUscita) locStats[lName].uscita += qty;
+                                    }
+                                  }
+                                });
+                              }
 
-                    } catch (e) {
-                      console.error("Errore esportazione:", e);
-                      alert("Errore durante l'esportazione: " + e.message);
-                    }
-                  }} title="Esporta in Excel">
-                    <FileSpreadsheet size={24} color="#16a34a" />
-                  </div>
+                              const row = [
+                                w.name || "",
+                                w.vintage || "",
+                                w.country || "",
+                                w.producer || "",
+                                w.category || "",
+                                w.classification || "",
+                                globalIngresso,
+                                globalIngresso - globalUscita,
+                                globalUscita
+                              ];
 
-                  <div className="toolbar-icon" onClick={() => setIsGlobalLogOpen(true)} title="Cronologia Movimenti">
-                    <History size={24} color="#3b82f6" />
-                  </div>
+                              locNames.forEach(loc => {
+                                const stats = locStats[loc];
+                                const disp = stats.ingresso - stats.uscita;
+                                row.push(disp === 0 && stats.uscita === 0 && stats.ingresso === 0 ? "" : disp);
+                                row.push(stats.uscita === 0 ? "" : stats.uscita);
+                              });
 
-                  <div className="toolbar-icon" onClick={() => router.push('/inventory')} title="Inventario Fisico (Conteggio e Rettifica)">
-                    <CheckSquare size={24} color="#10b981" />
-                  </div>
+                              dataRows.push(row);
+                            });
+                          });
+
+                          // 4. Crea il foglio Excel
+                          const ws = XLSX.utils.aoa_to_sheet(dataRows);
+
+                          // 5. Imposta la larghezza delle colonne e l'orientamento
+                          const wscols = [
+                            { wch: 32 }, // Nome Vino
+                            { wch: 7 },  // Annata
+                            { wch: 12 }, // Nazione
+                            { wch: 22 }, // Cantina
+                            { wch: 12 }, // Categoria
+                            { wch: 14 }, // Classificazione
+                            { wch: 11 }, // Inventariato
+                            { wch: 11 }, // Disponibile
+                            { wch: 8 },  // Usato
+                          ];
+                          locNames.forEach(() => {
+                            wscols.push({ wch: 10 }); // Disp Sede
+                            wscols.push({ wch: 10 }); // Usato Sede
+                          });
+                          ws['!cols'] = wscols;
+
+                          // Imposta la pagina A4 in orizzontale
+                          ws['!pageSetup'] = { orientation: 'landscape' };
+
+                          const wb = XLSX.utils.book_new();
+                          XLSX.utils.book_append_sheet(wb, ws, "Giacenze");
+
+                          XLSX.writeFile(wb, "Elenco_Giacenze_Vino.xlsx");
+
+                        } catch (e) {
+                          console.error("Errore esportazione:", e);
+                          alert("Errore durante l'esportazione: " + e.message);
+                        }
+                      }} title="Esporta in Excel">
+                        <FileSpreadsheet size={24} color="#16a34a" />
+                      </div>
+                    </>
+                  )}
+
+                  {canViewButton('history_log') && (
+                    <div className="toolbar-icon" onClick={() => setIsGlobalLogOpen(true)} title="Cronologia Movimenti">
+                      <History size={24} color="#3b82f6" />
+                    </div>
+                  )}
+
+                  {canViewButton('inventory') && (
+                    <div className="toolbar-icon" onClick={() => router.push('/inventory')} title="Inventario Fisico (Conteggio e Rettifica)">
+                      <CheckSquare size={24} color="#10b981" />
+                    </div>
+                  )}
 
                   <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>
 

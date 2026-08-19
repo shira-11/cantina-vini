@@ -14,7 +14,11 @@ export async function GET() {
             id: true,
             expectedQty: true,
             countedQty: true,
-            isChecked: true
+            isChecked: true,
+            locationId: true,
+            location: {
+              select: { name: true }
+            }
           }
         }
       }
@@ -27,6 +31,11 @@ export async function GET() {
       const totalCounted = session.items.reduce((sum, i) => sum + (i.countedQty !== null ? i.countedQty : 0), 0);
       const hasDiscrepancy = session.items.some(i => i.countedQty !== null && i.countedQty !== i.expectedQty);
 
+      const locNames = new Set(session.items.map(i => i.location?.name).filter(Boolean));
+      const locationName = locNames.size === 1 
+        ? Array.from(locNames)[0] 
+        : (locNames.size > 1 ? 'Tutte le Cantine' : 'Generale');
+
       return {
         id: session.id,
         title: session.title,
@@ -36,6 +45,7 @@ export async function GET() {
         createdBy: session.createdBy,
         createdAt: session.createdAt,
         completedAt: session.completedAt,
+        locationName,
         totalItems,
         checkedItems,
         totalExpected,

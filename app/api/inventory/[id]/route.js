@@ -203,3 +203,23 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "Errore nella gestione della chiusura inventario: " + error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request, { params }) {
+  try {
+    const { id } = await params;
+    const sessionId = parseInt(id);
+
+    await prisma.inventoryItem.deleteMany({
+      where: { sessionId }
+    });
+
+    await prisma.inventorySession.delete({
+      where: { id: sessionId }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete inventory session:", error);
+    return NextResponse.json({ error: "Errore durante l'eliminazione dell'inventario" }, { status: 500 });
+  }
+}

@@ -17,11 +17,21 @@ const FILTER_OPTIONS = [
   { id: 'bottleType', label: 'Formato Bottiglia' }
 ];
 
+const HEADER_BUTTON_OPTIONS = [
+  { id: 'print_scheda', label: '📄 Stampa Scheda Vino (Copertine)' },
+  { id: 'print_nazioni', label: '📋 Elenco Giacenze Vini per Nazione' },
+  { id: 'print_pdf', label: '📄 Stampa Giacenze Dettagliato (PDF Rosso)' },
+  { id: 'export_excel', label: '📊 Esporta Giacenze in Excel (Verde)' },
+  { id: 'history_log', label: '🕒 Storico e Cronologia Movimenti (Blu)' },
+  { id: 'inventory', label: '☑️ Inventario Fisico (Conteggio e Rettifica)' }
+];
+
 export default function AdminSettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [allowedFilters, setAllowedFilters] = useState([]);
+  const [allowedButtons, setAllowedButtons] = useState([]);
   const [allowWineDetails, setAllowWineDetails] = useState(true);
   const [loginPageBackground, setLoginPageBackground] = useState(true);
   const [photoPreviewSeconds, setPhotoPreviewSeconds] = useState(3);
@@ -35,6 +45,7 @@ export default function AdminSettingsPage() {
         if (res.ok) {
           const data = await res.json();
           setAllowedFilters(data.visitorAllowedFilters || FILTER_OPTIONS.map(f => f.id));
+          setAllowedButtons(data.visitorAllowedButtons || HEADER_BUTTON_OPTIONS.map(b => b.id));
           setAllowWineDetails(data.visitorAllowWineDetails !== false);
           setLoginPageBackground(data.loginPageBackground !== false);
           if (data.photoPreviewSeconds !== undefined) {
@@ -61,11 +72,27 @@ export default function AdminSettingsPage() {
     );
   };
 
+  const handleToggleBtn = (btnId) => {
+    setAllowedButtons(prev =>
+      prev.includes(btnId)
+        ? prev.filter(id => id !== btnId)
+        : [...prev, btnId]
+    );
+  };
+
   const handleSelectAll = (select) => {
     if (select) {
       setAllowedFilters(FILTER_OPTIONS.map(f => f.id));
     } else {
       setAllowedFilters([]);
+    }
+  };
+
+  const handleSelectAllBtns = (select) => {
+    if (select) {
+      setAllowedButtons(HEADER_BUTTON_OPTIONS.map(b => b.id));
+    } else {
+      setAllowedButtons([]);
     }
   };
 
@@ -78,6 +105,7 @@ export default function AdminSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           visitorAllowedFilters: allowedFilters,
+          visitorAllowedButtons: allowedButtons,
           visitorAllowWineDetails: allowWineDetails,
           loginPageBackground: loginPageBackground,
           photoPreviewSeconds: photoPreviewSeconds
@@ -300,6 +328,57 @@ export default function AdminSettingsPage() {
                   {uploadingBg && <span style={{ marginLeft: '1rem', fontSize: '0.85rem', color: '#8b5cf6' }}>Caricamento in corso...</span>}
                 </div>
               )}
+            </div>
+
+            {/* Sezione Pulsanti Header */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>Pulsanti Barra Superiore (Header)</h3>
+                  <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Scegli quali tasti della barra in alto mostrare all&apos;utente Visitatore.</span>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button
+                    onClick={() => handleSelectAllBtns(true)}
+                    style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.875rem' }}
+                  >
+                    Seleziona Tutti
+                  </button>
+                  <button
+                    onClick={() => handleSelectAllBtns(false)}
+                    style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.875rem' }}
+                  >
+                    Deseleziona Tutti
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {HEADER_BUTTON_OPTIONS.map(btn => (
+                  <label
+                    key={btn.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      background: allowedButtons.includes(btn.id) ? '#f8fafc' : 'transparent',
+                      border: '1px solid #e2e8f0',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={allowedButtons.includes(btn.id)}
+                      onChange={() => handleToggleBtn(btn.id)}
+                      style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>{btn.label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Sezione Filtri */}

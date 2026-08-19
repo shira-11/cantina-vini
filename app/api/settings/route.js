@@ -4,25 +4,39 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const settings = await prisma.systemSettings.findMany({
-      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds'] } }
+      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds', 'visitor_allowed_buttons'] } }
     });
 
     const filtersSetting = settings.find(s => s.key === 'visitor_allowed_filters');
     const wineDetailsSetting = settings.find(s => s.key === 'visitor_allow_wine_details');
     const loginBgSetting = settings.find(s => s.key === 'login_page_background');
     const photoSecSetting = settings.find(s => s.key === 'photo_preview_seconds');
+    const buttonsSetting = settings.find(s => s.key === 'visitor_allowed_buttons');
 
     let allowedFilters = [
       'country', 'region', 'producerCellar', 'producer',
       'classification', 'category', 'location', 'availability',
       'photo', 'bottleType'
-    ]; // Default: all allowed
+    ];
 
     if (filtersSetting && filtersSetting.value) {
       try {
         allowedFilters = JSON.parse(filtersSetting.value);
       } catch (e) {
         console.error("Error parsing settings JSON", e);
+      }
+    }
+
+    let allowedButtons = [
+      'print_scheda', 'print_nazioni', 'print_pdf',
+      'export_excel', 'history_log', 'inventory'
+    ];
+
+    if (buttonsSetting && buttonsSetting.value) {
+      try {
+        allowedButtons = JSON.parse(buttonsSetting.value);
+      } catch (e) {
+        console.error("Error parsing allowedButtons JSON", e);
       }
     }
 
@@ -43,6 +57,7 @@ export async function GET() {
 
     return NextResponse.json({
       visitorAllowedFilters: allowedFilters,
+      visitorAllowedButtons: allowedButtons,
       visitorAllowWineDetails: allowWineDetails,
       loginPageBackground,
       photoPreviewSeconds
