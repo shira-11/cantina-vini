@@ -114,7 +114,7 @@ export default function Home() {
   }, []);
 
   const canViewButton = (btnId) => {
-    if (!currentUser || currentUser?.role === 'admin') return true;
+    if (currentUser?.role === 'admin') return true;
     return visitorAllowedButtons.includes(btnId);
   };
 
