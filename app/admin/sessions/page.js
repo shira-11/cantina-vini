@@ -8,11 +8,13 @@ export default function AdminSessionsPage() {
   const router = useRouter();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'ended'
 
   const fetchSessions = async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const res = await fetch('/api/admin/sessions');
       if (res.ok) {
@@ -23,11 +25,16 @@ export default function AdminSessionsPage() {
           console.error("Session data format error:", data);
           setSessions([]);
         }
-      } else if (res.status === 403) {
-        router.push('/');
+      } else if (res.status === 403 || res.status === 401) {
+        setErrorMsg("Accesso riservato all'Amministratore. Se sei già l'Amministratore, esegui il Logout e accedi nuovamente.");
+        setSessions([]);
+      } else {
+        setErrorMsg("Impossibile caricare il registro sessioni.");
+        setSessions([]);
       }
     } catch (err) {
       console.error(err);
+      setErrorMsg("Errore di connessione al server.");
       setSessions([]);
     } finally {
       setLoading(false);
@@ -164,6 +171,12 @@ export default function AdminSessionsPage() {
       </div>
 
       {/* Table */}
+      {errorMsg ? (
+        <div style={{ padding: '2rem', textAlign: 'center', background: '#fff1f2', border: '1px solid #fecdd3', color: '#be123c', borderRadius: '12px', marginBottom: '1.5rem', fontWeight: '500' }}>
+          ⚠️ {errorMsg}
+        </div>
+      ) : null}
+
       {loading ? (
         <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Caricamento registro sessioni...</div>
       ) : filteredSessions.length === 0 ? (
