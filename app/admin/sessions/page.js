@@ -16,12 +16,19 @@ export default function AdminSessionsPage() {
     try {
       const res = await fetch('/api/admin/sessions');
       if (res.ok) {
-        setSessions(await res.json());
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setSessions(data);
+        } else {
+          console.error("Session data format error:", data);
+          setSessions([]);
+        }
       } else if (res.status === 403) {
         router.push('/');
       }
     } catch (err) {
       console.error(err);
+      setSessions([]);
     } finally {
       setLoading(false);
     }
@@ -72,8 +79,9 @@ export default function AdminSessionsPage() {
     return `${hours}h ${mins}m`;
   };
 
-  const filteredSessions = sessions.filter(s => {
-    const matchesUser = s.username.toLowerCase().includes(search.toLowerCase());
+  const filteredSessions = (Array.isArray(sessions) ? sessions : []).filter(s => {
+    const usernameStr = s.username || s.user?.username || '';
+    const matchesUser = usernameStr.toLowerCase().includes(search.toLowerCase());
     const isActive = !s.logoutTime;
     if (statusFilter === 'active' && !isActive) return false;
     if (statusFilter === 'ended' && isActive) return false;
