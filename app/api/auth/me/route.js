@@ -23,7 +23,7 @@ export async function GET(request) {
     try {
       dbUser = await prisma.user.findFirst({
         where: payload.userId ? { id: Number(payload.userId) } : { username: payload.username },
-        select: { username: true, role: true, isActive: true }
+        select: { username: true, role: true, isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: true }
       });
     } catch (dbErr) {
       console.error('Error finding user in auth/me:', dbErr);
@@ -32,8 +32,12 @@ export async function GET(request) {
     if (dbUser && dbUser.isActive) {
       username = dbUser.username;
       role = dbUser.role;
-      if (dbUser.autoLogoutEnabled !== undefined) autoLogoutEnabled = dbUser.autoLogoutEnabled;
-      if (dbUser.autoLogoutMinutes !== undefined) autoLogoutMinutes = dbUser.autoLogoutMinutes;
+      if (dbUser.autoLogoutEnabled !== undefined && dbUser.autoLogoutEnabled !== null) {
+        autoLogoutEnabled = dbUser.autoLogoutEnabled;
+      }
+      if (dbUser.autoLogoutMinutes !== undefined && dbUser.autoLogoutMinutes !== null) {
+        autoLogoutMinutes = dbUser.autoLogoutMinutes;
+      }
     }
 
     return NextResponse.json({
