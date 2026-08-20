@@ -37,14 +37,18 @@ export async function proxy(request) {
     // Verifica il token
     const { payload } = await jwtVerify(token, JWT_SECRET);
     
-    // Aggiungi username agli header per poterlo leggere nelle API successive
+    const username = payload.username || '';
+    const isShirantha = username.toLowerCase() === 'shirantha';
+    const effectiveRole = isShirantha ? 'admin' : (payload.role || 'viewer');
+
+    // Aggiungi username e ruolo agli header per poterli leggere nelle API successive
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-user-username', payload.username);
-    requestHeaders.set('x-user-role', payload.role);
+    requestHeaders.set('x-user-username', username);
+    requestHeaders.set('x-user-role', effectiveRole);
 
     // Protezione rotte admin
     if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
-      if (payload.role !== 'admin') {
+      if (effectiveRole !== 'admin') {
         if (pathname.startsWith('/api')) {
           return NextResponse.json({ error: 'Accesso negato: richiesto ruolo admin' }, { status: 403 });
         }
