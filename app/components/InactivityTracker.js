@@ -60,9 +60,15 @@ export default function InactivityTracker() {
 
     checkUserSettings();
 
+    // Heartbeat ogni 15 secondi per mantenere la sessione attiva e aggiornata nel Registro Accessi in tempo reale
+    const heartbeatInterval = setInterval(() => {
+      if (isMounted) checkUserSettings();
+    }, 15000);
+
     return () => {
       isMounted = false;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      clearInterval(heartbeatInterval);
       events.forEach(event => {
         window.removeEventListener(event, handleActivity);
       });

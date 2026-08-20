@@ -43,6 +43,11 @@ export default function AdminSessionsPage() {
 
   useEffect(() => {
     fetchSessions();
+    const interval = setInterval(() => {
+      fetchSessions();
+    }, 3000); // Live real-time update every 3 seconds!
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleClearHistory = async () => {
@@ -164,7 +169,11 @@ export default function AdminSessionsPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#dcfce7', border: '1px solid #86efac', color: '#15803d', padding: '0.45rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+            <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 8px #22c55e' }}></span>
+            <span>Live in Tempo Reale (Ogni 3s)</span>
+          </div>
           <button
             onClick={fetchSessions}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}
