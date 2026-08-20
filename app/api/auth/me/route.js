@@ -44,6 +44,39 @@ export async function GET(request) {
       role = 'admin';
     }
 
+    // Auto-registra o sincronizza la sessione attiva nel Registro Accessi se l'utente ha un cookie valido ma non ha ancora una sessione aperta nel DB
+    try {
+      if (prisma.userSession && username) {
+        const userAgent = request.headers.get('user-agent') || 'Unknown';
+        const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+
+        const userIdVal = dbUser?.id || (payload.userId ? Number(payload.userId) : null);
+        
+        const existingActiveSession = await prisma.userSession.findFirst({
+          where: {
+            OR: [
+              userIdVal ? { userId: userIdVal } : null,
+              { username: username }
+            ].filter(Boolean),
+            logoutTime: null
+          }
+        });
+
+        if (!existingActiveSession) {
+          await prisma.userSession.create({
+            data: {
+              userId: userIdVal,
+              username: username,
+              ipAddress,
+              userAgent
+            }
+          });
+        }
+      }
+    } catch (sErr) {
+      console.error('Error auto-syncing UserSession in auth/me:', sErr);
+    }
+
     return NextResponse.json({
       user: {
         username,
