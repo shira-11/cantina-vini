@@ -55,15 +55,15 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Account disabilitato. Contatta l\'amministratore.' }, { status: 403 });
     }
 
-    // Auto-chiudi le sessioni stantie dello stesso utente più vecchie di 45 minuti
+    // Auto-chiudi le sessioni stantie dello stesso utente prive di segnale da oltre 90 secondi
     try {
       if (prisma.userSession) {
-        const cutoffTime = new Date(Date.now() - 45 * 60 * 1000);
+        const cutoffTime = new Date(Date.now() - 90 * 1000);
         await prisma.userSession.updateMany({
           where: {
             OR: [{ userId: user.id }, { username: user.username }],
             logoutTime: null,
-            loginTime: { lt: cutoffTime }
+            updatedAt: { lt: cutoffTime }
           },
           data: {
             logoutTime: new Date(),

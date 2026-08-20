@@ -39,12 +39,12 @@ export async function GET(request) {
       });
     }
 
-    // Auto-cleanup stale sessions (over 45 mins old without logout)
-    const cutoffTime = new Date(Date.now() - 45 * 60 * 1000);
+    // Auto-cleanup stale sessions (over 90 seconds old without heartbeat)
+    const cutoffTime = new Date(Date.now() - 90 * 1000);
     await prisma.userSession.updateMany({
       where: {
         logoutTime: null,
-        loginTime: { lt: cutoffTime }
+        updatedAt: { lt: cutoffTime }
       },
       data: {
         logoutTime: new Date(),

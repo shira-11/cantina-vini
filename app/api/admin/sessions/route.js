@@ -24,22 +24,21 @@ export async function GET(request) {
   }
 
   try {
-    // Auto-chiudi le sessioni rimaste aperte senza logout per più di 45 minuti
-    const cutoffTime = new Date(Date.now() - 45 * 60 * 1000);
+    // Auto-chiudi le sessioni senza segnale di presenza (heartbeat) da più di 90 secondi (1.5 minuti)
+    const cutoffTime = new Date(Date.now() - 90 * 1000);
     const staleSessions = await prisma.userSession.findMany({
       where: {
         logoutTime: null,
-        loginTime: { lt: cutoffTime }
+        updatedAt: { lt: cutoffTime }
       }
     }).catch(() => []);
 
     for (const stale of staleSessions) {
-      const loginMs = new Date(stale.loginTime).getTime();
-      const autoLogoutDate = new Date(loginMs + 30 * 60 * 1000);
+      const logoutDate = stale.updatedAt || new Date();
       await prisma.userSession.update({
         where: { id: stale.id },
         data: {
-          logoutTime: autoLogoutDate,
+          logoutTime: logoutDate,
           logoutReason: 'auto_timeout'
         }
       }).catch(() => {});

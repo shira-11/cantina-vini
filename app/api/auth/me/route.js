@@ -71,6 +71,12 @@ export async function GET(request) {
               userAgent
             }
           });
+        } else {
+          // Aggiorna l'orario dell'ultimo segnale di presenza (heartbeat)
+          await prisma.userSession.update({
+            where: { id: existingActiveSession.id },
+            data: { updatedAt: new Date() }
+          }).catch(() => {});
         }
       }
     } catch (sErr) {
