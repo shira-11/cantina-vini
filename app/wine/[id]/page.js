@@ -53,7 +53,18 @@ export default function WineDetail({ params }) {
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [promptDialog, setPromptDialog] = useState(null);
   const [cropModal, setCropModal] = useState({ isOpen: false, photoUrl: null, type: 'front' });
+  const [deletionPin, setDeletionPin] = useState('1234');
   const customAlert = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(''), 4000); };
+
+  const verifyDeletionPin = () => {
+    const input = window.prompt("🔐 ATTENZIONE! PIN DI SICUREZZA RICHIESTO\nInserisci il PIN per confermare l'eliminazione:");
+    if (input === null) return false;
+    if (input.trim() !== String(deletionPin || '1234').trim()) {
+      customAlert("❌ PIN di Sicurezza Errato!\nEliminazione annullata.");
+      return false;
+    }
+    return true;
+  };
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
   const minSwipeDistance = 50;
@@ -104,6 +115,15 @@ export default function WineDetail({ params }) {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(settings => {
+        if (settings.deletionPin) {
+          setDeletionPin(settings.deletionPin);
+        }
+      })
+      .catch(err => console.error("Errore fetch settings:", err));
+
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
@@ -142,6 +162,7 @@ export default function WineDetail({ params }) {
   }, []);
 
   const openListModal = (field, label, options) => {
+    if (currentUser?.role === 'viewer') return;
     setListModal({ isOpen: true, field, label, options });
   };
 
@@ -1611,7 +1632,9 @@ export default function WineDetail({ params }) {
                             style={{ width: '100%', paddingLeft: (wine.country && getCountryFlag(wine.country)) ? '2.5rem' : '0.75rem' }}
                           />
                         </div>
-                        <button type="button" className="btn" title="Gestisci Nazione" onClick={(e) => { e.preventDefault(); openListModal('country', 'Nazione', metadata.countries); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        {currentUser?.role !== 'viewer' && (
+                          <button type="button" className="btn" title="Gestisci Nazione" onClick={(e) => { e.preventDefault(); openListModal('country', 'Nazione', metadata.countries); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        )}
                       </div>
                       <datalist id="country-list">
                         {metadata.countries.map(c => <option key={c} value={c} />)}
@@ -1621,15 +1644,17 @@ export default function WineDetail({ params }) {
                       <label>Regione</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <input type="text" list="region-list" placeholder="Seleziona regione" value={wine.region || ''} onChange={e => setWine({ ...wine, region: e.target.value })} style={{ flex: 1 }} />
-                        <button type="button" className="btn" title="Gestisci Regione" onClick={(e) => {
-                          e.preventDefault();
-                          let regionOptions = metadata.regions;
-                          if (wine.country && metadata.regionsByCountry) {
-                            const cKey = Object.keys(metadata.regionsByCountry).find(k => k.toLowerCase() === wine.country.trim().toLowerCase());
-                            if (cKey) regionOptions = metadata.regionsByCountry[cKey];
-                          }
-                          openListModal('region', 'Regione', regionOptions);
-                        }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        {currentUser?.role !== 'viewer' && (
+                          <button type="button" className="btn" title="Gestisci Regione" onClick={(e) => {
+                            e.preventDefault();
+                            let regionOptions = metadata.regions;
+                            if (wine.country && metadata.regionsByCountry) {
+                              const cKey = Object.keys(metadata.regionsByCountry).find(k => k.toLowerCase() === wine.country.trim().toLowerCase());
+                              if (cKey) regionOptions = metadata.regionsByCountry[cKey];
+                            }
+                            openListModal('region', 'Regione', regionOptions);
+                          }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        )}
                       </div>
                       <datalist id="region-list">
                         {(() => {
@@ -1645,7 +1670,9 @@ export default function WineDetail({ params }) {
                       <label>Cantina Produttrice</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <input type="text" list="producer-list" placeholder="Es. Marchesi di Barolo" value={wine.producerCellar || ''} onChange={e => setWine({ ...wine, producerCellar: e.target.value })} style={{ flex: 1 }} />
-                        <button type="button" className="btn" title="Gestisci Cantina Produttrice" onClick={(e) => { e.preventDefault(); openListModal('producerCellar', 'Cantina Produttrice', metadata.producers); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        {currentUser?.role !== 'viewer' && (
+                          <button type="button" className="btn" title="Gestisci Cantina Produttrice" onClick={(e) => { e.preventDefault(); openListModal('producerCellar', 'Cantina Produttrice', metadata.producers); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        )}
                       </div>
                       <datalist id="producer-list">
                         {metadata.producers.map(p => <option key={p} value={p} />)}
@@ -1655,7 +1682,9 @@ export default function WineDetail({ params }) {
                       <label>Produttore</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <input type="text" list="producer-name-list" placeholder="Es. Gaja" value={wine.producer || ''} onChange={e => setWine({ ...wine, producer: e.target.value })} style={{ flex: 1 }} />
-                        <button type="button" className="btn" title="Gestisci Produttore" onClick={(e) => { e.preventDefault(); openListModal('producer', 'Produttore', metadata.producerNames || []); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        {currentUser?.role !== 'viewer' && (
+                          <button type="button" className="btn" title="Gestisci Produttore" onClick={(e) => { e.preventDefault(); openListModal('producer', 'Produttore', metadata.producerNames || []); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        )}
                       </div>
                       <datalist id="producer-name-list">
                         {metadata.producerNames && metadata.producerNames.map(p => <option key={p} value={p} />)}
@@ -1665,7 +1694,9 @@ export default function WineDetail({ params }) {
                       <label>Classificazione</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <input type="text" list="classification-list" placeholder="Es. DOCG" value={wine.classification || ''} onChange={e => setWine({ ...wine, classification: e.target.value })} style={{ flex: 1 }} />
-                        <button type="button" className="btn" title="Gestisci Classificazione" onClick={(e) => { e.preventDefault(); openListModal('classification', 'Classificazione', metadata.classifications); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        {currentUser?.role !== 'viewer' && (
+                          <button type="button" className="btn" title="Gestisci Classificazione" onClick={(e) => { e.preventDefault(); openListModal('classification', 'Classificazione', metadata.classifications); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        )}
                       </div>
                       <datalist id="classification-list">
                         {metadata.classifications.map(c => <option key={c} value={c} />)}
@@ -1675,7 +1706,9 @@ export default function WineDetail({ params }) {
                       <label>Categoria</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <input type="text" list="category-list" placeholder="Es. Vino Rosso" value={wine.category || ''} onChange={e => setWine({ ...wine, category: e.target.value })} style={{ flex: 1 }} />
-                        <button type="button" className="btn" title="Gestisci Categoria" onClick={(e) => { e.preventDefault(); openListModal('category', 'Categoria', metadata.categories); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        {currentUser?.role !== 'viewer' && (
+                          <button type="button" className="btn" title="Gestisci Categoria" onClick={(e) => { e.preventDefault(); openListModal('category', 'Categoria', metadata.categories); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        )}
                       </div>
                       <datalist id="category-list">
                         {metadata.categories.map(c => <option key={c} value={c} />)}
@@ -1685,7 +1718,9 @@ export default function WineDetail({ params }) {
                       <label>Tipologia</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <input type="text" list="type-list" placeholder="Es. Secco" value={wine.type || ''} onChange={e => setWine({ ...wine, type: e.target.value })} style={{ flex: 1 }} />
-                        <button type="button" className="btn" title="Gestisci Tipologia" onClick={(e) => { e.preventDefault(); openListModal('type', 'Tipologia', metadata.types); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        {currentUser?.role !== 'viewer' && (
+                          <button type="button" className="btn" title="Gestisci Tipologia" onClick={(e) => { e.preventDefault(); openListModal('type', 'Tipologia', metadata.types); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                        )}
                       </div>
                       <datalist id="type-list">
                         {metadata.types.map(t => <option key={t} value={t} />)}
@@ -1703,18 +1738,20 @@ export default function WineDetail({ params }) {
                           onChange={e => setWine({ ...wine, _initialLocationName: e.target.value })}
                           style={{ flex: 1 }}
                         />
-                        <button
-                          type="button"
-                          className="btn"
-                          title="Gestisci Cantina Fisica"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            openListModal('_initialLocationName', 'Cantina Fisica', locations.map(l => l.name));
-                          }}
-                          style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}
-                        >
-                          ✏️
-                        </button>
+                        {currentUser?.role !== 'viewer' && (
+                          <button
+                            type="button"
+                            className="btn"
+                            title="Gestisci Cantina Fisica"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              openListModal('_initialLocationName', 'Cantina Fisica', locations.map(l => l.name));
+                            }}
+                            style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}
+                          >
+                            ✏️
+                          </button>
+                        )}
                         <datalist id="location-list">
                           {locations.map(loc => <option key={loc.id} value={loc.name} />)}
                         </datalist>
@@ -1732,7 +1769,9 @@ export default function WineDetail({ params }) {
                           <label>Tipo Bottiglia</label>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <input type="text" list="bottle-list-initial" placeholder="Es. Normale 0.75" value={wine._initialBottleType || ''} onChange={e => setWine({ ...wine, _initialBottleType: e.target.value })} style={{ flex: 1 }} />
-                            <button type="button" className="btn" title="Gestisci Tipo Bottiglia" onClick={(e) => { e.preventDefault(); openListModal('_initialBottleType', 'Tipo Bottiglia', metadata.bottleTypes); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                            {currentUser?.role !== 'viewer' && (
+                              <button type="button" className="btn" title="Gestisci Tipo Bottiglia" onClick={(e) => { e.preventDefault(); openListModal('_initialBottleType', 'Tipo Bottiglia', metadata.bottleTypes); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                            )}
                           </div>
                           <datalist id="bottle-list-initial">
                             {metadata.bottleTypes?.map(b => <option key={b} value={b} />)}
@@ -1772,7 +1811,9 @@ export default function WineDetail({ params }) {
                             <tr>
                               <th>
                                 Vitigno
-                                <button type="button" className="btn" title="Gestisci Vitigni" onClick={(e) => { e.preventDefault(); openListModal('grapeVarieties', 'Vitigno', metadata.grapeVarieties); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem', marginLeft: '0.5rem' }}>✏️</button>
+                                {currentUser?.role !== 'viewer' && (
+                                  <button type="button" className="btn" title="Gestisci Vitigni" onClick={(e) => { e.preventDefault(); openListModal('grapeVarieties', 'Vitigno', metadata.grapeVarieties); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem', marginLeft: '0.5rem' }}>✏️</button>
+                                )}
                               </th>
                               <th style={{ width: '100px' }}>Percentuale</th>
                               <th style={{ width: '40px' }}></th>
@@ -1988,6 +2029,7 @@ export default function WineDetail({ params }) {
                                 } else {
                                   setWine({ ...wine, photo: photo.url });
                                 }
+                                customAlert(`Ripristinata foto ${photo.type} dall'archivio!`);
                               }}
                             >
                               Ripristina
@@ -2111,6 +2153,8 @@ export default function WineDetail({ params }) {
                         style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }}
                         onClick={async (e) => {
                           e.preventDefault();
+                          if (currentUser?.role === 'viewer') return;
+                          if (!verifyDeletionPin()) return;
                           if (listModal.field === '_initialLocationName') {
                             const locToDelete = locations.find(l => l.name === opt);
                             if (locToDelete) {
@@ -2212,6 +2256,7 @@ export default function WineDetail({ params }) {
               <button
                 className="btn btn-danger"
                 onClick={async () => {
+                  if (!verifyDeletionPin()) return;
                   if (!locationMigration.migrateToId) {
                     if (!window.confirm(`ATTENZIONE! Non hai selezionato nessuna cantina di destinazione.\nTUTTI i movimenti collegati a ${locationMigration.locationToDeleteName} VERRANNO CANCELLATI IRREVERSIBILMENTE!\n\nVuoi davvero procedere?`)) return;
                   }

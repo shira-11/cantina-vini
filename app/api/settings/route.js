@@ -8,7 +8,7 @@ export const revalidate = 0;
 export async function GET() {
   try {
     const settings = await prisma.systemSettings.findMany({
-      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds', 'visitor_allowed_buttons', 'enable_search_autocomplete'] } }
+      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds', 'visitor_allowed_buttons', 'enable_search_autocomplete', 'deletion_pin'] } }
     });
 
     const filtersSetting = settings.find(s => s.key === 'visitor_allowed_filters');
@@ -17,6 +17,7 @@ export async function GET() {
     const photoSecSetting = settings.find(s => s.key === 'photo_preview_seconds');
     const buttonsSetting = settings.find(s => s.key === 'visitor_allowed_buttons');
     const autoSetting = settings.find(s => s.key === 'enable_search_autocomplete');
+    const pinSetting = settings.find(s => s.key === 'deletion_pin');
 
     let allowedFilters = [
       'country', 'region', 'producerCellar', 'producer',
@@ -65,13 +66,19 @@ export async function GET() {
       enableSearchAutocomplete = autoSetting.value === 'true';
     }
 
+    let deletionPin = '1234';
+    if (pinSetting && pinSetting.value) {
+      deletionPin = pinSetting.value;
+    }
+
     return NextResponse.json({
       visitorAllowedFilters: allowedFilters,
       visitorAllowedButtons: allowedButtons,
       visitorAllowWineDetails: allowWineDetails,
       loginPageBackground: loginPageBackground,
       photoPreviewSeconds: photoPreviewSeconds,
-      enableSearchAutocomplete: enableSearchAutocomplete
+      enableSearchAutocomplete: enableSearchAutocomplete,
+      deletionPin: deletionPin
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'

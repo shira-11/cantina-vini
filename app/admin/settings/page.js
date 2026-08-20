@@ -39,6 +39,7 @@ export default function AdminSettingsPage() {
   const [loginPageBackground, setLoginPageBackground] = useState(true);
   const [photoPreviewSeconds, setPhotoPreviewSeconds] = useState(3);
   const [enableSearchAutocomplete, setEnableSearchAutocomplete] = useState(true);
+  const [deletionPin, setDeletionPin] = useState('1234');
   const [uploadingBg, setUploadingBg] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -53,6 +54,9 @@ export default function AdminSettingsPage() {
           setAllowWineDetails(data.visitorAllowWineDetails !== false);
           setLoginPageBackground(data.loginPageBackground !== false);
           setEnableSearchAutocomplete(data.enableSearchAutocomplete !== false);
+          if (data.deletionPin) {
+            setDeletionPin(data.deletionPin);
+          }
           if (data.photoPreviewSeconds !== undefined) {
             setPhotoPreviewSeconds(data.photoPreviewSeconds);
           }
@@ -114,7 +118,8 @@ export default function AdminSettingsPage() {
           visitorAllowWineDetails: allowWineDetails,
           loginPageBackground: loginPageBackground,
           photoPreviewSeconds: photoPreviewSeconds,
-          enableSearchAutocomplete: enableSearchAutocomplete
+          enableSearchAutocomplete: enableSearchAutocomplete,
+          deletionPin: deletionPin
         })
       });
 
@@ -197,6 +202,49 @@ export default function AdminSettingsPage() {
 
       <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {/* Sezione PIN di Sicurezza per Eliminazioni */}
+          <div>
+            <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🔐 PIN di Sicurezza per Eliminazioni
+            </h3>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                padding: '1.25rem',
+                borderRadius: '8px',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0'
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '600' }}>PIN di Sicurezza per la Cancellazione</span>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.2rem' }}>
+                  Questo PIN verrà richiesto ogni volta che un utente preme il pulsante elimina (🗑️) per cancellare un elemento (Nazione, Regione, Cantina, Foto, ecc.).
+                </span>
+              </div>
+              <input
+                type="text"
+                value={deletionPin}
+                onChange={(e) => setDeletionPin(e.target.value)}
+                placeholder="1234"
+                style={{
+                  width: '110px',
+                  padding: '0.6rem 0.75rem',
+                  fontSize: '1.15rem',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  borderRadius: '8px',
+                  border: '2px solid #6366f1',
+                  background: 'white',
+                  letterSpacing: '2px'
+                }}
+              />
+            </div>
+          </div>
+
           {/* Sezione Autocompletamento Ricerca */}
           <div>
             <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Ricerca & Suggerimenti</h3>
