@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Shield, Plus, Edit2, Trash2, ArrowLeft, Check, X, Lock, Unlock, Clock } from 'lucide-react';
+import { Users, Shield, Plus, UserPlus, Edit2, Trash2, ArrowLeft, Check, X, Lock, Unlock, Clock } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const router = useRouter();
