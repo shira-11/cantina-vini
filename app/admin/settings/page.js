@@ -175,16 +175,33 @@ export default function AdminSettingsPage() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'system-ui' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <button
-          onClick={() => router.push('/')}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#64748b' }}
-        >
-          <ArrowLeft size={20} /> Torna alla Home
-        </button>
-        <h1 style={{ margin: 0, fontSize: '1.75rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Settings size={28} color="#6366f1" /> Impostazioni Gestionale
-        </h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button
+            onClick={() => router.push('/')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}
+          >
+            <ArrowLeft size={18} /> Home
+          </button>
+          <h1 style={{ margin: 0, fontSize: '1.75rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Settings size={28} color="#6366f1" /> Impostazioni Gestionale
+          </h1>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button
+            onClick={() => router.push('/admin/users')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#e0e7ff', border: '1px solid #6366f1', color: '#4338ca', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            👥 Gestione Utenti e Dispositivi
+          </button>
+          <button
+            onClick={() => router.push('/admin/sessions')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#334155', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}
+          >
+            🕒 Registro Accessi
+          </button>
+        </div>
       </div>
 
       {message.text && (
