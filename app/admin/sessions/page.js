@@ -86,6 +86,54 @@ export default function AdminSessionsPage() {
     return `${hours}h ${mins}m`;
   };
 
+  const parseUserAgent = (ua) => {
+    if (!ua || ua === 'Unknown') return { label: 'Dispositivo Sconosciuto', icon: '💻' };
+    
+    const lower = ua.toLowerCase();
+    
+    let deviceName = 'PC Computer';
+    let icon = '💻';
+    
+    if (lower.includes('ipad')) {
+      deviceName = 'iPad';
+      icon = '📱';
+    } else if (lower.includes('iphone')) {
+      deviceName = 'iPhone';
+      icon = '📱';
+    } else if (lower.includes('android')) {
+      if (lower.includes('mobile')) {
+        deviceName = 'Smartphone Android';
+        icon = '📱';
+      } else {
+        deviceName = 'Tablet Android';
+        icon = '📱';
+      }
+    } else if (lower.includes('macintosh') || lower.includes('mac os')) {
+      deviceName = 'Mac';
+      icon = '💻';
+    } else if (lower.includes('windows')) {
+      deviceName = 'Windows PC';
+      icon = '💻';
+    } else if (lower.includes('linux')) {
+      deviceName = 'Linux PC';
+      icon = '💻';
+    }
+
+    let browser = '';
+    if (lower.includes('edg')) {
+      browser = 'Edge';
+    } else if (lower.includes('chrome') || lower.includes('crios')) {
+      browser = 'Chrome';
+    } else if (lower.includes('safari') && !lower.includes('chrome')) {
+      browser = 'Safari';
+    } else if (lower.includes('firefox') || lower.includes('fxios')) {
+      browser = 'Firefox';
+    }
+
+    const label = browser ? `${deviceName} (${browser})` : deviceName;
+    return { label, icon };
+  };
+
   const filteredSessions = (Array.isArray(sessions) ? sessions : []).filter(s => {
     const usernameStr = s.username || s.user?.username || '';
     const matchesUser = usernameStr.toLowerCase().includes(search.toLowerCase());
@@ -111,7 +159,7 @@ export default function AdminSessionsPage() {
               <Clock size={28} color="#6366f1" /> Registro Accessi Utenti
             </h1>
             <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.95rem' }}>
-              Cronologia entrate, uscite e tempi di lavoro degli utenti
+              Cronologia entrate, uscite, dispositivi collegati e tempi di lavoro degli utenti
             </p>
           </div>
         </div>
@@ -184,11 +232,12 @@ export default function AdminSessionsPage() {
           Nessuna sessione trovata nel registro.
         </div>
       ) : (
-        <div style={{ backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+        <div style={{ backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflowX: 'auto', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
                 <th style={{ padding: '0.85rem 1rem' }}>UTENTE</th>
+                <th style={{ padding: '0.85rem 1rem' }}>DISPOSITIVO COLLEGATO</th>
                 <th style={{ padding: '0.85rem 1rem' }}>ENTRATA (LOGIN)</th>
                 <th style={{ padding: '0.85rem 1rem' }}>USCITA (LOGOUT)</th>
                 <th style={{ padding: '0.85rem 1rem' }}>DURATA SESSIONE</th>
@@ -200,6 +249,7 @@ export default function AdminSessionsPage() {
                 const isActive = !s.logoutTime;
                 const isAutoLogout = s.logoutReason === 'auto_timeout';
                 const role = s.user?.role || 'viewer';
+                const deviceInfo = parseUserAgent(s.userAgent);
 
                 return (
                   <tr key={s.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -217,6 +267,15 @@ export default function AdminSessionsPage() {
                           {role.toUpperCase()}
                         </span>
                       </div>
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#334155' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
+                        <span style={{ fontSize: '1.1rem' }}>{deviceInfo.icon}</span>
+                        <span>{deviceInfo.label}</span>
+                      </div>
+                      {s.ipAddress && s.ipAddress !== '127.0.0.1' && s.ipAddress !== '::1' && (
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.1rem' }}>IP: {s.ipAddress}</div>
+                      )}
                     </td>
                     <td style={{ padding: '0.85rem 1rem', color: '#334155' }}>
                       {formatDateTime(s.loginTime)}
