@@ -255,46 +255,67 @@ export default function AdminUsersPage() {
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="modal-header">
-              <h3>{editingUser ? 'Modifica Utente' : 'Nuovo Utente'}</h3>
+              <h3 style={{ margin: 0 }}>{editingUser ? 'Modifica Utente' : 'Nuovo Utente'}</h3>
               <button className="btn-close" onClick={() => setIsModalOpen(false)}><X size={20}/></button>
             </div>
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.75rem' }}>
               <div className="form-group">
-                <label>Nome Utente</label>
+                <label style={{ fontWeight: '600' }}>Nome Utente</label>
                 <input 
                   type="text" 
                   value={formData.username} 
                   onChange={e => setFormData({...formData, username: e.target.value})} 
                   disabled={!!editingUser}
                   required 
-                  style={{ width: '100%', padding: '0.75rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }}
+                  style={{ width: '100%', padding: '0.65rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }}
                 />
               </div>
 
               <div className="form-group">
-                <label>{editingUser ? 'Nuova Password (lascia vuoto per non cambiare)' : 'Password'}</label>
+                <label style={{ fontWeight: '600' }}>{editingUser ? 'Nuova Password (lascia vuoto per non cambiare)' : 'Password'}</label>
                 <input 
                   type="password" 
                   value={formData.password} 
                   onChange={e => setFormData({...formData, password: e.target.value})} 
                   required={!editingUser}
-                  style={{ width: '100%', padding: '0.75rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }}
+                  style={{ width: '100%', padding: '0.65rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }}
                 />
               </div>
 
               <div className="form-group">
-                <label>Livello di Accesso (Ruolo)</label>
+                <label style={{ fontWeight: '600' }}>Livello di Accesso (Ruolo)</label>
                 <select 
                   value={formData.role} 
                   onChange={e => setFormData({...formData, role: e.target.value})}
-                  style={{ width: '100%', padding: '0.75rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }}
+                  style={{ width: '100%', padding: '0.65rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }}
                 >
                   <option value="admin">Amministratore (Pieno accesso)</option>
                   <option value="editor">Operatore (Aggiunge/Modifica Vini)</option>
                   <option value="viewer">Visitatore (Solo Lettura, nessuna modifica)</option>
                 </select>
+              </div>
+
+              {/* AUTORIZZAZIONE DISPOSITIVI SIMULTANEI */}
+              <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                <label style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#1e293b', fontSize: '0.95rem' }}>
+                  📱 Dispositivi Contemporanei Consentiti
+                </label>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0.2rem 0 0.5rem 0' }}>
+                  Numero massimo di dispositivi (telefoni/PC) collegati contemporaneamente (default: 2).
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="50" 
+                    value={formData.maxDevices || 2} 
+                    onChange={e => setFormData({...formData, maxDevices: Math.max(1, Number(e.target.value))})} 
+                    style={{ width: '90px', padding: '0.5rem', border: '2px solid #6366f1', borderRadius: '6px', fontSize: '1.1rem', fontWeight: 'bold', textAlign: 'center' }}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: '600' }}>dispositivi max autorizzati</span>
+                </div>
               </div>
 
               <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -305,28 +326,7 @@ export default function AdminUsersPage() {
                   onChange={e => setFormData({...formData, isActive: e.target.checked})}
                   style={{ width: '18px', height: '18px' }}
                 />
-                <label htmlFor="isActive" style={{ margin: 0, cursor: 'pointer' }}>Account Attivo</label>
-              </div>
-
-              {/* AUTORIZZAZIONE DISPOSITIVI SIMULTANEI */}
-              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                <label style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#1e293b' }}>
-                  📱 Dispositivi Contemporanei Consentiti
-                </label>
-                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0.2rem 0 0.5rem 0' }}>
-                  Un utente può collegare al massimo questo numero di dispositivi contemporaneamente (default: 2).
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input 
-                    type="number" 
-                    min="1" 
-                    max="50" 
-                    value={formData.maxDevices || 2} 
-                    onChange={e => setFormData({...formData, maxDevices: Math.max(1, Number(e.target.value))})} 
-                    style={{ width: '90px', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem', fontWeight: 'bold' }}
-                  />
-                  <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '500' }}>dispositivi max autorizzati</span>
-                </div>
+                <label htmlFor="isActive" style={{ margin: 0, cursor: 'pointer', fontWeight: '600' }}>Account Attivo</label>
               </div>
 
               <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
