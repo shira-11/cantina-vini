@@ -53,11 +53,12 @@ export default function AdminUsersPage() {
         role: user.role,
         isActive: user.isActive,
         autoLogoutEnabled: user.autoLogoutEnabled !== false,
-        autoLogoutMinutes: user.autoLogoutMinutes || 30
+        autoLogoutMinutes: user.autoLogoutMinutes || 30,
+        maxDevices: user.maxDevices ?? 2
       });
     } else {
       setEditingUser(null);
-      setFormData({ username: '', password: '', role: 'viewer', isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: 30 });
+      setFormData({ username: '', password: '', role: 'viewer', isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: 30, maxDevices: 2 });
     }
     setIsModalOpen(true);
   };
@@ -149,40 +150,45 @@ export default function AdminUsersPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-color)' }}>
       <div className="header" style={{ padding: '1rem', background: 'white', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <button className="btn" onClick={() => router.push('/')} style={{ background: 'transparent', color: 'var(--text-color)', border: '1px solid var(--border-color)', padding: '0.5rem' }}>
-          <ArrowLeft size={20} />
+        <button className="btn" style={{ padding: '0.4rem 0.8rem', background: '#f1f5f9', border: '1px solid var(--border-color)' }} onClick={() => router.push('/')}>
+          <ArrowLeft size={16} style={{ marginRight: '0.4rem' }} /> Torna alla Cantina
         </button>
-        <Shield size={28} color="var(--primary-color)" />
-        <h1 style={{ margin: 0, fontSize: '1.25rem' }}>Gestione Utenti e Accessi</h1>
+        <h1 style={{ fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Shield size={20} color="var(--primary-color)" /> Gestione Utenti e Autorizzazioni
+        </h1>
       </div>
 
-      <div style={{ padding: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <h2 style={{ margin: 0, color: 'var(--text-color)' }}>Elenco Utenti</h2>
+      <div style={{ flex: 1, padding: '1.5rem', maxWidth: '1000px', width: '100%', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div>
+            <h2 style={{ margin: 0 }}>Utenti del Sistema</h2>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>Gestisci gli account, i permessi ed il numero massimo di dispositivi per utente</p>
+          </div>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button className="btn" onClick={() => router.push('/admin/sessions')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#334155' }}>
-              <Clock size={18} color="#6366f1" /> Registro Accessi
+            <button className="btn" style={{ background: '#f1f5f9', border: '1px solid var(--border-color)' }} onClick={() => router.push('/admin/sessions')}>
+              <Clock size={16} style={{ marginRight: '0.4rem' }} /> Registro Accessi
             </button>
-            <button className="btn btn-primary" onClick={() => handleOpenModal()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Plus size={18} /> Nuovo Utente
+            <button className="btn btn-primary" onClick={() => handleOpenModal(null)}>
+              <UserPlus size={16} style={{ marginRight: '0.4rem' }} /> Nuovo Utente
             </button>
           </div>
         </div>
 
         <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-          <table className="data-table" style={{ width: '100%', minWidth: '600px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
             <thead>
-              <tr>
+              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--border-color)', color: '#64748b' }}>
                 <th style={{ padding: '1rem' }}>Username</th>
                 <th>Ruolo</th>
-                <th style={{ textAlign: 'center' }}>Stato</th>
+                <th style={{ textAlign: 'center' }}>Stato Account</th>
                 <th style={{ textAlign: 'center' }}>Auto-Logout</th>
+                <th style={{ textAlign: 'center' }}>Dispositivi Collegati</th>
                 <th style={{ textAlign: 'right', padding: '1rem' }}>Azioni</th>
               </tr>
             </thead>
             <tbody>
               {users.map(user => (
-                <tr key={user.id}>
+                <tr key={user.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '1rem', fontWeight: '500' }}>{user.username}</td>
                   <td>
                     <span style={{ 
@@ -211,12 +217,23 @@ export default function AdminUsersPage() {
                       <span style={{ color: '#94a3b8' }}>Disattivato</span>
                     )}
                   </td>
+                  <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>
+                    <span style={{ 
+                      fontWeight: 'bold', 
+                      color: (user.activeDevicesCount || 0) >= (user.maxDevices || 2) ? '#e11d48' : '#059669',
+                      backgroundColor: (user.activeDevicesCount || 0) >= (user.maxDevices || 2) ? '#ffe4e6' : '#d1fae5',
+                      padding: '0.2rem 0.6rem',
+                      borderRadius: '12px'
+                    }}>
+                      📱 {user.activeDevicesCount || 0} / {user.maxDevices || 2} max
+                    </span>
+                  </td>
                   <td style={{ textAlign: 'right', padding: '1rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                       <button className="btn" style={{ padding: '0.4rem', border: '1px solid var(--border-color)', background: 'white' }} onClick={() => handleToggleStatus(user)} title={user.isActive ? "Blocca Accesso" : "Sblocca Accesso"}>
                         {user.isActive ? <Lock size={16} color="#64748b" /> : <Unlock size={16} color="var(--success-color)" />}
                       </button>
-                      <button className="btn" style={{ padding: '0.4rem', border: '1px solid var(--border-color)', background: 'white' }} onClick={() => handleOpenModal(user)} title="Modifica Utente">
+                      <button className="btn" style={{ padding: '0.4rem', border: '1px solid var(--border-color)', background: 'white' }} onClick={() => handleOpenModal(user)} title="Modifica Utente / Autorizza Dispositivi">
                         <Edit2 size={16} color="var(--primary-color)" />
                       </button>
                       <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleDelete(user)} title="Elimina Utente">
@@ -228,7 +245,7 @@ export default function AdminUsersPage() {
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Nessun utente trovato</td>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Nessun utente trovato</td>
                 </tr>
               )}
             </tbody>
@@ -289,6 +306,27 @@ export default function AdminUsersPage() {
                   style={{ width: '18px', height: '18px' }}
                 />
                 <label htmlFor="isActive" style={{ margin: 0, cursor: 'pointer' }}>Account Attivo</label>
+              </div>
+
+              {/* AUTORIZZAZIONE DISPOSITIVI SIMULTANEI */}
+              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+                <label style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#1e293b' }}>
+                  📱 Dispositivi Contemporanei Consentiti
+                </label>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0.2rem 0 0.5rem 0' }}>
+                  Un utente può collegare al massimo questo numero di dispositivi contemporaneamente (default: 2).
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="50" 
+                    value={formData.maxDevices || 2} 
+                    onChange={e => setFormData({...formData, maxDevices: Math.max(1, Number(e.target.value))})} 
+                    style={{ width: '90px', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem', fontWeight: 'bold' }}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '500' }}>dispositivi max autorizzati</span>
+                </div>
               </div>
 
               <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>

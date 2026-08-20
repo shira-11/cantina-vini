@@ -24,6 +24,13 @@ if (fs.existsSync(dbPath)) {
     }
 
     try {
+      db.prepare('ALTER TABLE User ADD COLUMN maxDevices INTEGER DEFAULT 2').run();
+      console.log('Added maxDevices column');
+    } catch (e) {
+      console.log('maxDevices column exists or skipped');
+    }
+
+    try {
       db.prepare('UPDATE Wine SET isArchived = 0 WHERE isArchived IS NULL').run();
       console.log('Updated null isArchived values to 0');
     } catch (e) {

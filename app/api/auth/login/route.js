@@ -55,6 +55,47 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Account disabilitato. Contatta l\'amministratore.' }, { status: 403 });
     }
 
+    // Auto-chiudi le sessioni stantie dello stesso utente più vecchie di 45 minuti
+    try {
+      if (prisma.userSession) {
+        const cutoffTime = new Date(Date.now() - 45 * 60 * 1000);
+        await prisma.userSession.updateMany({
+          where: {
+            OR: [{ userId: user.id }, { username: user.username }],
+            logoutTime: null,
+            loginTime: { lt: cutoffTime }
+          },
+          data: {
+            logoutTime: new Date(),
+            logoutReason: 'auto_timeout'
+          }
+        });
+      }
+    } catch (cleanErr) {
+      console.error('Error cleaning stale sessions:', cleanErr);
+    }
+
+    // Verifica il limite massimo di dispositivi consentiti per questo utente
+    const maxAllowed = user.maxDevices !== undefined && user.maxDevices !== null ? user.maxDevices : 2;
+    try {
+      if (prisma.userSession) {
+        const activeSessionsCount = await prisma.userSession.count({
+          where: {
+            OR: [{ userId: user.id }, { username: user.username }],
+            logoutTime: null
+          }
+        });
+
+        if (activeSessionsCount >= maxAllowed) {
+          return NextResponse.json({
+            error: `🚫 Limite dispositivi raggiunto (${activeSessionsCount}/${maxAllowed} dispositivi già collegati). Contatta l'amministratore per autorizzare ulteriori dispositivi.`
+          }, { status: 403 });
+        }
+      }
+    } catch (checkErr) {
+      console.error('Error checking active sessions limit:', checkErr);
+    }
+
     // Registra la sessione nel database
     let sessionId = null;
     try {

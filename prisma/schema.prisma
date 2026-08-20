@@ -98,6 +98,7 @@ model User {
   isActive          Boolean       @default(true)
   autoLogoutEnabled Boolean       @default(true)
   autoLogoutMinutes Int           @default(30)
+  maxDevices        Int           @default(2)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

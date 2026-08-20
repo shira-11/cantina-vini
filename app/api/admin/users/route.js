@@ -14,6 +14,7 @@ export async function GET(request) {
           isActive: true,
           autoLogoutEnabled: true,
           autoLogoutMinutes: true,
+          maxDevices: true,
           createdAt: true,
           updatedAt: true
         },
@@ -38,16 +39,40 @@ export async function GET(request) {
       });
     }
 
-    const formattedUsers = users.map(u => ({
-      id: u.id,
-      username: u.username,
-      role: u.role,
-      isActive: u.isActive,
-      autoLogoutEnabled: u.autoLogoutEnabled ?? true,
-      autoLogoutMinutes: u.autoLogoutMinutes ?? 30,
-      createdAt: u.createdAt,
-      updatedAt: u.updatedAt
-    }));
+    // Auto-cleanup stale sessions (over 45 mins old without logout)
+    const cutoffTime = new Date(Date.now() - 45 * 60 * 1000);
+    await prisma.userSession.updateMany({
+      where: {
+        logoutTime: null,
+        loginTime: { lt: cutoffTime }
+      },
+      data: {
+        logoutTime: new Date(),
+        logoutReason: 'auto_timeout'
+      }
+    }).catch(() => {});
+
+    // Count active sessions per user
+    const activeSessions = await prisma.userSession.findMany({
+      where: { logoutTime: null },
+      select: { userId: true, username: true }
+    }).catch(() => []);
+
+    const formattedUsers = users.map(u => {
+      const activeCount = activeSessions.filter(s => (s.userId && s.userId === u.id) || (s.username && s.username.toLowerCase() === u.username.toLowerCase())).length;
+      return {
+        id: u.id,
+        username: u.username,
+        role: u.role,
+        isActive: u.isActive,
+        autoLogoutEnabled: u.autoLogoutEnabled ?? true,
+        autoLogoutMinutes: u.autoLogoutMinutes ?? 30,
+        maxDevices: u.maxDevices ?? 2,
+        activeDevicesCount: activeCount,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt
+      };
+    });
 
     return NextResponse.json(formattedUsers);
   } catch (error) {
@@ -59,7 +84,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const data = await request.json();
-    const { username, password, role, isActive, autoLogoutEnabled, autoLogoutMinutes } = data;
+    const { username, password, role, isActive, autoLogoutEnabled, autoLogoutMinutes, maxDevices } = data;
 
     const trimmedUsername = username ? username.trim() : '';
 
@@ -80,7 +105,8 @@ export async function POST(request) {
       username: trimmedUsername,
       passwordHash,
       role: role || 'viewer',
-      isActive: isActive !== undefined ? isActive : true
+      isActive: isActive !== undefined ? isActive : true,
+      maxDevices: maxDevices !== undefined ? Number(maxDevices) : 2
     };
 
     if (autoLogoutEnabled !== undefined) userData.autoLogoutEnabled = autoLogoutEnabled;
@@ -95,6 +121,7 @@ export async function POST(request) {
       console.warn("Retrying user creation with core fields:", createErr);
       delete userData.autoLogoutEnabled;
       delete userData.autoLogoutMinutes;
+      delete userData.maxDevices;
       newUser = await prisma.user.create({
         data: userData
       });
@@ -106,7 +133,8 @@ export async function POST(request) {
       role: newUser.role,
       isActive: newUser.isActive,
       autoLogoutEnabled: newUser.autoLogoutEnabled ?? true,
-      autoLogoutMinutes: newUser.autoLogoutMinutes ?? 30
+      autoLogoutMinutes: newUser.autoLogoutMinutes ?? 30,
+      maxDevices: newUser.maxDevices ?? 2
     }, { status: 201 });
   } catch (error) {
     console.error("POST user error:", error);

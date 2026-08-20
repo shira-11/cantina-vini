@@ -95,10 +95,15 @@ async function migrateAndUpload() {
       isActive BOOLEAN NOT NULL DEFAULT 1,
       autoLogoutEnabled BOOLEAN NOT NULL DEFAULT 1,
       autoLogoutMinutes INTEGER NOT NULL DEFAULT 30,
+      maxDevices INTEGER NOT NULL DEFAULT 2,
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  try {
+    await tursoClient.execute(`ALTER TABLE User ADD COLUMN maxDevices INTEGER DEFAULT 2;`);
+  } catch (e) {}
 
   await tursoClient.execute(`
     CREATE TABLE IF NOT EXISTS UserSession (

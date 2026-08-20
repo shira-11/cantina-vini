@@ -13,6 +13,7 @@ export async function PUT(request, { params }) {
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.autoLogoutEnabled !== undefined) updateData.autoLogoutEnabled = data.autoLogoutEnabled;
     if (data.autoLogoutMinutes !== undefined) updateData.autoLogoutMinutes = Number(data.autoLogoutMinutes);
+    if (data.maxDevices !== undefined) updateData.maxDevices = Number(data.maxDevices);
     
     if (data.password) {
       const salt = await bcrypt.genSalt(10);
@@ -22,7 +23,7 @@ export async function PUT(request, { params }) {
     // Previeni che l'unico admin venga disabilitato
     if (data.isActive === false || (data.role && data.role !== 'admin')) {
       const userToUpdate = await prisma.user.findUnique({ where: { id: userId } });
-      if (userToUpdate.role === 'admin') {
+      if (userToUpdate && userToUpdate.role === 'admin') {
         const adminCount = await prisma.user.count({ where: { role: 'admin', isActive: true } });
         if (adminCount <= 1) {
           return NextResponse.json({ error: "Non puoi disabilitare l'unico amministratore" }, { status: 400 });
@@ -37,9 +38,10 @@ export async function PUT(request, { params }) {
         data: updateData
       });
     } catch (upErr) {
-      console.warn("Retrying user update without autoLogout fields:", upErr);
+      console.warn("Retrying user update without extra fields:", upErr);
       delete updateData.autoLogoutEnabled;
       delete updateData.autoLogoutMinutes;
+      delete updateData.maxDevices;
       updatedUser = await prisma.user.update({
         where: { id: userId },
         data: updateData
@@ -52,7 +54,8 @@ export async function PUT(request, { params }) {
       role: updatedUser.role,
       isActive: updatedUser.isActive,
       autoLogoutEnabled: updatedUser.autoLogoutEnabled ?? true,
-      autoLogoutMinutes: updatedUser.autoLogoutMinutes ?? 30
+      autoLogoutMinutes: updatedUser.autoLogoutMinutes ?? 30,
+      maxDevices: updatedUser.maxDevices ?? 2
     });
   } catch (error) {
     console.error("PUT user error:", error);
