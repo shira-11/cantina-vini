@@ -526,6 +526,7 @@ export default function WineDetail({ params }) {
 
   const handleDeleteVintage = async (vintageId, isCurrent) => {
     if (window.confirm("Sei sicuro di voler eliminare definitivamente questa annata e tutti i suoi movimenti? L'azione non è annullabile.")) {
+      if (!verifyDeletionPin()) return;
       try {
         const res = await fetch(`/api/wines/${vintageId}`, { method: 'DELETE' });
         if (res.ok) {
@@ -684,6 +685,7 @@ export default function WineDetail({ params }) {
 
   const handleDeleteWine = async () => {
     if (window.confirm("Sei sicuro di voler eliminare definitivamente questa scheda vino? Verranno eliminati anche tutti i movimenti e le foto associate. L'azione non è annullabile.")) {
+      if (!verifyDeletionPin()) return;
       setIsSaving(true);
       try {
         const res = await fetch(`/api/wines/${unwrappedParams.id}`, {
