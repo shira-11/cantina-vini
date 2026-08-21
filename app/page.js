@@ -33,10 +33,23 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
   const [search, setSearch] = useState(() => {
     if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchFromUrl = urlParams.get('search') || urlParams.get('scan') || urlParams.get('q') || urlParams.get('id') || urlParams.get('wine');
+      if (searchFromUrl) return searchFromUrl.trim();
       return sessionStorage.getItem('homeSearch') || '';
     }
     return '';
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchFromUrl = urlParams.get('search') || urlParams.get('scan') || urlParams.get('q') || urlParams.get('id') || urlParams.get('wine');
+      if (searchFromUrl) {
+        setSearch(searchFromUrl.trim());
+      }
+    }
+  }, []);
   const [expandedGroups, setExpandedGroups] = useState(() => {
     if (typeof window !== 'undefined') {
       const cached = sessionStorage.getItem('homeExpandedGroups');

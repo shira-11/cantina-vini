@@ -10,7 +10,7 @@ export default function QRCodeModal({ wine, onClose }) {
   useEffect(() => {
     if (!wine) return;
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const wineUrl = `${origin}/wine/${wine.id}`;
+    const wineUrl = `${origin}/?search=${wine.id}`;
 
     QRCode.toDataURL(wineUrl, {
       width: 300,

@@ -148,7 +148,7 @@ export default function PrintQRLabelsPage() {
       for (const wine of filteredWines) {
         if (isCancelled) break;
         try {
-          const url = `${origin}/wine/${wine.id}`;
+          const url = `${origin}/?search=${wine.id}`;
           const dataUrl = await QRCode.toDataURL(url, {
             width: 220,
             margin: 1,
