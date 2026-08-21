@@ -1970,7 +1970,15 @@ export default function Home() {
       {showQRScanner && (
         <QRScannerModal
           onClose={() => setShowQRScanner(false)}
-          onScanSuccess={(wineId) => handleWineClick(wineId)}
+          onScanSuccess={(wineId) => {
+            const foundWine = wines.find(w => String(w.id) === String(wineId));
+            if (foundWine) {
+              setSearch(foundWine.name);
+            } else {
+              setSearch(String(wineId));
+            }
+            setShowQRScanner(false);
+          }}
         />
       )}
 

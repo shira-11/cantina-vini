@@ -24,20 +24,25 @@ export async function GET(request) {
       // If after filtering we have no words, fallback to the original whole string
       const searchTerms = words.length > 0 ? words : [search.trim()];
 
-      searchConditions = searchTerms.map(term => ({
-        OR: [
-          { name: { contains: term } },
-          { country: { contains: term } },
-          { category: { contains: term } },
-          { producer: { contains: term } },
-          { producerCellar: { contains: term } },
-          { region: { contains: term } },
-          { classification: { contains: term } },
-          { bottleType: { contains: term } },
-          { vintage: { contains: term } },
-          { movements: { some: { OR: [{ bottleType: { contains: term } }, { location: { name: { contains: term } } }] } } }
-        ]
-      }));
+      searchConditions = searchTerms.map(term => {
+        const numVal = parseInt(term, 10);
+        const isNumeric = !isNaN(numVal) && String(numVal) === term.trim();
+        return {
+          OR: [
+            ...(isNumeric ? [{ id: { equals: numVal } }] : []),
+            { name: { contains: term } },
+            { country: { contains: term } },
+            { category: { contains: term } },
+            { producer: { contains: term } },
+            { producerCellar: { contains: term } },
+            { region: { contains: term } },
+            { classification: { contains: term } },
+            { bottleType: { contains: term } },
+            { vintage: { contains: term } },
+            { movements: { some: { OR: [{ bottleType: { contains: term } }, { location: { name: { contains: term } } }] } } }
+          ]
+        };
+      });
     }
 
     // Fetch wines along with their movements to calculate total stock
