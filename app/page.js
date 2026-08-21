@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wine, Search, Plus, Grape, MapPin, Loader2, Camera, FileText, List, FileSpreadsheet, History, ChevronDown, ChevronLeft, ChevronRight, X, Menu, Image as ImageIcon, User, LogOut, Shield, Settings, Mic, HelpCircle, CheckSquare } from 'lucide-react';
+import { Wine, Search, Plus, Grape, MapPin, Loader2, Camera, FileText, List, FileSpreadsheet, History, ChevronDown, ChevronLeft, ChevronRight, X, Menu, Image as ImageIcon, User, LogOut, Shield, Settings, Mic, HelpCircle, CheckSquare, QrCode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import * as XLSX from 'xlsx';
@@ -13,10 +13,14 @@ import { StockCell } from './components/StockCell';
 import { MobileCatalog } from './components/MobileCatalog';
 import HelpGuideModal from './components/HelpGuideModal';
 import GlobalMovementLog from './components/GlobalMovementLog';
+import QRCodeModal from '@/components/QRCodeModal';
+import QRScannerModal from '@/components/QRScannerModal';
 
 export default function Home() {
   const router = useRouter();
   const [wines, setWines] = useState([]);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [qrWineModal, setQrWineModal] = useState(null);
   const [loading, setLoading] = useState(() => {
     if (typeof window !== 'undefined') {
       return !sessionStorage.getItem('homeWines');
@@ -811,6 +815,7 @@ export default function Home() {
         setIsGlobalLogOpen={setIsGlobalLogOpen}
         winesArray={groupedWinesArray}
         enableSearchAutocomplete={enableSearchAutocomplete}
+        onOpenQRScanner={() => setShowQRScanner(true)}
       />
     );
   }
@@ -913,8 +918,28 @@ export default function Home() {
                     setSearch(e.target.value);
                     setShowSuggestions(true);
                   }}
-                  style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '3.5rem' : '2.25rem', width: '100%' }}
+                  style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '5rem' : '3.5rem', width: '100%' }}
                 />
+                <button
+                  onClick={() => setShowQRScanner(true)}
+                  title="Scansiona QR Code da fotocamera"
+                  style={{
+                    background: '#e0e7ff',
+                    border: 'none',
+                    padding: '3px 7px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    position: 'absolute',
+                    right: speechSupported ? '3.8rem' : '2.25rem',
+                    top: '9px',
+                    color: '#4338ca',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2px'
+                  }}
+                >
+                  <QrCode size={16} />
+                </button>
                 {speechSupported && (
                   <button
                     onClick={startVoiceSearch}
@@ -1616,6 +1641,10 @@ export default function Home() {
                     </div>
                   )}
 
+                  <div className="toolbar-icon" onClick={() => router.push('/print/qr-labels')} title="Stampa Fogli Etichette QR Code (A4)">
+                    <QrCode size={24} color="#6366f1" />
+                  </div>
+
                   <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>
 
                   {!currentUser ? (
@@ -1923,6 +1952,20 @@ export default function Home() {
       )}
 
       <GlobalMovementLog isOpen={isGlobalLogOpen} onClose={() => setIsGlobalLogOpen(false)} />
+
+      {showQRScanner && (
+        <QRScannerModal
+          onClose={() => setShowQRScanner(false)}
+          onScanSuccess={(wineId) => handleWineClick(wineId)}
+        />
+      )}
+
+      {qrWineModal && (
+        <QRCodeModal
+          wine={qrWineModal}
+          onClose={() => setQrWineModal(null)}
+        />
+      )}
     </div>
   );
 }

@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Trash, Image as ImageIcon, Edit2, List, FileText, ArrowRightLeft, Camera, Wine, Printer, RotateCw, Crop } from 'lucide-react';
+import { ArrowLeft, Save, Trash, Image as ImageIcon, Edit2, List, FileText, ArrowRightLeft, Camera, Wine, Printer, RotateCw, Crop, QrCode } from 'lucide-react';
 import { use } from 'react';
 import PhotoCropModal from '../../components/PhotoCropModal';
+import QRCodeModal from '@/components/QRCodeModal';
 
 const getCountryFlag = (country) => {
   if (!country) return '';
@@ -53,6 +54,7 @@ export default function WineDetail({ params }) {
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [promptDialog, setPromptDialog] = useState(null);
   const [cropModal, setCropModal] = useState({ isOpen: false, photoUrl: null, type: 'front' });
+  const [showQRModal, setShowQRModal] = useState(false);
   const [deletionPin, setDeletionPin] = useState('1234');
   const customAlert = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(''), 4000); };
 
@@ -794,6 +796,16 @@ export default function WineDetail({ params }) {
             <h1>Scheda Vino</h1>
           </div>
 
+          {unwrappedParams.id !== 'new' && (
+            <button
+              className="btn"
+              onClick={() => setShowQRModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#e0e7ff', border: '1px solid #818cf8', color: '#4338ca', fontWeight: '600' }}
+              title="Visualizza e Stampa Codice QR"
+            >
+              <QrCode size={18} /> QR Code
+            </button>
+          )}
           {currentUser?.role !== 'viewer' && (
             <div style={{ display: 'flex', gap: '1rem' }}>
               {unwrappedParams.id !== 'new' && (
@@ -2407,6 +2419,12 @@ export default function WineDetail({ params }) {
             </div>
           </div>
         </div>
+      )}
+      {showQRModal && (
+        <QRCodeModal
+          wine={wine}
+          onClose={() => setShowQRModal(false)}
+        />
       )}
     </div>
   );

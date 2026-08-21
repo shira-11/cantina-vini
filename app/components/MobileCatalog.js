@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Wine, Search, Monitor, Filter, X, Loader2, Plus, Settings, Shield, History, LogOut, Mic, CheckSquare } from 'lucide-react';
+import { Wine, Search, Monitor, Filter, X, Loader2, Plus, Settings, Shield, History, LogOut, Mic, CheckSquare, QrCode } from 'lucide-react';
 import { getCountryFlag, getBadgeClass, getStockBreakdown, correctSpokenWineTranscript, getWineSearchSuggestions } from '../utils/wineHelpers';
 import { StockCell } from './StockCell';
 
@@ -24,7 +24,9 @@ export const MobileCatalog = ({
   uniqueBottleTypes,
   currentUser,
   setIsGlobalLogOpen,
-  enableSearchAutocomplete = true
+  enableSearchAutocomplete = true,
+  onOpenQRScanner,
+  onOpenQRModal
 }) => {
   const router = useRouter();
   const [showFilters, setShowFilters] = useState(false);
@@ -292,8 +294,31 @@ export const MobileCatalog = ({
                 setSearch(e.target.value);
                 setShowSuggestions(true);
               }}
-              style={{ width: '100%', padding: `0.75rem ${speechSupported ? '4rem' : '2.5rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
+              style={{ width: '100%', padding: `0.75rem ${speechSupported ? '5.5rem' : '4rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
             />
+
+            <button
+              onClick={onOpenQRScanner}
+              title="Scansiona QR Code da fotocamera"
+              style={{
+                background: '#e0e7ff',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                position: 'absolute',
+                right: search ? (speechSupported ? '64px' : '36px') : (speechSupported ? '36px' : '10px'),
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#4338ca',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2px'
+              }}
+            >
+              <QrCode size={16} />
+            </button>
+
             {speechSupported && (
               <button
                 onClick={startVoiceSearch}
