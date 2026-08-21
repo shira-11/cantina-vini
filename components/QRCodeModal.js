@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Printer, Download, QrCode } from 'lucide-react';
 import QRCode from 'qrcode';
+import { getCountryFlag } from '../app/utils/wineHelpers';
 
 export default function QRCodeModal({ wine, onClose }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
@@ -14,7 +15,7 @@ export default function QRCodeModal({ wine, onClose }) {
 
     QRCode.toDataURL(wineUrl, {
       width: 300,
-      margin: 2,
+      margin: 1,
       color: {
         dark: '#1e1b4b',
         light: '#ffffff'
@@ -40,6 +41,8 @@ export default function QRCodeModal({ wine, onClose }) {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
+    const flagStr = getCountryFlag(wine.country);
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -57,56 +60,65 @@ export default function QRCodeModal({ wine, onClose }) {
             }
             .label-card {
               width: 70mm;
-              height: 45mm;
-              border: 2px dashed #94a3b8;
-              padding: 4mm;
+              height: 35mm;
+              border: 1px dashed #94a3b8;
+              border-radius: 5px;
+              padding: 2.5mm 3.5mm;
               box-sizing: border-box;
               display: flex;
-              gap: 3mm;
               align-items: center;
-              background: white;
-              border-radius: 6px;
+              gap: 3.5mm;
+              background: #ffffff;
             }
             .qr-img {
-              width: 32mm;
-              height: 32mm;
+              width: 25mm;
+              height: 25mm;
+              flex-shrink: 0;
             }
             .details {
               flex: 1;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
+              overflow: hidden;
             }
             .title {
-              font-size: 11pt;
+              font-size: 9.5pt;
               font-weight: bold;
               color: #0f172a;
+              line-height: 1.15;
               margin-bottom: 2px;
-              line-height: 1.2;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
             }
             .producer {
-              font-size: 8.5pt;
+              font-size: 7.5pt;
               color: #475569;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
               margin-bottom: 2px;
             }
             .meta {
-              font-size: 8pt;
-              color: #64748b;
-              font-weight: 500;
-            }
-            .tag {
-              display: inline-block;
-              background: #f1f5f9;
-              padding: 1px 4px;
-              border-radius: 3px;
               font-size: 7.5pt;
               color: #334155;
-              margin-top: 3px;
               font-weight: 600;
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              margin-bottom: 2px;
+            }
+            .badge {
+              display: inline-block;
+              background: #e0e7ff;
+              color: #4338ca;
+              font-size: 6.5pt;
+              font-weight: bold;
+              padding: 1px 5px;
+              border-radius: 3px;
             }
             @media print {
-              body { background: white; }
-              .label-card { border: 1px solid #ccc; }
+              body { background: white; margin: 0; padding: 0; }
+              .label-card { border: 1px dashed #94a3b8 !important; }
+              @page { size: auto; margin: 10mm; }
             }
           </style>
         </head>
@@ -116,8 +128,8 @@ export default function QRCodeModal({ wine, onClose }) {
             <div class="details">
               <div class="title">${wine.name}</div>
               <div class="producer">${wine.producerCellar || wine.producer || ''}</div>
-              <div class="meta">Annata: <strong>${wine.vintage || 'S.A.'}</strong></div>
-              <div class="tag">ID: #${wine.id}</div>
+              <div class="meta"><span>${flagStr}</span> <span>Annata: ${wine.vintage || 'S.A.'}</span></div>
+              <div class="badge">ID: #${wine.id}</div>
             </div>
           </div>
           <script>
@@ -149,9 +161,9 @@ export default function QRCodeModal({ wine, onClose }) {
       <div style={{
         background: 'white',
         borderRadius: '16px',
-        maxWidth: '420px',
+        maxWidth: '440px',
         width: '100%',
-        padding: '1.75rem',
+        padding: '1.5rem',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         position: 'relative',
         textAlign: 'center',
@@ -178,31 +190,65 @@ export default function QRCodeModal({ wine, onClose }) {
           <X size={18} />
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
           <QrCode size={24} color="#6366f1" />
           <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a', fontWeight: '700' }}>Codice QR Vino</h3>
         </div>
 
-        <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem', color: '#1e293b', fontWeight: '600' }}>{wine.name}</h4>
-        <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.875rem' }}>
-          {wine.producerCellar || wine.producer || ''} {wine.vintage ? `• ${wine.vintage}` : ''}
-        </p>
-
+        {/* Card Anteprima Etichetta Identica alla Stampa A4 */}
         <div style={{
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '12px',
-          padding: '1.25rem',
-          display: 'inline-block',
-          marginBottom: '1.5rem'
+          border: '1px dashed #94a3b8',
+          borderRadius: '6px',
+          padding: '2.5mm 3.5mm',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '3.5mm',
+          background: '#ffffff',
+          boxSizing: 'border-box',
+          height: '34mm',
+          maxHeight: '35mm',
+          overflow: 'hidden',
+          maxWidth: '320px',
+          margin: '0 auto 1.5rem auto',
+          textAlign: 'left'
         }}>
           {qrDataUrl ? (
-            <img src={qrDataUrl} alt="QR Code Vino" style={{ width: '200px', height: '200px', display: 'block' }} />
+            <img
+              src={qrDataUrl}
+              alt={`QR Code Vino ID #${wine.id}`}
+              style={{
+                width: '25mm',
+                height: '25mm',
+                flexShrink: 0
+              }}
+            />
           ) : (
-            <div style={{ width: '200px', height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-              Generazione QR in corso...
-            </div>
+            <div
+              style={{
+                width: '25mm',
+                height: '25mm',
+                background: '#f1f5f9',
+                borderRadius: '4px',
+                flexShrink: 0
+              }}
+            />
           )}
+
+          <div style={{ overflow: 'hidden', flex: 1 }}>
+            <div style={{ fontSize: '9pt', fontWeight: 'bold', color: '#0f172a', lineHeight: 1.15, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {wine.name}
+            </div>
+            <div style={{ fontSize: '7.5pt', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
+              {wine.producerCellar || wine.producer || ''}
+            </div>
+            <div style={{ fontSize: '7.5pt', color: '#334155', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+              <span>{getCountryFlag(wine.country)}</span>
+              <span>Annata: {wine.vintage || 'S.A.'}</span>
+            </div>
+            <div style={{ display: 'inline-block', background: '#e0e7ff', color: '#4338ca', fontSize: '6.5pt', fontWeight: 'bold', padding: '1px 5px', borderRadius: '3px' }}>
+              ID: #{wine.id}
+            </div>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
@@ -252,3 +298,4 @@ export default function QRCodeModal({ wine, onClose }) {
     </div>
   );
 }
+
