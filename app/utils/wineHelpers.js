@@ -42,7 +42,8 @@ export const getStockBreakdown = (winesArray) => {
     w.movements.forEach(m => {
       const locName = m.location?.name || 'Senza Cantina';
       const isDefaultBottle = (bt) => !bt || bt === "0,75 L" || bt === "0.75 L" || bt === "Normale 0.75" || bt === "0,75L";
-      const typeStr = !isDefaultBottle(m.bottleType) ? ` (${m.bottleType})` : "";
+      const bType = m.bottleType || w.bottleType || '';
+      const typeStr = !isDefaultBottle(bType) ? ` (${bType})` : "";
       const label = `${locName}${typeStr}`;
       if (!locMap[label]) locMap[label] = 0;
       if (m.movementType === 'Ingresso') locMap[label] += m.quantity;
