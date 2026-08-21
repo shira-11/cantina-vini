@@ -109,21 +109,40 @@ export async function POST(request) {
         notes: data.notes,
         photo: data.photo,
         photoBack: data.photoBack,
-        movements: (data.movements?.filter(m => m.isNew || String(m.id).startsWith('temp-')).length > 0) ? {
-          create: data.movements.filter(m => m.isNew || String(m.id).startsWith('temp-')).map(m => ({
-            date: new Date(m.date),
-            movementType: m.movementType,
-            quantity: m.quantity,
-            bottleType: m.bottleType,
-            reason: m.reason,
-            vendor: m.vendor,
-            price: m.price ? parseFloat(m.price) : null,
-            tempPrice: m.tempPrice ? parseFloat(m.tempPrice) : null,
-            locationId: parseInt(m.locationId || m.location?.id),
-            notes: m.notes || '',
-            user: m.user || currentUser || null
-          }))
-        } : undefined,
+        movements: {
+          create: (() => {
+            const movs = [];
+            if (data.movements?.filter(m => m.isNew || String(m.id).startsWith('temp-')).length > 0) {
+              data.movements.filter(m => m.isNew || String(m.id).startsWith('temp-')).forEach(m => {
+                movs.push({
+                  date: new Date(m.date),
+                  movementType: m.movementType,
+                  quantity: m.quantity,
+                  bottleType: m.bottleType,
+                  reason: m.reason,
+                  vendor: m.vendor,
+                  price: m.price ? parseFloat(m.price) : null,
+                  tempPrice: m.tempPrice ? parseFloat(m.tempPrice) : null,
+                  locationId: parseInt(m.locationId || m.location?.id),
+                  notes: m.notes || '',
+                  user: m.user || currentUser || null
+                });
+              });
+            }
+            // Always log the creation of the wine record
+            const locId = (data.movements && data.movements[0]?.locationId) ? parseInt(data.movements[0].locationId) : 1;
+            movs.push({
+              date: new Date(),
+              movementType: 'Modifica',
+              quantity: 0,
+              reason: 'Nuova Scheda Vino',
+              locationId: locId,
+              notes: 'Nuova scheda vino aggiunta al gestionale',
+              user: currentUser || null
+            });
+            return movs;
+          })()
+        },
         grapeVarieties: (data.grapeVarieties?.filter(g => g.name && g.name.trim() !== '').length > 0) ? {
           create: data.grapeVarieties.filter(g => g.name && g.name.trim() !== '').map(g => ({
             name: g.name,

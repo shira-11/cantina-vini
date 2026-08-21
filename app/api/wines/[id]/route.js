@@ -135,24 +135,31 @@ export async function PUT(request, { params }) {
       }
     }
 
-    const fieldsToCheck = ['name', 'vintage', 'country', 'region', 'producerCellar', 'producer', 'classification', 'category', 'type', 'notes'];
+    const fieldsToCheck = ['name', 'vintage', 'country', 'region', 'producerCellar', 'producer', 'classification', 'category', 'type', 'notes', 'bottleType', 'alcoholContent', 'tempMin', 'tempMax'];
     let hasTextualChanges = false;
+    const changedFieldNames = [];
     for (const field of fieldsToCheck) {
-      if (data[field] !== undefined && data[field] !== currentWine[field]) {
+      const newVal = data[field] !== undefined ? String(data[field] ?? '').trim() : '';
+      const oldVal = currentWine[field] !== undefined && currentWine[field] !== null ? String(currentWine[field]).trim() : '';
+      if (data[field] !== undefined && newVal !== oldVal) {
         hasTextualChanges = true;
-        break;
+        changedFieldNames.push(field);
       }
     }
 
     let hasPhotoChanges = false;
-    if (data.photo !== undefined && data.photo !== currentWine.photo) hasPhotoChanges = true;
-    if (data.photoBack !== undefined && data.photoBack !== currentWine.photoBack) hasPhotoChanges = true;
+    if (data.photo !== undefined && data.photo !== currentWine.photo) {
+      hasPhotoChanges = true;
+      changedFieldNames.push('foto fronte');
+    }
+    if (data.photoBack !== undefined && data.photoBack !== currentWine.photoBack) {
+      hasPhotoChanges = true;
+      changedFieldNames.push('foto retro');
+    }
 
     if ((hasTextualChanges || hasPhotoChanges) && allLocations.length > 0) {
-      let modNotes = 'Dettagli aggiornati';
-      if (hasTextualChanges && hasPhotoChanges) modNotes = 'Dettagli e foto aggiornati';
-      else if (hasPhotoChanges) modNotes = 'Foto aggiornata';
-      else modNotes = 'Dettagli testuali aggiornati';
+      let modNotes = `Modificati: ${changedFieldNames.join(', ')}`;
+      if (modNotes.length > 150) modNotes = 'Dettagli e foto della scheda aggiornati';
 
       newMovementsToCreate.push({
         date: new Date(),
