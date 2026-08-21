@@ -1056,9 +1056,7 @@ export default function Home() {
                   <button
                     type="button"
                     className="btn"
-                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
-                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
+                    onClick={(e) => { e.preventDefault(); setShowQRScanner(true); }}
                     title="Scansiona QR Code / Codice a Barre da fotocamera"
                     style={{
                       flex: 1,

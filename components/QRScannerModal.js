@@ -66,34 +66,25 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
 
         const config = { fps: 10, qrbox: { width: 240, height: 240 } };
 
-        // Prova ad avviare la fotocamera posteriore (environment)
-        const cameras = await Html5Qrcode.getCameras().catch(() => []);
-        let cameraConstraint = { facingMode: "environment" };
-        if (cameras && cameras.length > 0) {
-          const backCam = cameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('posteriore'));
-          if (backCam) {
-            cameraConstraint = backCam.id;
-          }
-        }
-
-        await scanner.start(
-          cameraConstraint,
-          config,
-          async (decodedText) => {
-            if (!isMounted) return;
-
-            try {
-              if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
-                await scanner.stop();
-              }
-            } catch (e) {
-              console.warn("Scanner stop error:", e);
+        const onScanSuccessCallback = async (decodedText) => {
+          if (!isMounted) return;
+          try {
+            if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+              await scanner.stop();
             }
+          } catch (e) {
+            console.warn("Scanner stop error:", e);
+          }
+          handleDecodedCode(decodedText);
+        };
 
-            handleDecodedCode(decodedText);
-          },
-          () => {}
-        );
+        // Try environment camera first for mobile devices, with fallback to any camera
+        try {
+          await scanner.start({ facingMode: "environment" }, config, onScanSuccessCallback, () => {});
+        } catch (camErr) {
+          console.warn("Environment camera failed, trying default camera:", camErr);
+          await scanner.start({ facingMode: "user" }, config, onScanSuccessCallback, () => {});
+        }
 
         if (!isMounted) {
           try {

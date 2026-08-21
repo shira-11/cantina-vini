@@ -404,19 +404,8 @@ export const MobileCatalog = ({
           {/* Pulsante dedicato QR Scanner per Smartphone */}
           <button
             type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (onOpenQRScanner) onOpenQRScanner();
-            }}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (onOpenQRScanner) onOpenQRScanner();
-            }}
             onClick={(e) => {
               e.preventDefault();
-              e.stopPropagation();
               if (onOpenQRScanner) onOpenQRScanner();
             }}
             title="Scansiona QR Code da Fotocamera"

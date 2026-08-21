@@ -16,6 +16,7 @@ const tursoClient = createClient({
 async function syncTursoToLocal() {
   console.log("Synchronizing Turso Cloud Database to Local cantina.db...");
 
+  localDb.pragma('foreign_keys = OFF');
   const tables = ['Location', 'User', 'SystemSettings', 'Wine', 'GrapeVariety', 'Movement', 'WinePhoto', 'UserSession', 'InventorySession', 'InventoryItem'];
 
   for (const table of tables) {
@@ -41,6 +42,7 @@ async function syncTursoToLocal() {
     console.log(`✓ Local ${table} synchronized!`);
   }
 
+  localDb.pragma('foreign_keys = ON');
   console.log("🎉 LOCAL DATABASE IS NOW 100% PERFECTLY SYNCHRONIZED WITH TURSO CLOUD!");
 }
 
