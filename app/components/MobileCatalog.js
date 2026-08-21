@@ -298,25 +298,43 @@ export const MobileCatalog = ({
             />
 
             <button
-              onClick={onOpenQRScanner}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onOpenQRScanner) onOpenQRScanner();
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onOpenQRScanner) onOpenQRScanner();
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onOpenQRScanner) onOpenQRScanner();
+              }}
               title="Scansiona QR Code da fotocamera"
               style={{
-                background: '#e0e7ff',
+                background: '#4f46e5',
+                color: 'white',
                 border: 'none',
-                padding: '4px 8px',
+                padding: '5px 9px',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 position: 'absolute',
-                right: search ? (speechSupported ? '64px' : '36px') : (speechSupported ? '36px' : '10px'),
+                right: search ? (speechSupported ? '64px' : '38px') : (speechSupported ? '38px' : '10px'),
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#4338ca',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '2px'
+                justifyContent: 'center',
+                gap: '2px',
+                boxShadow: '0 2px 4px rgba(79, 70, 229, 0.3)',
+                zIndex: 10
               }}
             >
-              <QrCode size={16} />
+              <QrCode size={18} />
             </button>
 
             {speechSupported && (
@@ -359,14 +377,13 @@ export const MobileCatalog = ({
                   top: '100%',
                   left: 0,
                   right: 0,
-                  marginTop: '6px',
-                  backgroundColor: 'white',
+                  background: 'white',
                   borderRadius: '12px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.18)',
-                  border: '1px solid #cbd5e1',
-                  maxHeight: '260px',
-                  overflowY: 'auto',
-                  zIndex: 2000
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                  zIndex: 100,
+                  marginTop: '6px',
+                  overflow: 'hidden'
                 }}
               >
                 {suggestions.map((s, idx) => (
@@ -381,12 +398,11 @@ export const MobileCatalog = ({
                       padding: '0.65rem 1rem',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.6rem',
+                      gap: '0.65rem',
                       cursor: 'pointer',
-                      borderBottom: idx === suggestions.length - 1 ? 'none' : '1px solid #f1f5f9',
-                      fontSize: '0.95rem',
-                      color: '#0f172a',
-                      backgroundColor: 'white'
+                      borderBottom: idx < suggestions.length - 1 ? '1px solid #f1f5f9' : 'none',
+                      fontSize: '0.9rem',
+                      color: '#1e293b'
                     }}
                   >
                     <Wine size={16} color="#8b5cf6" style={{ flexShrink: 0 }} />
@@ -401,9 +417,45 @@ export const MobileCatalog = ({
               </div>
             )}
           </div>
+          {/* Pulsante dedicato QR Scanner per Smartphone */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onOpenQRScanner) onOpenQRScanner();
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onOpenQRScanner) onOpenQRScanner();
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onOpenQRScanner) onOpenQRScanner();
+            }}
+            title="Scansiona QR Code da Fotocamera"
+            style={{
+              marginLeft: '0.4rem',
+              background: '#4f46e5',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.75rem 0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(79, 70, 229, 0.3)',
+              flexShrink: 0
+            }}
+          >
+            <QrCode size={20} />
+          </button>
           <button
             onClick={() => setShowFilters(true)}
-            style={{ marginLeft: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.75rem', display: 'flex', alignItems: 'center', cursor: 'pointer', color: '#475569' }}
+            style={{ marginLeft: '0.4rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '0.75rem', display: 'flex', alignItems: 'center', cursor: 'pointer', color: '#475569', flexShrink: 0 }}
           >
             <Filter size={20} />
           </button>
