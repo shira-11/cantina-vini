@@ -1036,18 +1036,34 @@ export default function Home() {
               </div>
               {currentUser?.role !== 'viewer' && (
                 <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-                  <div style={{ position: 'relative', flex: 1 }} title="Scatta foto all'etichetta">
+                  <div style={{ position: 'relative', flex: 1 }} title="Scatta foto all'etichetta per ricerca visiva OCR">
                     <input type="file" accept="image/*" capture="environment" onChange={handleVisualSearch} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={ocrLoading} />
-                    <button className="btn" style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border-color)', background: 'white', color: ocrLoading ? '#94a3b8' : 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <button type="button" className="btn" style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border-color)', background: 'white', color: ocrLoading ? '#94a3b8' : 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                       {ocrLoading ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
                     </button>
                   </div>
-                  <div style={{ position: 'relative', flex: 1 }} title="Scegli dalla galleria">
-                    <input type="file" accept="image/*" onChange={handleVisualSearch} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={ocrLoading} />
-                    <button className="btn" style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--border-color)', background: 'white', color: ocrLoading ? '#94a3b8' : 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                      {ocrLoading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className="btn"
+                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
+                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
+                    title="Scansiona QR Code / Codice a Barre da fotocamera"
+                    style={{
+                      flex: 1,
+                      padding: '0.625rem',
+                      border: '1px solid #c7d2fe',
+                      background: '#e0e7ff',
+                      color: '#4338ca',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <QrCode size={18} />
+                  </button>
                 </div>
               )}
             </div>
