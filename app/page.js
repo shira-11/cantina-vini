@@ -1878,7 +1878,7 @@ export default function Home() {
                         <StockCell winesArray={group.wines} displayStock={group.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} />
                       </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {group.wines.length === 1 ? (group.wines[0].vintage || '-') : 'Varie'}
+                        {group.wines.length === 1 ? (`${group.wines[0].vintage || '-'}${group.wines[0].bottleType ? ` (${group.wines[0].bottleType})` : ''}`) : 'Varie'}
                       </td>
                       <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1910,7 +1910,7 @@ export default function Home() {
                           </span>
                         </td>
                         <td style={{ fontSize: '0.9rem', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()} onMouseEnter={(e) => e.stopPropagation()}><StockCell winesArray={[wine]} displayStock={wine.displayStock} filters={filters} setHoveredPhoto={setHoveredPhoto} /></td>
-                        <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wine.vintage || '-'}</td>
+                        <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wine.vintage || '-'}{wine.bottleType ? ` (${wine.bottleType})` : ''}</td>
                         <td style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <span style={{ fontSize: '1.1rem', marginRight: '0.3rem' }}>{getCountryFlag(wine.country)}</span>
                           {wine.country || '-'}

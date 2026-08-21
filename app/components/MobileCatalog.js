@@ -480,7 +480,11 @@ export const MobileCatalog = ({
                   <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <span>{getCountryFlag(wine.country)} {wine.country || ''}</span>
                     {wine.category && <span className={getBadgeClass(wine.category)} style={{ transform: 'scale(0.8)', transformOrigin: 'left center' }}>{wine.category}</span>}
-                    {wine.vintage && <span style={{ fontWeight: '600', color: '#334155' }}>Annata: {wine.vintage}</span>}
+                    {(wine.vintage || wine.bottleType) && (
+                      <span style={{ fontWeight: '600', color: '#334155' }}>
+                        {wine.vintage ? `Annata: ${wine.vintage}` : ''} {wine.bottleType ? `(${wine.bottleType})` : ''}
+                      </span>
+                    )}
                   </div>
                   <div style={{ fontSize: '0.9rem', color: '#475569' }}>
                     Cantina: <span style={{ fontWeight: '500' }}>{wine.producerCellar || '-'}</span>

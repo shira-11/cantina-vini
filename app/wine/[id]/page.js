@@ -857,7 +857,7 @@ export default function WineDetail({ params }) {
                       }
                     }}
                   >
-                    {wine.name || 'Vino senza nome'} <span style={{ color: '#64748b', fontWeight: 'normal' }}>- {wine.vintage ? `Annata ${wine.vintage}` : 'Senza annata'}</span>
+                    {wine.name || 'Vino senza nome'} <span style={{ color: '#64748b', fontWeight: 'normal' }}>- {wine.vintage ? `Annata ${wine.vintage}` : 'Senza annata'}{wine.bottleType ? ` (${wine.bottleType})` : ''}</span>
 
                     {(wine.photo || wine.photoBack) && (
                       <div className="wine-preview-popover">
@@ -1504,6 +1504,31 @@ export default function WineDetail({ params }) {
                       </div>
                       <datalist id="vintage-list">
                         {metadata.vintages.map(v => <option key={v} value={v} />)}
+                      </datalist>
+                    </div>
+                    <div className="form-grid">
+                      <label>Formato Bottiglia</label>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input
+                          type="text"
+                          list="bottleType-list"
+                          placeholder="Es. Normale 0.75"
+                          value={wine.bottleType || ''}
+                          onChange={e => setWine({ ...wine, bottleType: e.target.value })}
+                          style={{ flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          className="btn"
+                          title="Gestisci Formato Bottiglia"
+                          onClick={(e) => { e.preventDefault(); openListModal('bottleType', 'Formato Bottiglia', metadata.bottleTypes); }}
+                          style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                      <datalist id="bottleType-list">
+                        {(metadata.bottleTypes || []).map(bt => <option key={bt} value={bt} />)}
                       </datalist>
                     </div>
                     <div className="form-grid">
