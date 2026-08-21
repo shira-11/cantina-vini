@@ -115,10 +115,15 @@ async function migrateAndUpload() {
       logoutReason TEXT,
       ipAddress TEXT,
       userAgent TEXT,
+      isArchived BOOLEAN NOT NULL DEFAULT 0,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  try {
+    await tursoClient.execute(`ALTER TABLE UserSession ADD COLUMN isArchived INTEGER DEFAULT 0;`);
+  } catch (e) {}
 
   await tursoClient.execute(`
     CREATE TABLE IF NOT EXISTS SystemSettings (

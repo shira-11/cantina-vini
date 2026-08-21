@@ -115,6 +115,7 @@ model UserSession {
   logoutReason String?   // "manual", "auto_timeout", "force"
   ipAddress    String?
   userAgent    String?
+  isArchived   Boolean   @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }

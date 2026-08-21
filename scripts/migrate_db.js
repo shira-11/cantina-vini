@@ -48,6 +48,7 @@ if (fs.existsSync(dbPath)) {
           logoutReason TEXT,
           ipAddress TEXT,
           userAgent TEXT,
+          isArchived INTEGER DEFAULT 0,
           createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
           updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -55,6 +56,13 @@ if (fs.existsSync(dbPath)) {
       console.log('Created UserSession table');
     } catch (e) {
       console.log('UserSession table status:', e.message);
+    }
+
+    try {
+      db.prepare('ALTER TABLE UserSession ADD COLUMN isArchived INTEGER DEFAULT 0').run();
+      console.log('Added isArchived column to UserSession');
+    } catch (e) {
+      console.log('isArchived column on UserSession exists or skipped');
     }
 
     try {

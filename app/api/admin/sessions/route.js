@@ -45,6 +45,9 @@ export async function GET(request) {
     }
 
     const sessions = await prisma.userSession.findMany({
+      where: {
+        isArchived: false
+      },
       orderBy: { id: 'desc' },
       take: 200,
       include: {
@@ -70,14 +73,18 @@ export async function DELETE(request) {
   }
 
   try {
-    await prisma.userSession.deleteMany({
+    // Non cancelliamo definitivamente dal DB! Archiviamo solo lo storico concluso per pulire la vista
+    await prisma.userSession.updateMany({
       where: {
         logoutTime: { not: null }
+      },
+      data: {
+        isArchived: true
       }
     });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'Vista storico concluso ripulita con successo.' });
   } catch (error) {
-    console.error('Error deleting sessions:', error);
-    return NextResponse.json({ error: 'Errore durante la cancellazione delle sessioni' }, { status: 500 });
+    console.error('Error archiving sessions:', error);
+    return NextResponse.json({ error: 'Errore nel ripulire lo storico delle sessioni' }, { status: 500 });
   }
 }

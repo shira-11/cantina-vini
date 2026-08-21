@@ -12,6 +12,9 @@ export default function AdminSessionsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'ended'
 
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState(3); // secondi
+
   const fetchSessions = async () => {
     setLoading(true);
     setErrorMsg(null);
@@ -43,15 +46,17 @@ export default function AdminSessionsPage() {
 
   useEffect(() => {
     fetchSessions();
+    if (!autoRefreshEnabled || refreshInterval <= 0) return;
+
     const interval = setInterval(() => {
       fetchSessions();
-    }, 3000); // Live real-time update every 3 seconds!
+    }, refreshInterval * 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [autoRefreshEnabled, refreshInterval]);
 
   const handleClearHistory = async () => {
-    if (!confirm("Sei sicuro di voler cancellare le sessioni storiche già concluse?")) return;
+    if (!confirm("Vuoi nascondere lo storico delle sessioni già concluse dalla vista? (I dati storici rimarranno comunque salvati al sicuro in archivio)")) return;
     try {
       const res = await fetch('/api/admin/sessions', { method: 'DELETE' });
       if (res.ok) {
@@ -169,22 +174,77 @@ export default function AdminSessionsPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#dcfce7', border: '1px solid #86efac', color: '#15803d', padding: '0.45rem 0.85rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>
-            <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 8px #22c55e' }}></span>
-            <span>Live in Tempo Reale (Ogni 3s)</span>
+        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Toggle Auto-Refresh ON / OFF */}
+          <button
+            onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              background: autoRefreshEnabled ? '#dcfce7' : '#f1f5f9',
+              border: `1px solid ${autoRefreshEnabled ? '#86efac' : '#cbd5e1'}`,
+              color: autoRefreshEnabled ? '#15803d' : '#64748b',
+              padding: '0.45rem 0.85rem',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            <span style={{
+              width: '9px',
+              height: '9px',
+              borderRadius: '50%',
+              background: autoRefreshEnabled ? '#22c55e' : '#94a3b8',
+              display: 'inline-block',
+              boxShadow: autoRefreshEnabled ? '0 0 8px #22c55e' : 'none'
+            }}></span>
+            <span>{autoRefreshEnabled ? `Live (${refreshInterval}s)` : 'Live Pausato'}</span>
+          </button>
+
+          {/* Selettore Frequenza Secondi */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#f8fafc', border: '1px solid #cbd5e1', padding: '0.35rem 0.65rem', borderRadius: '8px', fontSize: '0.85rem' }}>
+            <span style={{ color: '#64748b', fontWeight: '500' }}>Frequenza:</span>
+            <select
+              value={refreshInterval}
+              onChange={(e) => {
+                setRefreshInterval(Number(e.target.value));
+                setAutoRefreshEnabled(true);
+              }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                fontWeight: 'bold',
+                color: '#1e293b',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                outline: 'none'
+              }}
+            >
+              <option value={1}>1 secondo</option>
+              <option value={2}>2 secondi</option>
+              <option value={3}>3 secondi</option>
+              <option value={5}>5 secondi</option>
+              <option value={10}>10 secondi</option>
+              <option value={15}>15 secondi</option>
+              <option value={30}>30 secondi</option>
+            </select>
           </div>
+
           <button
             onClick={fetchSessions}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}
           >
-            <RefreshCw size={18} /> Aggiorna
+            <RefreshCw size={16} /> Aggiorna
           </button>
+
           <button
             onClick={handleClearHistory}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff1f2', border: '1px solid #fecdd3', color: '#e11d48', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#fff1f2', border: '1px solid #fecdd3', color: '#e11d48', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}
           >
-            <Trash2 size={18} /> Svuota Storico Concluso
+            <Trash2 size={16} /> Pulisci Vista Storico
           </button>
         </div>
       </div>
