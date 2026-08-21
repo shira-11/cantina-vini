@@ -710,13 +710,71 @@ export default function WineDetail({ params }) {
     }
   };
 
-  const handleBack = () => {
-    if (unwrappedParams.id === 'new' && (wine.name || wine.producer || wine.country || wine.region || wine.vintage)) {
-      const abandon = window.confirm("Attenzione: stai per uscire senza salvare il nuovo vino. I dati inseriti andranno persi.\n\n- Premi OK per uscire senza salvare\n- Premi Annulla per restare qui");
-      if (!abandon) return;
+  const hasUnsavedChanges = (() => {
+    if (!wine) return false;
+    if (unwrappedParams.id === 'new') {
+      return Boolean(wine.name || wine.producer || wine.country || wine.region || wine.vintage || wine.bottleType);
     }
+    if (!originalWine) return false;
+
+    // Confronta i campi principali della scheda
+    const fieldsToCompare = [
+      'name', 'vintage', 'country', 'region', 'producer', 'producerCellar',
+      'classification', 'category', 'type', 'alcoholContent', 'tempMin', 'tempMax',
+      'notes', 'photo', 'photoBack', 'bottleType', '_initialLocationName', '_initialQuantity',
+      '_initialPrice', '_initialTempPrice'
+    ];
+
+    for (const f of fieldsToCompare) {
+      if (String(wine[f] || '').trim() !== String(originalWine[f] || '').trim()) {
+        return true;
+      }
+    }
+
+    // Confronta movimenti
+    const currentMovs = wine.movements || [];
+    const origMovs = originalWine.movements || [];
+    if (currentMovs.length !== origMovs.length) return true;
+
+    // Controllo campi compilati nel form nuovo movimento
+    if (newMovement.movementType || newMovement.quantity || newMovement.reason || newMovement.price || newMovement.tempPrice || newMovement.notes) {
+      return true;
+    }
+
+    return false;
+  })();
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '⚠️ ATTENZIONE: Ci sono modifiche non salvate!';
+        return '⚠️ ATTENZIONE: Ci sono modifiche non salvate!';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  const confirmLeavePage = () => {
+    if (!hasUnsavedChanges) return true;
+    return window.confirm(
+      "⚠️ ATTENZIONE: Ci sono modifiche o aggiornamenti non salvati!\n\n" +
+      "Se esci adesso senza salvare, tutte le modifiche apportate andranno perse.\n\n" +
+      "- Premi OK per uscire SENZA SALVARE\n" +
+      "- Premi Annulla per rimanere qui e SALVARE"
+    );
+  };
+
+  const handleBack = () => {
+    if (!confirmLeavePage()) return;
     if (window.history.length > 1) router.back();
     else router.push('/');
+  };
+
+  const handleGoHome = () => {
+    if (!confirmLeavePage()) return;
+    router.push('/');
   };
 
   return (
@@ -784,13 +842,7 @@ export default function WineDetail({ params }) {
             </button>
             <div
               style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', paddingRight: '1rem', borderRight: '1px solid var(--border-color)' }}
-              onClick={() => {
-                if (unwrappedParams.id === 'new' && (wine.name || wine.producer || wine.country || wine.region || wine.vintage)) {
-                  const abandon = window.confirm("Attenzione: stai per uscire senza salvare il nuovo vino. I dati inseriti andranno persi.\n\n- Premi OK per uscire senza salvare\n- Premi Annulla per restare qui");
-                  if (!abandon) return;
-                }
-                router.push('/');
-              }}
+              onClick={handleGoHome}
               title="Torna alla Home"
             >
               <Wine size={28} color="var(--primary-color)" />
