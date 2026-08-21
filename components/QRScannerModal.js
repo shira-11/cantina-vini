@@ -9,25 +9,40 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [scanning, setScanning] = useState(false);
   const scannerRef = useRef(null);
+  // Store callbacks in refs so they never cause useEffect re-triggers
+  const callbacksRef = useRef({ onClose, onScanSuccess });
+  useEffect(() => {
+    callbacksRef.current = { onClose, onScanSuccess };
+  });
 
   useEffect(() => {
-    let html5QrcodeScanner = null;
+    let isMounted = true;
+    let scannerInstance = null;
 
     const startScanner = async () => {
       try {
-        const { Html5Qrcode } = await import('html5-qrcode');
-        html5QrcodeScanner = new Html5Qrcode("qr-reader-container");
-        scannerRef.current = html5QrcodeScanner;
+        const { Html5Qrcode, Html5QrcodeScannerState } = await import('html5-qrcode');
+        if (!isMounted) return;
+
+        const scanner = new Html5Qrcode("qr-reader-container");
+        scannerInstance = scanner;
+        scannerRef.current = scanner;
 
         const config = { fps: 10, qrbox: { width: 240, height: 240 } };
 
-        await html5QrcodeScanner.start(
+        await scanner.start(
           { facingMode: "environment" },
           config,
-          (decodedText) => {
-            // Success handler
-            if (html5QrcodeScanner) {
-              html5QrcodeScanner.stop().catch(() => {});
+          async (decodedText) => {
+            if (!isMounted) return;
+
+            // Stop scanner on success
+            try {
+              if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+                await scanner.stop();
+              }
+            } catch (e) {
+              console.warn("Scanner stop error:", e);
             }
 
             // Audio feedback beep if supported
@@ -48,13 +63,15 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
               wineId = match[1];
             }
 
+            const { onClose: handleClose, onScanSuccess: handleScanSuccess } = callbacksRef.current;
+
             if (wineId) {
-              if (onScanSuccess) {
-                onScanSuccess(wineId);
+              if (handleScanSuccess) {
+                handleScanSuccess(wineId);
               } else {
                 router.push(`/wine/${wineId}`);
               }
-              onClose();
+              if (handleClose) handleClose();
             } else {
               setErrorMsg(`Codice QR scansionato (${decodedText}) non riconosciuto come vino.`);
             }
@@ -63,8 +80,18 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
             // Code scanning error / waiting for code
           }
         );
-        setScanning(true);
+
+        if (!isMounted) {
+          try {
+            if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+              await scanner.stop();
+            }
+          } catch (e) {}
+        } else {
+          setScanning(true);
+        }
       } catch (err) {
+        if (!isMounted) return;
         console.error("Camera access error:", err);
         setErrorMsg("Impossibile accedere alla fotocamera. Verifica i permessi del browser o prova su uno smartphone/iPad.");
       }
@@ -73,11 +100,21 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
     startScanner();
 
     return () => {
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch(() => {});
+      isMounted = false;
+      if (scannerInstance) {
+        try {
+          if (typeof scannerInstance.getState === 'function') {
+            const state = scannerInstance.getState();
+            if (state === 2 || state === 3) { // SCANNING or PAUSED
+              scannerInstance.stop().catch(() => {});
+            }
+          } else {
+            scannerInstance.stop().catch(() => {});
+          }
+        } catch (e) {}
       }
     };
-  }, [router, onClose, onScanSuccess]);
+  }, [router]);
 
   return (
     <div style={{

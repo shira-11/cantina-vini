@@ -241,20 +241,28 @@ export default function Home() {
   );
 
   useEffect(() => {
-    if (isResizing) {
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'col-resize';
-    } else {
+    if (!isResizing) return;
+
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+
+    const handleMouseMove = (e) => {
+      setSidebarWidth(Math.max(250, Math.min(800, e.clientX)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
-    }
-    window.addEventListener("mousemove", resize);
-    window.addEventListener("mouseup", stopResizing);
-    return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [resize, stopResizing, isResizing]);
+  }, [isResizing]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1641,7 +1649,17 @@ export default function Home() {
                     </div>
                   )}
 
-                  <div className="toolbar-icon" onClick={() => router.push('/print/qr-labels')} title="Stampa Fogli Etichette QR Code (A4)">
+                  <div className="toolbar-icon" onClick={() => {
+                    if (selectedGroups.length > 0) {
+                      const targetIds = groupedWinesArray.filter(g => selectedGroups.includes(g.name)).flatMap(g => g.wines.map(w => w.id));
+                      if (targetIds.length > 0) {
+                        sessionStorage.setItem('selectedWineIds', JSON.stringify(targetIds));
+                        router.push(`/print/qr-labels?selected=${encodeURIComponent(targetIds.join(','))}`);
+                        return;
+                      }
+                    }
+                    alert("Seleziona prima uno o più vini mettendo la spunta (tik) nella colonna a sinistra, poi clicca sull'icona per stampare le etichette QR Code.");
+                  }} title={selectedGroups.length > 0 ? `Stampa Etichette QR Code per i ${selectedGroups.length} vini selezionati (A4)` : "Seleziona i vini con il tik prima di stampare le etichette QR Code"}>
                     <QrCode size={24} color="#6366f1" />
                   </div>
 
