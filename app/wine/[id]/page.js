@@ -1053,7 +1053,7 @@ export default function WineDetail({ params }) {
                           locationId: locations[0]?.id ? String(locations[0].id) : ''
                         })}
                       >
-                        <Plus size={18} /> Aggiungi Nuova Annata / Formato
+                        <Plus size={18} /> Aggiungi Nuova Annata / Tipo Bottiglia
                       </button>
                     <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                       <table className="data-table" style={{ width: '100%', minWidth: '400px' }}>
@@ -2402,8 +2402,8 @@ export default function WineDetail({ params }) {
                 <Plus size={22} color="#4f46e5" />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: '700' }}>Aggiungi Nuova Annata / Formato</h3>
-                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Seleziona annata, formato e quantità iniziale</span>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: '700' }}>Aggiungi Nuova Annata / Tipo Bottiglia</h3>
+                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Seleziona annata, tipo bottiglia e quantità iniziale</span>
               </div>
             </div>
 
@@ -2442,10 +2442,10 @@ export default function WineDetail({ params }) {
                 </div>
               </div>
 
-              {/* Campo Formato Bottiglia */}
+              {/* Campo Tipo Bottiglia */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
-                  Formato Bottiglia:
+                  Tipo Bottiglia:
                 </label>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <select
@@ -2466,8 +2466,8 @@ export default function WineDetail({ params }) {
                     type="button"
                     className="btn"
                     style={{ padding: '0.65rem 0.85rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem' }}
-                    onClick={() => setListModal({ isOpen: true, field: 'bottleType', label: 'Formato Bottiglia', options: metadata.bottleTypes || [] })}
-                    title="Modifica lista formati"
+                    onClick={() => setListModal({ isOpen: true, field: 'bottleType', label: 'Tipo Bottiglia', options: metadata.bottleTypes || [] })}
+                    title="Modifica lista tipi bottiglia"
                   >
                     ✏️
                   </button>
@@ -2536,7 +2536,7 @@ export default function WineDetail({ params }) {
                   );
 
                   if (isDuplicate) {
-                    customAlert(`Attenzione: L'annata ${vStr} con formato "${bStr}" è già presente in archivio per questo vino!`);
+                    customAlert(`Attenzione: L'annata ${vStr} con tipo bottiglia "${bStr}" è già presente in archivio per questo vino!`);
                     return;
                   }
 
@@ -2578,7 +2578,7 @@ export default function WineDetail({ params }) {
                       window.location.href = `/wine/${newWine.id}`;
                     } else {
                       setIsSaving(false);
-                      customAlert('Errore durante la creazione della nuova annata / formato');
+                      customAlert('Errore durante la creazione della nuova annata / tipo bottiglia');
                     }
                   } catch (err) {
                     setIsSaving(false);
@@ -2587,7 +2587,7 @@ export default function WineDetail({ params }) {
                 }}
                 style={{ padding: '0.65rem 1.25rem', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 4px rgba(79, 70, 229, 0.3)' }}
               >
-                {isSaving ? 'Salvataggio...' : 'Salva Annata / Formato'}
+                {isSaving ? 'Salvataggio...' : 'Salva Annata / Tipo Bottiglia'}
               </button>
             </div>
           </div>

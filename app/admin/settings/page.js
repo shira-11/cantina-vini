@@ -17,7 +17,7 @@ const FILTER_OPTIONS = [
   { id: 'location', label: 'Locazione' },
   { id: 'availability', label: 'Disponibilità' },
   { id: 'photo', label: 'Foto' },
-  { id: 'bottleType', label: 'Formato Bottiglia' }
+  { id: 'bottleType', label: 'Tipo Bottiglia' }
 ];
 
 const HEADER_BUTTON_OPTIONS = [
