@@ -1,11 +1,11 @@
 'use client';
-// Version 2.0.0 - Premium 2-Column Layout for Settings Page
+// Version 2.1.0 - Premium 2-Column Layout with Cellar & Location Management
 
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, ArrowLeft, Check, X, Save, Shield, Eye, Search, Image as ImageIcon, Clock, Lock, Sliders, Users } from 'lucide-react';
+import { Settings, ArrowLeft, Check, X, Save, Shield, Eye, Search, Image as ImageIcon, Clock, Lock, Sliders, Users, Building2, Plus, Edit2, Trash2, RotateCcw } from 'lucide-react';
 
 const FILTER_OPTIONS = [
   { id: 'country', label: 'Nazione' },
@@ -43,6 +43,24 @@ export default function AdminSettingsPage() {
   const [uploadingBg, setUploadingBg] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
+  // Location Management states
+  const [locations, setLocations] = useState([]);
+  const [newLocationName, setNewLocationName] = useState('');
+  const [editingLocId, setEditingLocId] = useState(null);
+  const [editingLocName, setEditingLocName] = useState('');
+
+  const fetchLocations = async () => {
+    try {
+      const res = await fetch('/api/locations');
+      if (res.ok) {
+        const data = await res.json();
+        setLocations(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -71,6 +89,7 @@ export default function AdminSettingsPage() {
     };
 
     fetchSettings();
+    fetchLocations();
   }, [router]);
 
   const handleToggle = (filterId) => {
@@ -165,6 +184,97 @@ export default function AdminSettingsPage() {
     }
   };
 
+  // Location Handlers
+  const handleAddLocation = async () => {
+    if (!newLocationName.trim()) return;
+    try {
+      const res = await fetch('/api/locations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newLocationName.trim() })
+      });
+      if (res.ok) {
+        setNewLocationName('');
+        setMessage({ text: 'Nuova cantina aggiunta con successo!', type: 'success' });
+        fetchLocations();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Errore durante la creazione della cantina');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleRenameLocation = async (id) => {
+    if (!editingLocName.trim()) return;
+    try {
+      const res = await fetch(`/api/locations/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editingLocName.trim() })
+      });
+      if (res.ok) {
+        setEditingLocId(null);
+        setEditingLocName('');
+        setMessage({ text: 'Cantina rinominata con successo!', type: 'success' });
+        fetchLocations();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Errore durante la rinomina');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleClearLocationStock = async (loc) => {
+    const userPin = prompt(`🔑 Inserisci il PIN di Sicurezza per azzerare tutte le bottiglie in "${loc.name}":`);
+    if (userPin !== deletionPin) {
+      alert("❌ PIN di Sicurezza errato. Operazione annullata.");
+      return;
+    }
+
+    if (!confirm(`⚠️ Sei sicuro di voler SVUOTARE LA CANTINA "${loc.name}"?\n\nTutte le giacenze attive in questa cantina verranno azzerate. Non verranno aggiunte bottiglie su altre cantine.`)) return;
+
+    try {
+      const res = await fetch(`/api/locations/${loc.id}/clear`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setMessage({ text: data.message || `Cantina "${loc.name}" svuotata con successo.`, type: 'success' });
+        fetchLocations();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Errore durante lo svuotamento della cantina');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteLocation = async (loc) => {
+    const userPin = prompt(`🔑 Inserisci il PIN di Sicurezza per ELIMINARE la cantina "${loc.name}":`);
+    if (userPin !== deletionPin) {
+      alert("❌ PIN di Sicurezza errato. Eliminazione annullata.");
+      return;
+    }
+
+    if (!confirm(`⚠️ Sei sicuro di voler ELIMINARE DEFINITIVAMENTE la cantina "${loc.name}"?`)) return;
+
+    try {
+      const res = await fetch(`/api/locations/${loc.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setMessage({ text: `Cantina "${loc.name}" eliminata con successo!`, type: 'success' });
+        fetchLocations();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Errore durante l\'eliminazione della cantina');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -194,7 +304,7 @@ export default function AdminSettingsPage() {
                 <Settings size={26} color="#6366f1" /> Impostazioni Gestionale
               </h1>
               <p style={{ margin: '0.2rem 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
-                Personalizza la sicurezza, l&apos;estetica ed i permessi per gli utenti visitatori
+                Personalizza la sicurezza, le cantine, l&apos;estetica ed i permessi visitatori
               </p>
             </div>
           </div>
@@ -238,10 +348,139 @@ export default function AdminSettingsPage() {
         {/* Main 2-Column Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem', marginBottom: '5rem' }}>
           
-          {/* COLUMN 1: Impostazioni Generali & Sicurezza */}
+          {/* COLUMN 1: Gestione Cantine & Impostazioni Generali */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
-            {/* Card 1: PIN Sicurezza */}
+            {/* Card: Gestione Cantine e Locazioni */}
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ background: '#e0e7ff', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
+                  <Building2 size={20} color="#4338ca" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>Gestione Cantine e Locazioni</h3>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Crea, rinomina, elimina o svuota le tue cantine</span>
+                </div>
+              </div>
+
+              {/* Form Aggiunta Cantina */}
+              <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.25rem' }}>
+                <input
+                  type="text"
+                  placeholder="Nome nuova cantina..."
+                  value={newLocationName}
+                  onChange={(e) => setNewLocationName(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.95rem',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  onClick={handleAddLocation}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: '#4f46e5',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.6rem 1rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  <Plus size={16} /> Aggiungi
+                </button>
+              </div>
+
+              {/* Lista Cantine Esistenti */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                {locations.map(loc => (
+                  <div
+                    key={loc.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem 0.9rem',
+                      background: '#f8fafc',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    {editingLocId === loc.id ? (
+                      <div style={{ display: 'flex', gap: '0.4rem', flex: 1, alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          value={editingLocName}
+                          onChange={(e) => setEditingLocName(e.target.value)}
+                          style={{
+                            flex: 1,
+                            padding: '0.4rem 0.6rem',
+                            borderRadius: '6px',
+                            border: '1px solid #6366f1',
+                            fontSize: '0.9rem'
+                          }}
+                        />
+                        <button
+                          onClick={() => handleRenameLocation(loc.id)}
+                          style={{ background: '#16a34a', color: 'white', border: 'none', padding: '0.4rem 0.65rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                        >
+                          Salva
+                        </button>
+                        <button
+                          onClick={() => { setEditingLocId(null); setEditingLocName(''); }}
+                          style={{ background: '#64748b', color: 'white', border: 'none', padding: '0.4rem 0.65rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+                        >
+                          Annulla
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '0.95rem' }}>
+                          🏰 {loc.name}
+                        </span>
+
+                        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                          <button
+                            onClick={() => { setEditingLocId(loc.id); setEditingLocName(loc.name); }}
+                            title="Rinomina Cantina"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', background: '#e0e7ff', border: 'none', color: '#4338ca', padding: '0.35rem 0.65rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500' }}
+                          >
+                            <Edit2 size={13} /> Rinomina
+                          </button>
+
+                          <button
+                            onClick={() => handleClearLocationStock(loc)}
+                            title="Svuota Cantina (Zero Giacenza)"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', background: '#fef3c7', border: 'none', color: '#92400e', padding: '0.35rem 0.65rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500' }}
+                          >
+                            <RotateCcw size={13} /> Svuota Cantina
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteLocation(loc)}
+                            title="Elimina Cantina"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', background: '#fee2e2', border: 'none', color: '#991b1b', padding: '0.35rem 0.65rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500' }}
+                          >
+                            <Trash2 size={13} /> Elimina
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Card: PIN Sicurezza */}
             <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ background: '#fef3c7', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
@@ -249,15 +488,15 @@ export default function AdminSettingsPage() {
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>PIN Sicurezza Eliminazioni</h3>
-                  <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Protezione per la cancellazione di dati ed elementi</span>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Protezione per eliminare/svuotare cantine, vini o foto</span>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.1rem', borderRadius: '10px', background: '#fffbeb', border: '1px solid #fde68a' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.975rem', color: '#92400e', fontWeight: '600' }}>PIN richiesto su tasti Elimina (🗑️)</span>
+                  <span style={{ fontSize: '0.975rem', color: '#92400e', fontWeight: '600' }}>PIN di Sicurezza (default 1234)</span>
                   <span style={{ fontSize: '0.825rem', color: '#b45309', marginTop: '0.2rem' }}>
-                    Verrà richiesto per eliminare Nazioni, Regioni, Cantine, Vini o Foto.
+                    Verrà richiesto per eliminare/svuotare Cantine, Nazioni, Vini o Foto.
                   </span>
                 </div>
                 <input
@@ -281,7 +520,7 @@ export default function AdminSettingsPage() {
               </div>
             </div>
 
-            {/* Card 2: Suggerimenti di Ricerca */}
+            {/* Card: Suggerimenti di Ricerca */}
             <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ background: '#e0f2fe', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
@@ -321,7 +560,7 @@ export default function AdminSettingsPage() {
               </label>
             </div>
 
-            {/* Card 3: Anteprima Foto Vini */}
+            {/* Card: Anteprima Foto Vini */}
             <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ background: '#f3e8ff', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
@@ -410,7 +649,7 @@ export default function AdminSettingsPage() {
               </div>
             </div>
 
-            {/* Card 4: Estetica Login */}
+            {/* Card: Estetica Login */}
             <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ background: '#fce7f3', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
@@ -470,7 +709,7 @@ export default function AdminSettingsPage() {
           {/* COLUMN 2: Permessi & Visibilità Visitatori */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
-            {/* Card 1: Accesso Scheda Vino */}
+            {/* Card: Accesso Scheda Vino */}
             <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ background: '#dcfce7', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
@@ -510,7 +749,7 @@ export default function AdminSettingsPage() {
               </label>
             </div>
 
-            {/* Card 2: Pulsanti Barra Superiore */}
+            {/* Card: Pulsanti Barra Superiore */}
             <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -569,7 +808,7 @@ export default function AdminSettingsPage() {
               </div>
             </div>
 
-            {/* Card 3: Filtri di Ricerca */}
+            {/* Card: Filtri di Ricerca */}
             <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
