@@ -702,14 +702,11 @@ export default function WineDetail({ params }) {
     }
   };
 
-  if (loading) return <div style={{ padding: '2rem' }}>Caricamento scheda...</div>;
-  if (!wine) return <div style={{ padding: '2rem' }}>Vino non trovato</div>;
-
   // Calculate stock summary by location and bottleType
   const stockSummary = {};
-  if (wine.movements) {
+  if (wine && wine.movements) {
     wine.movements.forEach(m => {
-      const locName = m.location.name;
+      const locName = m.location ? m.location.name : 'Sconosciuta';
       const typeStr = !isDefaultBottle(m.bottleType) ? ` (${m.bottleType})` : "";
       const key = `${locName}${typeStr}`;
       if (!stockSummary[key]) stockSummary[key] = 0;
@@ -766,6 +763,9 @@ export default function WineDetail({ params }) {
     if (!confirmLeavePage()) return;
     router.push('/');
   };
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '1.2rem', color: '#64748b' }}>Caricamento scheda vino...</div>;
+  if (!wine) return <div style={{ padding: '2rem', textAlign: 'center', fontSize: '1.2rem', color: '#dc2626' }}>Vino non trovato</div>;
 
   return (
     <div className="app-container" style={{ display: 'block', overflowY: 'auto', backgroundColor: '#f8fafc' }}>
