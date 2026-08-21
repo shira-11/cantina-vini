@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Printer, QrCode, Filter, Search, ChevronLeft, ChevronRight, Layers, Eye } from 'lucide-react';
+import { ArrowLeft, Printer, QrCode, Filter, Search, ChevronLeft, ChevronRight, Layers, Eye, Download, FileDown } from 'lucide-react';
 import QRCode from 'qrcode';
 import { getCountryFlag } from '../../utils/wineHelpers';
 
@@ -21,6 +21,7 @@ export default function PrintQRLabelsPage() {
   const [qrCodesMap, setQrCodesMap] = useState({}); // wineId -> dataUrl
   const [viewMode, setViewMode] = useState('paginated'); // 'paginated' | 'all'
   const [allowAll, setAllowAll] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Carica i vini selezionati dalla Home Page (da URL query string o sessionStorage)
   useEffect(() => {
@@ -175,6 +176,53 @@ export default function PrintQRLabelsPage() {
     window.print();
   };
 
+  const handleDownloadPDF = async () => {
+    if (typeof window === 'undefined') return;
+    setPdfLoading(true);
+
+    try {
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = html2pdfModule.default || html2pdfModule;
+
+      const element = document.querySelector('.a4-sheets-wrapper');
+      if (!element) {
+        alert("Impossibile trovare l'area delle etichette.");
+        setPdfLoading(false);
+        return;
+      }
+
+      // Rivela temporaneamente tutti i fogli per il PDF se nascosti
+      const hiddenSheets = element.querySelectorAll('.sheet-hidden-screen');
+      hiddenSheets.forEach(el => el.classList.remove('sheet-hidden-screen'));
+
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: `Etichette_QR_Vini_${new Date().toISOString().slice(0, 10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      };
+
+      await html2pdf().set(opt).from(element).save();
+
+      // Ripristina lo stato visivo dello schermo se in modalità pagina singola
+      if (viewMode === 'paginated') {
+        const sheetsList = element.querySelectorAll('.a4-sheet');
+        sheetsList.forEach((el, idx) => {
+          if (idx + 1 !== safeCurrentPage) {
+            el.classList.add('sheet-hidden-screen');
+          }
+        });
+      }
+    } catch (err) {
+      console.error("Errore generazione PDF:", err);
+      window.print();
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f8fafc' }}>
@@ -231,7 +279,7 @@ export default function PrintQRLabelsPage() {
       {/* Barra di Controllo Toolbar (Nascosta durante la stampa) */}
       <div className="no-print" style={{ maxWidth: '1200px', margin: '0 auto 1.5rem auto', background: 'white', padding: '1.25rem 1.5rem', borderRadius: '14px', border: '1px solid #cbd5e1', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         
-        {/* Titolo Principale e Pulsante Stampa */}
+        {/* Titolo Principale e Pulsanti Stampa & PDF */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <button
@@ -250,12 +298,23 @@ export default function PrintQRLabelsPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Pulsanti Stampa e Scarica PDF */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button
               onClick={handlePrint}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#4f46e5', color: 'white', border: 'none', padding: '0.65rem 1.35rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '0.95rem', boxShadow: '0 2px 4px rgba(79, 70, 229, 0.3)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#4f46e5', color: 'white', border: 'none', padding: '0.65rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '0.95rem', boxShadow: '0 2px 4px rgba(79, 70, 229, 0.3)' }}
+              title="Apri finestra di stampa o salva in PDF da Safari/Browser"
             >
-              <Printer size={18} /> Stampa Tutti i Fogli A4 ({filteredWines.length} etichette)
+              <Printer size={18} /> Stampa / PDF ({filteredWines.length} etichette)
+            </button>
+
+            <button
+              onClick={handleDownloadPDF}
+              disabled={pdfLoading}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#059669', color: 'white', border: 'none', padding: '0.65rem 1.25rem', borderRadius: '8px', cursor: pdfLoading ? 'wait' : 'pointer', fontWeight: '700', fontSize: '0.95rem', boxShadow: '0 2px 4px rgba(5, 150, 105, 0.3)', opacity: pdfLoading ? 0.8 : 1 }}
+              title="Scarica direttamente il file PDF con tutte le etichette"
+            >
+              <Download size={18} /> {pdfLoading ? 'Generazione PDF...' : 'Scarica PDF'}
             </button>
           </div>
         </div>
@@ -439,7 +498,7 @@ export default function PrintQRLabelsPage() {
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: '4mm 6mm',
+                  gap: pageSize <= 12 ? '4mm 6mm' : (pageSize <= 14 ? '3mm 5mm' : '2.5mm 4mm'),
                   boxSizing: 'border-box'
                 }}>
                   {sheetWines.map(wine => (
@@ -447,14 +506,16 @@ export default function PrintQRLabelsPage() {
                       key={wine.id}
                       style={{
                         border: '1px dashed #94a3b8',
-                        borderRadius: '6px',
-                        padding: pageSize <= 12 ? '4mm 5mm' : (pageSize <= 14 ? '3.5mm 4mm' : '2.5mm 3.5mm'),
+                        borderRadius: '5px',
+                        padding: pageSize <= 12 ? '3.5mm 4mm' : (pageSize <= 14 ? '2.5mm 3.5mm' : '2mm 3mm'),
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4mm',
+                        gap: '3.5mm',
                         background: '#ffffff',
                         boxSizing: 'border-box',
-                        minHeight: pageSize <= 12 ? '41mm' : (pageSize <= 14 ? '35mm' : '30mm'),
+                        height: pageSize <= 12 ? '40mm' : (pageSize <= 14 ? '34mm' : '29mm'),
+                        maxHeight: pageSize <= 12 ? '41mm' : (pageSize <= 14 ? '35mm' : '30mm'),
+                        overflow: 'hidden',
                         pageBreakInside: 'avoid',
                         breakInside: 'avoid'
                       }}
@@ -465,16 +526,16 @@ export default function PrintQRLabelsPage() {
                           src={qrCodesMap[wine.id]}
                           alt={`QR Code Vino ID #${wine.id}`}
                           style={{
-                            width: pageSize <= 12 ? '32mm' : (pageSize <= 14 ? '28mm' : '24mm'),
-                            height: pageSize <= 12 ? '32mm' : (pageSize <= 14 ? '28mm' : '24mm'),
+                            width: pageSize <= 12 ? '30mm' : (pageSize <= 14 ? '25mm' : '22mm'),
+                            height: pageSize <= 12 ? '30mm' : (pageSize <= 14 ? '25mm' : '22mm'),
                             flexShrink: 0
                           }}
                         />
                       ) : (
                         <div
                           style={{
-                            width: pageSize <= 12 ? '32mm' : (pageSize <= 14 ? '28mm' : '24mm'),
-                            height: pageSize <= 12 ? '32mm' : (pageSize <= 14 ? '28mm' : '24mm'),
+                            width: pageSize <= 12 ? '30mm' : (pageSize <= 14 ? '25mm' : '22mm'),
+                            height: pageSize <= 12 ? '30mm' : (pageSize <= 14 ? '25mm' : '22mm'),
                             background: '#f1f5f9',
                             borderRadius: '4px',
                             flexShrink: 0
@@ -484,17 +545,17 @@ export default function PrintQRLabelsPage() {
 
                       {/* Informazioni Vino */}
                       <div style={{ overflow: 'hidden', flex: 1 }}>
-                        <div style={{ fontSize: '9.5pt', fontWeight: 'bold', color: '#0f172a', lineHeight: 1.15, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: '9pt', fontWeight: 'bold', color: '#0f172a', lineHeight: 1.15, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {wine.name}
                         </div>
-                        <div style={{ fontSize: '8pt', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '3px' }}>
+                        <div style={{ fontSize: '7.5pt', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
                           {wine.producerCellar || wine.producer || ''}
                         </div>
-                        <div style={{ fontSize: '8pt', color: '#334155', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ fontSize: '7.5pt', color: '#334155', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
                           <span>{getCountryFlag(wine.country)}</span>
                           <span>Annata: {wine.vintage || 'S.A.'}</span>
                         </div>
-                        <div style={{ display: 'inline-block', background: '#e0e7ff', color: '#4338ca', fontSize: '7pt', fontWeight: 'bold', padding: '1px 6px', borderRadius: '4px', marginTop: '3px' }}>
+                        <div style={{ display: 'inline-block', background: '#e0e7ff', color: '#4338ca', fontSize: '6.5pt', fontWeight: 'bold', padding: '1px 5px', borderRadius: '3px' }}>
                           ID: #{wine.id}
                         </div>
                       </div>
@@ -536,8 +597,12 @@ export default function PrintQRLabelsPage() {
             box-shadow: none !important;
             padding: 0 !important;
             margin: 0 auto !important;
-            width: 100% !important;
-            max-width: 100% !important;
+            width: 194mm !important;
+            max-width: 194mm !important;
+            height: 275mm !important;
+            max-height: 275mm !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
             border-radius: 0 !important;
             page-break-after: always !important;
             break-after: page !important;
@@ -557,5 +622,6 @@ export default function PrintQRLabelsPage() {
     </div>
   );
 }
+
 
 
