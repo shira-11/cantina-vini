@@ -1,11 +1,11 @@
 'use client';
-// Version 1.0.5 - Clean Visitor Settings & Header Buttons Permissions
+// Version 2.0.0 - Premium 2-Column Layout for Settings Page
 
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, ArrowLeft, Check, X, Save } from 'lucide-react';
+import { Settings, ArrowLeft, Check, X, Save, Shield, Eye, Search, Image as ImageIcon, Clock, Lock, Sliders, Users } from 'lucide-react';
 
 const FILTER_OPTIONS = [
   { id: 'country', label: 'Nazione' },
@@ -141,7 +141,7 @@ export default function AdminSettingsPage() {
     if (!file) return;
 
     setUploadingBg(true);
-    setMessage({ text: 'Caricamento immagine...', type: 'info' });
+    setMessage({ text: 'Caricamento immagine in corso...', type: 'info' });
 
     const formData = new FormData();
     formData.append('file', file);
@@ -167,203 +167,178 @@ export default function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'system-ui' }}>
-        <p>Caricamento impostazioni...</p>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner" style={{ width: '2.5rem', height: '2.5rem', borderWidth: '3px', borderColor: '#e2e8f0', borderBottomColor: '#6366f1', borderRadius: '50%', animation: 'rotation 1s linear infinite', margin: '0 auto 1rem auto' }}></div>
+          <p style={{ color: '#64748b', fontWeight: '500' }}>Caricamento impostazioni...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'system-ui' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button
-            onClick={() => router.push('/')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}
-          >
-            <ArrowLeft size={18} /> Home
-          </button>
-          <h1 style={{ margin: 0, fontSize: '1.75rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Settings size={28} color="#6366f1" /> Impostazioni Gestionale
-          </h1>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button
-            onClick={() => router.push('/admin/users')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#e0e7ff', border: '1px solid #6366f1', color: '#4338ca', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            👥 Gestione Utenti e Dispositivi
-          </button>
-          <button
-            onClick={() => router.push('/admin/sessions')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#334155', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}
-          >
-            🕒 Registro Accessi
-          </button>
-        </div>
-      </div>
-
-      {message.text && (
-        <div style={{
-          padding: '1rem',
-          borderRadius: '8px',
-          marginBottom: '1.5rem',
-          backgroundColor: message.type === 'success' ? '#dcfce7' : message.type === 'error' ? '#fee2e2' : '#e0f2fe',
-          color: message.type === 'success' ? '#166534' : message.type === 'error' ? '#991b1b' : '#075985',
-          fontWeight: '500'
-        }}>
-          {message.text}
-        </div>
-      )}
-
-      <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {/* Sezione PIN di Sicurezza per Eliminazioni */}
-          <div>
-            <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              🔐 PIN di Sicurezza per Eliminazioni
-            </h3>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '1rem',
-                padding: '1.25rem',
-                borderRadius: '8px',
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0'
-              }}
+    <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '1.5rem', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#0f172a' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        
+        {/* Top Header Navigation */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button
+              onClick={() => router.push('/')}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', border: '1px solid #cbd5e1', padding: '0.6rem 1.1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', color: '#334155', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '600' }}>PIN di Sicurezza per la Cancellazione</span>
-                <span style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.2rem' }}>
-                  Questo PIN verrà richiesto ogni volta che un utente preme il pulsante elimina (🗑️) per cancellare un elemento (Nazione, Regione, Cantina, Foto, ecc.).
-                </span>
-              </div>
-              <input
-                type="text"
-                value={deletionPin}
-                onChange={(e) => setDeletionPin(e.target.value)}
-                placeholder="1234"
-                style={{
-                  width: '110px',
-                  padding: '0.6rem 0.75rem',
-                  fontSize: '1.15rem',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  borderRadius: '8px',
-                  border: '2px solid #6366f1',
-                  background: 'white',
-                  letterSpacing: '2px'
-                }}
-              />
+              <ArrowLeft size={18} /> Home
+            </button>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '1.6rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.55rem', fontWeight: '700' }}>
+                <Settings size={26} color="#6366f1" /> Impostazioni Gestionale
+              </h1>
+              <p style={{ margin: '0.2rem 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
+                Personalizza la sicurezza, l&apos;estetica ed i permessi per gli utenti visitatori
+              </p>
             </div>
           </div>
 
-          {/* Sezione Autocompletamento Ricerca */}
-          <div>
-            <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Ricerca & Suggerimenti</h3>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem',
-                padding: '1rem',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                background: enableSearchAutocomplete ? '#f8fafc' : 'transparent',
-                border: '1px solid #e2e8f0',
-                transition: 'all 0.2s ease'
-              }}
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => router.push('/admin/users')}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#e0e7ff', border: '1px solid #818cf8', color: '#4338ca', padding: '0.6rem 1.1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
             >
-              <input
-                type="checkbox"
-                checked={enableSearchAutocomplete}
-                onChange={() => setEnableSearchAutocomplete(!enableSearchAutocomplete)}
-                style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>Suggerimenti di Ricerca Automatici (stile Google)</span>
-                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Se attivo, digitando nella barra di ricerca comparirà il menu con i nomi dei vini e produttori corrispondenti. Se disattivato, il menu dei suggerimenti non apparirà.</span>
-              </div>
-            </label>
-          </div>
-
-          {/* Sezione Accesso Scheda Vino */}
-          <div>
-            <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Permessi Generali</h3>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem',
-                padding: '1rem',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                background: allowWineDetails ? '#f8fafc' : 'transparent',
-                border: '1px solid #e2e8f0',
-                transition: 'all 0.2s ease'
-              }}
+              <Users size={18} /> Gestione Utenti e Dispositivi
+            </button>
+            <button
+              onClick={() => router.push('/admin/sessions')}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', border: '1px solid #cbd5e1', color: '#334155', padding: '0.6rem 1.1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
             >
-              <input
-                type="checkbox"
-                checked={allowWineDetails}
-                onChange={() => setAllowWineDetails(!allowWineDetails)}
-                style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>Consenti accesso alla Scheda Vino</span>
-                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Se disattivato, i visitatori non potranno cliccare sui vini per vedere giacenze e movimenti.</span>
-              </div>
-            </label>
+              <Clock size={18} color="#6366f1" /> Registro Accessi
+            </button>
           </div>
-          
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: '#6366f1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            {saving ? 'Salvataggio...' : <><Save size={18} /> Salva Modifiche</>}
-          </button>
         </div>
-      </div>
 
-      <div className="admin-content" style={{ maxWidth: '600px', margin: '0 auto', paddingTop: '2rem' }}>
-        <p style={{ marginBottom: '2rem', color: '#64748b', lineHeight: '1.5' }}>
-          Seleziona quali filtri vuoi rendere visibili agli utenti &quot;Visitatori&quot; (Viewer) e gestisci la durata di visualizzazione delle foto.
-        </p>
-
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-            <div className="spinner"></div>
+        {/* Global Feedback Alert Banner */}
+        {message.text && (
+          <div style={{
+            padding: '1rem 1.25rem',
+            borderRadius: '10px',
+            marginBottom: '1.5rem',
+            backgroundColor: message.type === 'success' ? '#dcfce7' : message.type === 'error' ? '#fee2e2' : '#e0f2fe',
+            color: message.type === 'success' ? '#15803d' : message.type === 'error' ? '#b91c1c' : '#0369a1',
+            border: `1px solid ${message.type === 'success' ? '#86efac' : message.type === 'error' ? '#fca5a5' : '#7dd3fc'}`,
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
+          }}>
+            {message.type === 'success' ? <Check size={20} /> : message.type === 'error' ? <X size={20} /> : <Settings size={20} />}
+            {message.text}
           </div>
-        ) : (
-          <div className="form-card" style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        )}
 
-            {/* Sezione Durata Anteprima Foto Vini */}
-            <div>
-              <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Anteprima Foto Vini</h3>
-              <div style={{ padding: '1rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500', display: 'block', marginBottom: '0.25rem' }}>
+        {/* Main 2-Column Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem', marginBottom: '5rem' }}>
+          
+          {/* COLUMN 1: Impostazioni Generali & Sicurezza */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            
+            {/* Card 1: PIN Sicurezza */}
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ background: '#fef3c7', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
+                  <Lock size={20} color="#d97706" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>PIN Sicurezza Eliminazioni</h3>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Protezione per la cancellazione di dati ed elementi</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.1rem', borderRadius: '10px', background: '#fffbeb', border: '1px solid #fde68a' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.975rem', color: '#92400e', fontWeight: '600' }}>PIN richiesto su tasti Elimina (🗑️)</span>
+                  <span style={{ fontSize: '0.825rem', color: '#b45309', marginTop: '0.2rem' }}>
+                    Verrà richiesto per eliminare Nazioni, Regioni, Cantine, Vini o Foto.
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={deletionPin}
+                  onChange={(e) => setDeletionPin(e.target.value)}
+                  placeholder="1234"
+                  style={{
+                    width: '100px',
+                    padding: '0.5rem 0.6rem',
+                    fontSize: '1.2rem',
+                    fontWeight: '800',
+                    textAlign: 'center',
+                    borderRadius: '8px',
+                    border: '2px solid #f59e0b',
+                    background: 'white',
+                    color: '#78350f',
+                    letterSpacing: '2px'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Card 2: Suggerimenti di Ricerca */}
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ background: '#e0f2fe', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
+                  <Search size={20} color="#0284c7" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>Ricerca & Suggerimenti</h3>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Autocompletamento dinamico durante la digitazione</span>
+                </div>
+              </div>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1.1rem',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  background: enableSearchAutocomplete ? '#f0f9ff' : '#f8fafc',
+                  border: `1px solid ${enableSearchAutocomplete ? '#bae6fd' : '#e2e8f0'}`,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={enableSearchAutocomplete}
+                  onChange={() => setEnableSearchAutocomplete(!enableSearchAutocomplete)}
+                  style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer', accentColor: '#0284c7' }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.975rem', color: '#0369a1', fontWeight: '600' }}>Suggerimenti di Ricerca Automatici (stile Google)</span>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b', marginTop: '0.15rem' }}>
+                    Mostra il menu a comparsa con i nomi dei vini e dei produttori corrispondenti.
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            {/* Card 3: Anteprima Foto Vini */}
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ background: '#f3e8ff', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
+                  <ImageIcon size={20} color="#9333ea" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>Anteprima Foto Vini</h3>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Tempo di persistenza visiva dell&apos;immagine</span>
+                </div>
+              </div>
+
+              <div style={{ padding: '1.1rem', borderRadius: '10px', background: '#faf5ff', border: '1px solid #e9d5ff' }}>
+                <span style={{ fontSize: '0.975rem', color: '#7e22ce', fontWeight: '600', display: 'block', marginBottom: '0.25rem' }}>
                   Durata scomparsa foto (secondi)
                 </span>
-                <span style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: '1rem' }}>
-                  Imposta per quanti secondi deve rimanere visibile l&apos;anteprima della foto della bottiglia dopo aver rilasciato il mouse o il dito.
+                <span style={{ fontSize: '0.825rem', color: '#64748b', display: 'block', marginBottom: '1rem' }}>
+                  Secondi di permanenza a schermo dell&apos;anteprima della bottiglia dopo aver rilasciato il mouse o il dito.
                 </span>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -374,10 +349,11 @@ export default function AdminSettingsPage() {
                       width: '2.5rem',
                       height: '2.5rem',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid #d8b4fe',
                       background: 'white',
-                      fontSize: '1.25rem',
+                      fontSize: '1.3rem',
                       fontWeight: 'bold',
+                      color: '#7e22ce',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -397,11 +373,12 @@ export default function AdminSettingsPage() {
                       width: '4.5rem',
                       height: '2.5rem',
                       textAlign: 'center',
-                      fontSize: '1.1rem',
-                      fontWeight: 'bold',
+                      fontSize: '1.15rem',
+                      fontWeight: '800',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      background: 'white'
+                      border: '2px solid #a855f7',
+                      background: 'white',
+                      color: '#6b21a8'
                     }}
                   />
 
@@ -412,10 +389,11 @@ export default function AdminSettingsPage() {
                       width: '2.5rem',
                       height: '2.5rem',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid #d8b4fe',
                       background: 'white',
-                      fontSize: '1.25rem',
+                      fontSize: '1.3rem',
                       fontWeight: 'bold',
+                      color: '#7e22ce',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -425,285 +403,295 @@ export default function AdminSettingsPage() {
                     +
                   </button>
 
-                  <span style={{ fontSize: '1rem', fontWeight: '500', color: '#475569' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: '600', color: '#6b21a8' }}>
                     secondi
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Sezione Accesso Scheda Vino */}
-            <div>
-              <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Permessi Generali</h3>
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  background: allowWineDetails ? '#f8fafc' : 'transparent',
-                  border: '1px solid #e2e8f0',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={allowWineDetails}
-                  onChange={() => setAllowWineDetails(!allowWineDetails)}
-                  style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-                />
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>Consenti accesso alla Scheda Vino</span>
-                  <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Se disattivato, i visitatori non potranno cliccare sui vini per vedere giacenze e movimenti.</span>
+            {/* Card 4: Estetica Login */}
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ background: '#fce7f3', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
+                  <ImageIcon size={20} color="#db2777" />
                 </div>
-              </label>
-            </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>Estetica Pagina Login</h3>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Personalizzazione dello sfondo della schermata di accesso</span>
+                </div>
+              </div>
 
-            {/* Sezione Sfondo Pagina Login */}
-            <div>
-              <h3 style={{ margin: '0 0 1rem 0', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>Estetica Generale</h3>
               <label
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '1rem',
-                  padding: '1rem',
-                  borderRadius: '8px',
+                  padding: '1.1rem',
+                  borderRadius: '10px',
                   cursor: 'pointer',
-                  background: loginPageBackground ? '#f8fafc' : 'transparent',
-                  border: '1px solid #e2e8f0',
-                  transition: 'all 0.2s ease'
+                  background: loginPageBackground ? '#fdf2f8' : '#f8fafc',
+                  border: `1px solid ${loginPageBackground ? '#fbcfe8' : '#e2e8f0'}`,
+                  transition: 'all 0.2s'
                 }}
               >
                 <input
                   type="checkbox"
                   checked={loginPageBackground}
                   onChange={() => setLoginPageBackground(!loginPageBackground)}
-                  style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                  style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer', accentColor: '#db2777' }}
                 />
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>Usa immagine come sfondo del Login</span>
-                  <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Se disattivato, la pagina di login avrà un colore semplice e pulito.</span>
+                  <span style={{ fontSize: '0.975rem', color: '#be185d', fontWeight: '600' }}>Usa immagine come sfondo del Login</span>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b', marginTop: '0.15rem' }}>
+                    Se disattivato, la pagina di login avrà un colore solido pulito.
+                  </span>
                 </div>
               </label>
 
               {loginPageBackground && (
-                <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', fontWeight: '500', color: '#334155' }}>Cambia l'immagine di sfondo</p>
-                  <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#64748b' }}>Carica un'immagine JPG o PNG. Verrà applicata immediatamente.</p>
+                <div style={{ marginTop: '1rem', padding: '1rem', background: '#fff1f2', borderRadius: '10px', border: '1px dashed #fda4af' }}>
+                  <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', fontWeight: '600', color: '#9f1239' }}>Cambia l&apos;immagine di sfondo</p>
+                  <p style={{ margin: '0 0 0.85rem 0', fontSize: '0.8rem', color: '#be123c' }}>Carica un file JPG o PNG per sostituire la foto attuale.</p>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleBgUpload}
                     disabled={uploadingBg}
-                    style={{ fontSize: '0.9rem' }}
+                    style={{ fontSize: '0.85rem' }}
                   />
-                  {uploadingBg && <span style={{ marginLeft: '1rem', fontSize: '0.85rem', color: '#8b5cf6' }}>Caricamento in corso...</span>}
+                  {uploadingBg && <span style={{ marginLeft: '0.75rem', fontSize: '0.85rem', color: '#be185d', fontWeight: 'bold' }}>Caricamento in corso...</span>}
                 </div>
               )}
             </div>
 
-            {/* Sezione Pulsanti Header */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
-                <div>
-                  <h3 style={{ margin: 0 }}>Pulsanti Barra Superiore (Header)</h3>
-                  <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Scegli quali tasti della barra in alto mostrare all&apos;utente Visitatore.</span>
+          </div>
+
+          {/* COLUMN 2: Permessi & Visibilità Visitatori */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            
+            {/* Card 1: Accesso Scheda Vino */}
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ background: '#dcfce7', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
+                  <Eye size={20} color="#16a34a" />
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>Accesso Scheda Dettaglio Vino</h3>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Permessi di consultazione giacenze e movimenti per Visitatori</span>
+                </div>
+              </div>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1.1rem',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  background: allowWineDetails ? '#f0fdf4' : '#f8fafc',
+                  border: `1px solid ${allowWineDetails ? '#bbf7d0' : '#e2e8f0'}`,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={allowWineDetails}
+                  onChange={() => setAllowWineDetails(!allowWineDetails)}
+                  style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer', accentColor: '#16a34a' }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.975rem', color: '#15803d', fontWeight: '600' }}>Consenti apertura Scheda Vino</span>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b', marginTop: '0.15rem' }}>
+                    Se disattivato, i visitatori non potranno cliccare sui vini per aprire la scheda di dettaglio.
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            {/* Card 2: Pulsanti Barra Superiore */}
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ background: '#e0e7ff', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
+                    <Sliders size={20} color="#4f46e5" />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>Pulsanti Barra Superiore (Header)</h3>
+                    <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Tasti azione visibili agli utenti Visitatori</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.6rem' }}>
                   <button
                     onClick={() => handleSelectAllBtns(true)}
-                    style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.875rem' }}
+                    style={{ background: '#f1f5f9', border: 'none', color: '#4f46e5', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600', padding: '0.35rem 0.65rem', borderRadius: '6px' }}
                   >
-                    Seleziona Tutti
+                    Tutti
                   </button>
                   <button
                     onClick={() => handleSelectAllBtns(false)}
-                    style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.875rem' }}
+                    style={{ background: '#f1f5f9', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600', padding: '0.35rem 0.65rem', borderRadius: '6px' }}
                   >
-                    Deseleziona Tutti
+                    Nessuno
                   </button>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {HEADER_BUTTON_OPTIONS.map(btn => (
                   <label
                     key={btn.id}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '1rem',
-                      padding: '0.75rem',
+                      gap: '0.85rem',
+                      padding: '0.75rem 0.9rem',
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      background: allowedButtons.includes(btn.id) ? '#f8fafc' : 'transparent',
-                      border: '1px solid #e2e8f0',
-                      transition: 'all 0.2s ease'
+                      background: allowedButtons.includes(btn.id) ? '#f5f3ff' : '#f8fafc',
+                      border: `1px solid ${allowedButtons.includes(btn.id) ? '#ddd6fe' : '#e2e8f0'}`,
+                      transition: 'all 0.15s'
                     }}
                   >
                     <input
                       type="checkbox"
                       checked={allowedButtons.includes(btn.id)}
                       onChange={() => handleToggleBtn(btn.id)}
-                      style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                      style={{ width: '1.15rem', height: '1.15rem', cursor: 'pointer', accentColor: '#6366f1' }}
                     />
-                    <span style={{ fontSize: '1.05rem', color: '#1e293b', fontWeight: '500' }}>{btn.label}</span>
+                    <span style={{ fontSize: '0.925rem', color: allowedButtons.includes(btn.id) ? '#5b21b6' : '#334155', fontWeight: allowedButtons.includes(btn.id) ? '600' : '400' }}>
+                      {btn.label}
+                    </span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Sezione Filtri */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
-                <h3 style={{ margin: 0 }}>Filtri di Ricerca</h3>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+            {/* Card 3: Filtri di Ricerca */}
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ background: '#f0fdf4', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
+                    <Shield size={20} color="#16a34a" />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>Filtri di Ricerca Visibili</h3>
+                    <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Filtri abilitati per gli utenti Visitatori</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.6rem' }}>
                   <button
                     onClick={() => handleSelectAll(true)}
-                    style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.875rem' }}
+                    style={{ background: '#f1f5f9', border: 'none', color: '#16a34a', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600', padding: '0.35rem 0.65rem', borderRadius: '6px' }}
                   >
-                    Seleziona Tutti
+                    Tutti
                   </button>
                   <button
                     onClick={() => handleSelectAll(false)}
-                    style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.875rem' }}
+                    style={{ background: '#f1f5f9', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600', padding: '0.35rem 0.65rem', borderRadius: '6px' }}
                   >
-                    Deseleziona Tutti
+                    Nessuno
                   </button>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.6rem' }}>
                 {FILTER_OPTIONS.map(filter => (
                   <label
                     key={filter.id}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '1rem',
-                      padding: '0.75rem',
+                      gap: '0.75rem',
+                      padding: '0.7rem 0.85rem',
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      background: allowedFilters.includes(filter.id) ? '#f8fafc' : 'transparent',
-                      border: '1px solid #e2e8f0',
-                      transition: 'all 0.2s ease'
+                      background: allowedFilters.includes(filter.id) ? '#f0fdf4' : '#f8fafc',
+                      border: `1px solid ${allowedFilters.includes(filter.id) ? '#bbf7d0' : '#e2e8f0'}`,
+                      transition: 'all 0.15s'
                     }}
                   >
                     <input
                       type="checkbox"
                       checked={allowedFilters.includes(filter.id)}
                       onChange={() => handleToggle(filter.id)}
-                      style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                      style={{ width: '1.15rem', height: '1.15rem', cursor: 'pointer', accentColor: '#16a34a' }}
                     />
-                    <span style={{ fontSize: '1.05rem', color: '#1e293b' }}>{filter.label}</span>
+                    <span style={{ fontSize: '0.9rem', color: allowedFilters.includes(filter.id) ? '#14532d' : '#334155', fontWeight: allowedFilters.includes(filter.id) ? '600' : '400' }}>
+                      {filter.label}
+                    </span>
                   </label>
                 ))}
               </div>
             </div>
 
-            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                {message.text && (
-                  <span style={{ color: message.type === 'success' ? '#10b981' : '#ef4444', fontWeight: '500' }}>
-                    {message.type === 'success' ? <Check size={18} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> : <X size={18} style={{ verticalAlign: 'middle', marginRight: '4px' }} />}
-                    {message.text}
-                  </span>
-                )}
-              </div>
-              <button
-                className="btn btn-primary"
-                onClick={handleSave}
-                disabled={saving}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '140px', justifyContent: 'center' }}
-              >
-                {saving ? (
-                  <span className="spinner" style={{ width: '1.25rem', height: '1.25rem', borderBottomColor: 'white' }}></span>
-                ) : (
-                  <>
-                    <Save size={18} />
-                    Salva Modifiche
-                  </>
-                )}
-              </button>
-            </div>
           </div>
-        )}
-      </div>
 
-      <style jsx global>{`
-        .admin-container {
-          min-height: 100vh;
-          background: #f8fafc;
-          padding-bottom: 3rem;
-        }
-        .admin-header {
-          background: white;
-          padding: 1.25rem 2rem;
-          border-bottom: 1px solid #e2e8f0;
-          display: flex;
-          align-items: center;
-          position: sticky;
-          top: 0;
-          z-index: 10;
-        }
-        .admin-header h2 {
-          margin: 0;
-          font-size: 1.5rem;
-          color: #0f172a;
-        }
-        .icon-btn {
-          background: none;
-          border: none;
-          padding: 0.5rem;
-          cursor: pointer;
-          color: #64748b;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s;
-        }
-        .icon-btn:hover {
-          background: #f1f5f9;
-          color: #0f172a;
-        }
-        .btn {
-          padding: 0.75rem 1.5rem;
-          border-radius: 8px;
-          font-weight: 500;
-          cursor: pointer;
-          border: none;
-          transition: all 0.2s;
-        }
-        .btn-primary {
-          background: var(--primary-color);
-          color: white;
-        }
-        .btn-primary:hover:not(:disabled) {
-          opacity: 0.9;
-        }
-        .btn:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-        .spinner {
-          width: 2rem;
-          height: 2rem;
-          border: 3px solid #e2e8f0;
-          border-bottom-color: var(--primary-color);
-          border-radius: 50%;
-          display: inline-block;
-          box-sizing: border-box;
-          animation: rotation 1s linear infinite;
-        }
-        @keyframes rotation {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+        </div>
+
+        {/* Floating Bottom Save Bar */}
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          borderTop: '1px solid #e2e8f0',
+          padding: '1rem 2rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          zIndex: 100,
+          boxShadow: '0 -4px 12px rgba(0,0,0,0.06)'
+        }}>
+          <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {message.text ? (
+                <span style={{ color: message.type === 'success' ? '#16a34a' : message.type === 'error' ? '#dc2626' : '#2563eb', fontWeight: '600', fontSize: '0.95rem' }}>
+                  {message.text}
+                </span>
+              ) : (
+                <span style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                  Ricordati di salvare le modifiche apportate alle impostazioni.
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                padding: '0.75rem 2rem',
+                background: '#6366f1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '1rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.35)',
+                transition: 'all 0.2s'
+              }}
+            >
+              {saving ? (
+                <span>Salvataggio in corso...</span>
+              ) : (
+                <>
+                  <Save size={20} /> Salva Tutte le Modifiche
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
