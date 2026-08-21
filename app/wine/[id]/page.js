@@ -56,7 +56,7 @@ export default function WineDetail({ params }) {
   const [cropModal, setCropModal] = useState({ isOpen: false, photoUrl: null, type: 'front' });
   const [showQRModal, setShowQRModal] = useState(false);
   const [deletionPin, setDeletionPin] = useState('1234');
-  const [addVintageModal, setAddVintageModal] = useState({ isOpen: false, vintage: '', bottleType: '' });
+  const [addVintageModal, setAddVintageModal] = useState({ isOpen: false, vintage: '', bottleType: '', quantity: '0', locationId: '' });
   const customAlert = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(''), 4000); };
 
   const verifyDeletionPin = () => {
@@ -996,7 +996,9 @@ export default function WineDetail({ params }) {
                         onClick={() => setAddVintageModal({
                           isOpen: true,
                           vintage: String(new Date().getFullYear()),
-                          bottleType: wine?.bottleType || 'Normale 0.75'
+                          bottleType: wine?.bottleType || 'Normale 0.75',
+                          quantity: '0',
+                          locationId: locations[0]?.id ? String(locations[0].id) : ''
                         })}
                       >
                         <Plus size={18} /> Aggiungi Nuova Annata / Formato
@@ -2316,7 +2318,7 @@ export default function WineDetail({ params }) {
           <div style={{
             background: 'white',
             borderRadius: '16px',
-            maxWidth: '480px',
+            maxWidth: '500px',
             width: '100%',
             padding: '1.75rem',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15)',
@@ -2324,7 +2326,7 @@ export default function WineDetail({ params }) {
             fontFamily: 'system-ui, -apple-system, sans-serif'
           }}>
             <button
-              onClick={() => setAddVintageModal({ isOpen: false, vintage: '', bottleType: '' })}
+              onClick={() => setAddVintageModal({ isOpen: false, vintage: '', bottleType: '', quantity: '0', locationId: '' })}
               style={{
                 position: 'absolute', top: '1rem', right: '1rem',
                 background: '#f1f5f9', border: 'none', borderRadius: '50%',
@@ -2341,35 +2343,42 @@ export default function WineDetail({ params }) {
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: '700' }}>Aggiungi Nuova Annata / Formato</h3>
-                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Seleziona o digita l'annata e il formato di bottiglia</span>
+                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Seleziona annata, formato e quantità iniziale</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginBottom: '1.5rem' }}>
               {/* Campo Annata */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
                   Annata:
                 </label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <select
                     value={addVintageModal.vintage}
                     onChange={(e) => setAddVintageModal(prev => ({ ...prev, vintage: e.target.value }))}
                     style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', background: 'white' }}
                   >
-                    <option value="">-- Seleziona --</option>
-                    {Array.from({ length: 40 }, (_, i) => String(new Date().getFullYear() - i + 1)).map(yr => (
+                    <option value="">-- Seleziona Annata --</option>
+                    {Array.from({ length: 45 }, (_, i) => String(new Date().getFullYear() - i + 1)).map(yr => (
                       <option key={yr} value={yr}>{yr}</option>
                     ))}
                     <option value="S.A.">S.A. (Senza Annata)</option>
                   </select>
-                  <input
-                    type="text"
-                    placeholder="o digita es. 2026"
-                    value={addVintageModal.vintage}
-                    onChange={(e) => setAddVintageModal(prev => ({ ...prev, vintage: e.target.value }))}
-                    style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
-                  />
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{ padding: '0.65rem 0.85rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem' }}
+                    onClick={() => {
+                      const customYr = window.prompt("Inserisci un'annata personalizzata (es. 1985 o S.A.):");
+                      if (customYr && customYr.trim()) {
+                        setAddVintageModal(prev => ({ ...prev, vintage: customYr.trim() }));
+                      }
+                    }}
+                    title="Aggiungi o digita annata personalizzata"
+                  >
+                    ✏️
+                  </button>
                 </div>
               </div>
 
@@ -2378,7 +2387,7 @@ export default function WineDetail({ params }) {
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
                   Formato Bottiglia:
                 </label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <select
                     value={addVintageModal.bottleType}
                     onChange={(e) => setAddVintageModal(prev => ({ ...prev, bottleType: e.target.value }))}
@@ -2393,20 +2402,56 @@ export default function WineDetail({ params }) {
                       <option key={bt} value={bt}>{bt}</option>
                     ))}
                   </select>
-                  <input
-                    type="text"
-                    placeholder="o digita formato"
-                    value={addVintageModal.bottleType}
-                    onChange={(e) => setAddVintageModal(prev => ({ ...prev, bottleType: e.target.value }))}
-                    style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
-                  />
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{ padding: '0.65rem 0.85rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem' }}
+                    onClick={() => setListModal({ isOpen: true, field: 'bottleType', label: 'Formato Bottiglia', options: metadata.bottleTypes || [] })}
+                    title="Modifica lista formati"
+                  >
+                    ✏️
+                  </button>
                 </div>
               </div>
+
+              {/* Campo Quantità Bottiglie */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                  Quantità Bottiglie (Giacenza Iniziale):
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Es. 6"
+                  value={addVintageModal.quantity}
+                  onChange={(e) => setAddVintageModal(prev => ({ ...prev, quantity: e.target.value }))}
+                  style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              {/* Campo Cantina / Posizione */}
+              {parseInt(addVintageModal.quantity) > 0 && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                    Cantina / Posizione:
+                  </label>
+                  <select
+                    value={addVintageModal.locationId}
+                    onChange={(e) => setAddVintageModal(prev => ({ ...prev, locationId: e.target.value }))}
+                    style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', background: 'white', boxSizing: 'border-box' }}
+                  >
+                    <option value="">-- Seleziona Cantina --</option>
+                    {locations.map(l => (
+                      <option key={l.id} value={l.id.toString()}>{l.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button
-                onClick={() => setAddVintageModal({ isOpen: false, vintage: '', bottleType: '' })}
+                onClick={() => setAddVintageModal({ isOpen: false, vintage: '', bottleType: '', quantity: '0', locationId: '' })}
                 style={{ padding: '0.65rem 1.25rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', color: '#475569', fontWeight: '600', cursor: 'pointer' }}
               >
                 Annulla
@@ -2416,9 +2461,11 @@ export default function WineDetail({ params }) {
                 onClick={async () => {
                   const vStr = addVintageModal.vintage.trim();
                   const bStr = addVintageModal.bottleType.trim() || 'Normale 0.75';
+                  const qty = parseInt(addVintageModal.quantity) || 0;
+                  const locId = addVintageModal.locationId ? parseInt(addVintageModal.locationId) : (locations[0]?.id || null);
 
                   if (!vStr) {
-                    customAlert('Inserisci o seleziona un\'annata.');
+                    customAlert('Seleziona o inserisci un\'annata.');
                     return;
                   }
 
@@ -2450,6 +2497,24 @@ export default function WineDetail({ params }) {
                     });
                     if (res.ok) {
                       const newWine = await res.json();
+                      
+                      // Se è stata inserita una quantità > 0, crea il movimento di Carico Iniziale
+                      if (qty > 0 && locId) {
+                        await fetch('/api/movements', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            wineId: newWine.id,
+                            locationId: locId,
+                            movementType: 'Ingresso',
+                            quantity: qty,
+                            bottleType: bStr,
+                            reason: 'Carico Iniziale',
+                            date: new Date().toISOString()
+                          })
+                        });
+                      }
+
                       window.location.href = `/wine/${newWine.id}`;
                     } else {
                       setIsSaving(false);
