@@ -929,24 +929,30 @@ export default function Home() {
                   style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '5rem' : '3.5rem', width: '100%' }}
                 />
                 <button
-                  onClick={() => setShowQRScanner(true)}
-                  title="Scansiona QR Code da fotocamera"
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
+                  onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
+                  title="Scansiona QR Code / Codice a Barre da fotocamera"
                   style={{
-                    background: '#e0e7ff',
+                    background: '#4f46e5',
+                    color: 'white',
                     border: 'none',
-                    padding: '3px 7px',
-                    borderRadius: '6px',
+                    padding: '5px 10px',
+                    borderRadius: '8px',
                     cursor: 'pointer',
                     position: 'absolute',
                     right: speechSupported ? '3.8rem' : '2.25rem',
-                    top: '9px',
-                    color: '#4338ca',
+                    top: '6px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '2px'
+                    justifyContent: 'center',
+                    gap: '4px',
+                    boxShadow: '0 1px 3px rgba(79, 70, 229, 0.3)',
+                    zIndex: 5
                   }}
                 >
-                  <QrCode size={16} />
+                  <QrCode size={18} />
                 </button>
                 {speechSupported && (
                   <button
