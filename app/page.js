@@ -926,34 +926,8 @@ export default function Home() {
                     setSearch(e.target.value);
                     setShowSuggestions(true);
                   }}
-                  style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '5rem' : '3.5rem', width: '100%' }}
+                  style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '3.5rem' : '2.25rem', width: '100%' }}
                 />
-                <button
-                  type="button"
-                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
-                  onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowQRScanner(true); }}
-                  title="Scansiona QR Code / Codice a Barre da fotocamera"
-                  style={{
-                    background: '#4f46e5',
-                    color: 'white',
-                    border: 'none',
-                    padding: '5px 10px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    position: 'absolute',
-                    right: speechSupported ? '3.8rem' : '2.25rem',
-                    top: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    boxShadow: '0 1px 3px rgba(79, 70, 229, 0.3)',
-                    zIndex: 5
-                  }}
-                >
-                  <QrCode size={18} />
-                </button>
                 {speechSupported && (
                   <button
                     onClick={startVoiceSearch}

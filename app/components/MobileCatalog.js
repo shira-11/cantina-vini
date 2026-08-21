@@ -294,48 +294,8 @@ export const MobileCatalog = ({
                 setSearch(e.target.value);
                 setShowSuggestions(true);
               }}
-              style={{ width: '100%', padding: `0.75rem ${speechSupported ? '5.5rem' : '4rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
+              style={{ width: '100%', padding: `0.75rem ${speechSupported ? '3.5rem' : '2.5rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
             />
-
-            <button
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (onOpenQRScanner) onOpenQRScanner();
-              }}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (onOpenQRScanner) onOpenQRScanner();
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (onOpenQRScanner) onOpenQRScanner();
-              }}
-              title="Scansiona QR Code da fotocamera"
-              style={{
-                background: '#4f46e5',
-                color: 'white',
-                border: 'none',
-                padding: '5px 9px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                position: 'absolute',
-                right: search ? (speechSupported ? '64px' : '38px') : (speechSupported ? '38px' : '10px'),
-                top: '50%',
-                transform: 'translateY(-50%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '2px',
-                boxShadow: '0 2px 4px rgba(79, 70, 229, 0.3)',
-                zIndex: 10
-              }}
-            >
-              <QrCode size={18} />
-            </button>
 
             {speechSupported && (
               <button
