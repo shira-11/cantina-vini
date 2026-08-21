@@ -942,10 +942,12 @@ export default function Home() {
           </div>
 
           <div className="filter-group">
-            <label>Cerca</label>
+            <label style={search ? { color: '#047857', fontWeight: 'bold' } : {}}>
+              {search ? '🟢 ' : ''}Cerca
+            </label>
             <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <div style={{ position: 'relative', width: '100%' }}>
-                <Search size={18} style={{ position: 'absolute', left: 10, top: 11, color: '#94a3b8' }} />
+                <Search size={18} style={{ position: 'absolute', left: 10, top: 11, color: search ? '#10b981' : '#94a3b8' }} />
                 <input
                   type="text"
                   placeholder="Nome, produttore..."
@@ -956,7 +958,12 @@ export default function Home() {
                     setSearch(e.target.value);
                     setShowSuggestions(true);
                   }}
-                  style={{ paddingLeft: '2.25rem', paddingRight: speechSupported ? '3.5rem' : '2.25rem', width: '100%' }}
+                  style={{
+                    paddingLeft: '2.25rem',
+                    paddingRight: speechSupported ? '3.5rem' : '2.25rem',
+                    width: '100%',
+                    ...(search ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {})
+                  }}
                 />
                 {speechSupported && (
                   <button
@@ -1075,8 +1082,14 @@ export default function Home() {
 
           {canViewFilter('country') && (
             <div className="filter-group">
-              <label>Nazione</label>
-              <select value={filters.country} onChange={e => setFilters({ ...filters, country: e.target.value })}>
+              <label style={filters.country ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.country ? '🟢 ' : ''}Nazione
+              </label>
+              <select
+                value={filters.country}
+                onChange={e => setFilters({ ...filters, country: e.target.value })}
+                style={filters.country ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutte</option>
                 {uniqueCountries.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -1085,8 +1098,14 @@ export default function Home() {
 
           {canViewFilter('region') && filters.country && (
             <div className="filter-group">
-              <label>Regione</label>
-              <select value={filters.region} onChange={e => setFilters({ ...filters, region: e.target.value })}>
+              <label style={filters.region ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.region ? '🟢 ' : ''}Regione
+              </label>
+              <select
+                value={filters.region}
+                onChange={e => setFilters({ ...filters, region: e.target.value })}
+                style={filters.region ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutte</option>
                 {uniqueRegions.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
@@ -1095,8 +1114,14 @@ export default function Home() {
 
           {canViewFilter('producerCellar') && (
             <div className="filter-group">
-              <label>Cantina Produttrice</label>
-              <select value={filters.producerCellar} onChange={e => setFilters({ ...filters, producerCellar: e.target.value })}>
+              <label style={filters.producerCellar ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.producerCellar ? '🟢 ' : ''}Cantina Produttrice
+              </label>
+              <select
+                value={filters.producerCellar}
+                onChange={e => setFilters({ ...filters, producerCellar: e.target.value })}
+                style={filters.producerCellar ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutte</option>
                 {uniqueProducerCellars.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
@@ -1105,8 +1130,14 @@ export default function Home() {
 
           {canViewFilter('producer') && (
             <div className="filter-group">
-              <label>Produttore</label>
-              <select value={filters.producer} onChange={e => setFilters({ ...filters, producer: e.target.value })}>
+              <label style={filters.producer ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.producer ? '🟢 ' : ''}Produttore
+              </label>
+              <select
+                value={filters.producer}
+                onChange={e => setFilters({ ...filters, producer: e.target.value })}
+                style={filters.producer ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutti</option>
                 {uniqueProducers.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
@@ -1115,8 +1146,14 @@ export default function Home() {
 
           {canViewFilter('classification') && (
             <div className="filter-group">
-              <label>Classificazione</label>
-              <select value={filters.classification} onChange={e => setFilters({ ...filters, classification: e.target.value })}>
+              <label style={filters.classification ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.classification ? '🟢 ' : ''}Classificazione
+              </label>
+              <select
+                value={filters.classification}
+                onChange={e => setFilters({ ...filters, classification: e.target.value })}
+                style={filters.classification ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutte</option>
                 {uniqueClassifications.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -1125,8 +1162,14 @@ export default function Home() {
 
           {canViewFilter('category') && (
             <div className="filter-group">
-              <label>Categoria</label>
-              <select value={filters.category} onChange={e => setFilters({ ...filters, category: e.target.value })}>
+              <label style={filters.category ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.category ? '🟢 ' : ''}Categoria
+              </label>
+              <select
+                value={filters.category}
+                onChange={e => setFilters({ ...filters, category: e.target.value })}
+                style={filters.category ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutte</option>
                 {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -1135,8 +1178,14 @@ export default function Home() {
 
           {canViewFilter('location') && (
             <div className="filter-group">
-              <label>Cantina Fisica</label>
-              <select value={filters.location} onChange={e => setFilters({ ...filters, location: e.target.value })}>
+              <label style={filters.location ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.location ? '🟢 ' : ''}Cantina Fisica
+              </label>
+              <select
+                value={filters.location}
+                onChange={e => setFilters({ ...filters, location: e.target.value })}
+                style={filters.location ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutte</option>
                 {uniqueLocations.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
@@ -1145,8 +1194,14 @@ export default function Home() {
 
           {canViewFilter('availability') && (
             <div className="filter-group">
-              <label>Disponibilità</label>
-              <select value={filters.availability} onChange={e => setFilters({ ...filters, availability: e.target.value })}>
+              <label style={filters.availability ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.availability ? '🟢 ' : ''}Disponibilità
+              </label>
+              <select
+                value={filters.availability}
+                onChange={e => setFilters({ ...filters, availability: e.target.value })}
+                style={filters.availability ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutte</option>
                 <option value="available">Solo Disponibili</option>
                 <option value="unavailable">Giacenze Non Disponibili</option>
@@ -1156,8 +1211,14 @@ export default function Home() {
 
           {canViewFilter('photo') && (
             <div className="filter-group">
-              <label>Foto</label>
-              <select value={filters.photo || ''} onChange={e => setFilters({ ...filters, photo: e.target.value })}>
+              <label style={filters.photo ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.photo ? '🟢 ' : ''}Foto
+              </label>
+              <select
+                value={filters.photo || ''}
+                onChange={e => setFilters({ ...filters, photo: e.target.value })}
+                style={filters.photo ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutte</option>
                 <option value="with_photo">Con Foto</option>
                 <option value="without_photo">Senza Foto</option>
@@ -1167,8 +1228,14 @@ export default function Home() {
 
           {canViewFilter('bottleType') && (
             <div className="filter-group">
-              <label>Tipo Bottiglia</label>
-              <select value={filters.bottleType || ''} onChange={e => setFilters({ ...filters, bottleType: e.target.value })}>
+              <label style={filters.bottleType ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.bottleType ? '🟢 ' : ''}Tipo Bottiglia
+              </label>
+              <select
+                value={filters.bottleType || ''}
+                onChange={e => setFilters({ ...filters, bottleType: e.target.value })}
+                style={filters.bottleType ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
                 <option value="">Tutte</option>
                 {uniqueBottleTypes.map(b => <option key={b} value={b}>{b}</option>)}
               </select>

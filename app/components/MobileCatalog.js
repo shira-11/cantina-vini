@@ -297,7 +297,7 @@ export const MobileCatalog = ({
         {/* Search Bar with Autocomplete Suggestions */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <Search size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: search ? '#10b981' : '#94a3b8' }} />
             <input
               type="text"
               placeholder="Cerca vino..."
@@ -308,7 +308,17 @@ export const MobileCatalog = ({
                 setSearch(e.target.value);
                 setShowSuggestions(true);
               }}
-              style={{ width: '100%', padding: `0.75rem ${speechSupported ? '3.5rem' : '2.5rem'} 0.75rem 2.5rem`, borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', outline: 'none' }}
+              style={{
+                width: '100%',
+                padding: `0.75rem ${speechSupported ? '3.5rem' : '2.5rem'} 0.75rem 2.5rem`,
+                borderRadius: '12px',
+                border: search ? '2px solid #10b981' : '1px solid #cbd5e1',
+                backgroundColor: search ? '#ecfdf5' : 'white',
+                color: search ? '#047857' : 'inherit',
+                fontWeight: search ? 'bold' : 'normal',
+                fontSize: '1rem',
+                outline: 'none'
+              }}
             />
 
             {speechSupported && (
@@ -324,7 +334,7 @@ export const MobileCatalog = ({
                   right: search ? '36px' : '12px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: isListening ? '#ef4444' : '#94a3b8',
+                  color: isListening ? '#ef4444' : (search ? '#10b981' : '#94a3b8'),
                   animation: isListening ? 'pulse 1.5s infinite' : 'none'
                 }}
               >
@@ -337,7 +347,7 @@ export const MobileCatalog = ({
                   setSearch('');
                   setShowSuggestions(false);
                 }}
-                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 0 }}
+                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#10b981', display: 'flex', alignItems: 'center', padding: 0 }}
               >
                 <X size={18} />
               </button>
@@ -426,12 +436,35 @@ export const MobileCatalog = ({
           >
             <QrCode size={20} />
           </button>
-          <button
-            onClick={() => setShowFilters(true)}
-            style={{ marginLeft: '0.4rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '0.75rem', display: 'flex', alignItems: 'center', cursor: 'pointer', color: '#475569', flexShrink: 0 }}
-          >
-            <Filter size={20} />
-          </button>
+          {(() => {
+            const activeFiltersCount = Object.values(filters).filter(Boolean).length;
+            return (
+              <button
+                onClick={() => setShowFilters(true)}
+                style={{
+                  marginLeft: '0.4rem',
+                  background: activeFiltersCount > 0 ? '#ecfdf5' : '#f1f5f9',
+                  border: activeFiltersCount > 0 ? '2px solid #10b981' : '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  cursor: 'pointer',
+                  color: activeFiltersCount > 0 ? '#047857' : '#475569',
+                  fontWeight: activeFiltersCount > 0 ? 'bold' : 'normal',
+                  flexShrink: 0
+                }}
+              >
+                <Filter size={20} color={activeFiltersCount > 0 ? '#10b981' : '#475569'} />
+                {activeFiltersCount > 0 && (
+                  <span style={{ background: '#10b981', color: 'white', borderRadius: '50%', padding: '0.1rem 0.45rem', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+            );
+          })()}
         </div>
 
         {/* Wine Count Line */}
@@ -551,8 +584,8 @@ export const MobileCatalog = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {canViewFilter('location') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
-                    Cantina Fisica
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: filters.location ? '#047857' : '#334155' }}>
+                    {filters.location ? '🟢 ' : ''}Cantina Fisica
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {['', ...uniqueLocations].map(l => {
@@ -566,9 +599,9 @@ export const MobileCatalog = ({
                           style={{
                             padding: '0.45rem 0.85rem',
                             borderRadius: '20px',
-                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
-                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
-                            color: isSelected ? '#4338ca' : '#475569',
+                            border: isSelected && l ? '2px solid #10b981' : (isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1'),
+                            backgroundColor: isSelected && l ? '#ecfdf5' : (isSelected ? '#eeeffe' : '#f8fafc'),
+                            color: isSelected && l ? '#047857' : (isSelected ? '#4338ca' : '#475569'),
                             fontWeight: isSelected ? 'bold' : 'normal',
                             fontSize: '0.85rem',
                             cursor: 'pointer',
@@ -585,8 +618,8 @@ export const MobileCatalog = ({
 
               {canViewFilter('country') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
-                    Nazione
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: filters.country ? '#047857' : '#334155' }}>
+                    {filters.country ? '🟢 ' : ''}Nazione
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
                     {['', ...uniqueCountries].map(c => {
@@ -600,9 +633,9 @@ export const MobileCatalog = ({
                           style={{
                             padding: '0.45rem 0.85rem',
                             borderRadius: '20px',
-                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
-                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
-                            color: isSelected ? '#4338ca' : '#475569',
+                            border: isSelected && c ? '2px solid #10b981' : (isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1'),
+                            backgroundColor: isSelected && c ? '#ecfdf5' : (isSelected ? '#eeeffe' : '#f8fafc'),
+                            color: isSelected && c ? '#047857' : (isSelected ? '#4338ca' : '#475569'),
                             fontWeight: isSelected ? 'bold' : 'normal',
                             fontSize: '0.85rem',
                             cursor: 'pointer',
@@ -619,8 +652,8 @@ export const MobileCatalog = ({
 
               {canViewFilter('region') && filters.country && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
-                    Regione ({filters.country})
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: filters.region ? '#047857' : '#334155' }}>
+                    {filters.region ? '🟢 ' : ''}Regione ({filters.country})
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
                     {['', ...uniqueRegions].map(r => {
@@ -634,9 +667,9 @@ export const MobileCatalog = ({
                           style={{
                             padding: '0.45rem 0.85rem',
                             borderRadius: '20px',
-                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
-                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
-                            color: isSelected ? '#4338ca' : '#475569',
+                            border: isSelected && r ? '2px solid #10b981' : (isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1'),
+                            backgroundColor: isSelected && r ? '#ecfdf5' : (isSelected ? '#eeeffe' : '#f8fafc'),
+                            color: isSelected && r ? '#047857' : (isSelected ? '#4338ca' : '#475569'),
                             fontWeight: isSelected ? 'bold' : 'normal',
                             fontSize: '0.85rem',
                             cursor: 'pointer',
@@ -653,8 +686,8 @@ export const MobileCatalog = ({
 
               {canViewFilter('category') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
-                    Categoria
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: filters.category ? '#047857' : '#334155' }}>
+                    {filters.category ? '🟢 ' : ''}Categoria
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {['', ...uniqueCategories].map(cat => {
@@ -668,9 +701,9 @@ export const MobileCatalog = ({
                           style={{
                             padding: '0.45rem 0.85rem',
                             borderRadius: '20px',
-                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
-                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
-                            color: isSelected ? '#4338ca' : '#475569',
+                            border: isSelected && cat ? '2px solid #10b981' : (isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1'),
+                            backgroundColor: isSelected && cat ? '#ecfdf5' : (isSelected ? '#eeeffe' : '#f8fafc'),
+                            color: isSelected && cat ? '#047857' : (isSelected ? '#4338ca' : '#475569'),
                             fontWeight: isSelected ? 'bold' : 'normal',
                             fontSize: '0.85rem',
                             cursor: 'pointer',
@@ -687,8 +720,8 @@ export const MobileCatalog = ({
 
               {canViewFilter('availability') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
-                    Disponibilità
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: filters.availability ? '#047857' : '#334155' }}>
+                    {filters.availability ? '🟢 ' : ''}Disponibilità
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {[
@@ -705,9 +738,9 @@ export const MobileCatalog = ({
                           style={{
                             padding: '0.45rem 0.85rem',
                             borderRadius: '20px',
-                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
-                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
-                            color: isSelected ? '#4338ca' : '#475569',
+                            border: isSelected && opt.value ? '2px solid #10b981' : (isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1'),
+                            backgroundColor: isSelected && opt.value ? '#ecfdf5' : (isSelected ? '#eeeffe' : '#f8fafc'),
+                            color: isSelected && opt.value ? '#047857' : (isSelected ? '#4338ca' : '#475569'),
                             fontWeight: isSelected ? 'bold' : 'normal',
                             fontSize: '0.85rem',
                             cursor: 'pointer',
@@ -724,8 +757,22 @@ export const MobileCatalog = ({
 
               {canViewFilter('producerCellar') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Cantina Produttrice</label>
-                  <select value={filters.producerCellar} onChange={e => setFilters({ ...filters, producerCellar: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white' }}>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: filters.producerCellar ? '#047857' : '#475569', fontWeight: filters.producerCellar ? 'bold' : 'normal' }}>
+                    {filters.producerCellar ? '🟢 ' : ''}Cantina Produttrice
+                  </label>
+                  <select
+                    value={filters.producerCellar}
+                    onChange={e => setFilters({ ...filters, producerCellar: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
+                      border: filters.producerCellar ? '2px solid #10b981' : '1px solid #cbd5e1',
+                      backgroundColor: filters.producerCellar ? '#ecfdf5' : 'white',
+                      color: filters.producerCellar ? '#047857' : 'inherit',
+                      fontWeight: filters.producerCellar ? 'bold' : 'normal'
+                    }}
+                  >
                     <option value="">Tutte</option>
                     {uniqueProducerCellars.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
@@ -734,8 +781,22 @@ export const MobileCatalog = ({
 
               {canViewFilter('producer') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Produttore</label>
-                  <select value={filters.producer || ''} onChange={e => setFilters({ ...filters, producer: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white' }}>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: filters.producer ? '#047857' : '#475569', fontWeight: filters.producer ? 'bold' : 'normal' }}>
+                    {filters.producer ? '🟢 ' : ''}Produttore
+                  </label>
+                  <select
+                    value={filters.producer || ''}
+                    onChange={e => setFilters({ ...filters, producer: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
+                      border: filters.producer ? '2px solid #10b981' : '1px solid #cbd5e1',
+                      backgroundColor: filters.producer ? '#ecfdf5' : 'white',
+                      color: filters.producer ? '#047857' : 'inherit',
+                      fontWeight: filters.producer ? 'bold' : 'normal'
+                    }}
+                  >
                     <option value="">Tutti</option>
                     {uniqueProducers.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
@@ -744,8 +805,22 @@ export const MobileCatalog = ({
 
               {canViewFilter('classification') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Classificazione</label>
-                  <select value={filters.classification} onChange={e => setFilters({ ...filters, classification: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white' }}>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: filters.classification ? '#047857' : '#475569', fontWeight: filters.classification ? 'bold' : 'normal' }}>
+                    {filters.classification ? '🟢 ' : ''}Classificazione
+                  </label>
+                  <select
+                    value={filters.classification}
+                    onChange={e => setFilters({ ...filters, classification: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
+                      border: filters.classification ? '2px solid #10b981' : '1px solid #cbd5e1',
+                      backgroundColor: filters.classification ? '#ecfdf5' : 'white',
+                      color: filters.classification ? '#047857' : 'inherit',
+                      fontWeight: filters.classification ? 'bold' : 'normal'
+                    }}
+                  >
                     <option value="">Tutte</option>
                     {uniqueClassifications.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -754,8 +829,22 @@ export const MobileCatalog = ({
 
               {canViewFilter('bottleType') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: '#475569' }}>Tipo Bottiglia</label>
-                  <select value={filters.bottleType || ''} onChange={e => setFilters({ ...filters, bottleType: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white' }}>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem', color: filters.bottleType ? '#047857' : '#475569', fontWeight: filters.bottleType ? 'bold' : 'normal' }}>
+                    {filters.bottleType ? '🟢 ' : ''}Tipo Bottiglia
+                  </label>
+                  <select
+                    value={filters.bottleType || ''}
+                    onChange={e => setFilters({ ...filters, bottleType: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
+                      border: filters.bottleType ? '2px solid #10b981' : '1px solid #cbd5e1',
+                      backgroundColor: filters.bottleType ? '#ecfdf5' : 'white',
+                      color: filters.bottleType ? '#047857' : 'inherit',
+                      fontWeight: filters.bottleType ? 'bold' : 'normal'
+                    }}
+                  >
                     <option value="">Tutte</option>
                     {uniqueBottleTypes.map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
@@ -764,8 +853,8 @@ export const MobileCatalog = ({
 
               {canViewFilter('photo') && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: '#334155' }}>
-                    Foto
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: filters.photo ? '#047857' : '#334155' }}>
+                    {filters.photo ? '🟢 ' : ''}Foto
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {[
@@ -782,9 +871,9 @@ export const MobileCatalog = ({
                           style={{
                             padding: '0.45rem 0.85rem',
                             borderRadius: '20px',
-                            border: isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1',
-                            backgroundColor: isSelected ? '#eeeffe' : '#f8fafc',
-                            color: isSelected ? '#4338ca' : '#475569',
+                            border: isSelected && opt.value ? '2px solid #10b981' : (isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1'),
+                            backgroundColor: isSelected && opt.value ? '#ecfdf5' : (isSelected ? '#eeeffe' : '#f8fafc'),
+                            color: isSelected && opt.value ? '#047857' : (isSelected ? '#4338ca' : '#475569'),
                             fontWeight: isSelected ? 'bold' : 'normal',
                             fontSize: '0.85rem',
                             cursor: 'pointer',
