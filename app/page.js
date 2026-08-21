@@ -1026,9 +1026,9 @@ export default function Home() {
                     style={{
                       flex: 1,
                       padding: '0.625rem',
-                      border: '1px solid #c7d2fe',
-                      background: '#e0e7ff',
-                      color: '#4338ca',
+                      border: '1px solid var(--border-color)',
+                      background: 'white',
+                      color: 'var(--primary-color)',
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',

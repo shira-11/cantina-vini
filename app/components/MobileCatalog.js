@@ -398,16 +398,15 @@ export const MobileCatalog = ({
             title="Scansiona QR Code da Fotocamera"
             style={{
               marginLeft: '0.4rem',
-              background: '#4f46e5',
-              color: 'white',
-              border: 'none',
+              background: 'white',
+              color: '#4f46e5',
+              border: '1px solid #cbd5e1',
               borderRadius: '10px',
               padding: '0.75rem 0.85rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(79, 70, 229, 0.3)',
               flexShrink: 0
             }}
           >
