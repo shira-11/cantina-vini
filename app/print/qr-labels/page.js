@@ -8,6 +8,8 @@ import { ArrowLeft, Printer, QrCode, Filter, Search, ChevronLeft, ChevronRight, 
 import QRCode from 'qrcode';
 import { getCountryFlag } from '../../utils/wineHelpers';
 
+import WineBottleLoader from '@/components/WineBottleLoader';
+
 export default function PrintQRLabelsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -224,14 +226,7 @@ export default function PrintQRLabelsPage() {
   };
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f8fafc' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner" style={{ width: '2.5rem', height: '2.5rem', borderWidth: '3px', borderColor: '#e2e8f0', borderBottomColor: '#6366f1', borderRadius: '50%', animation: 'rotation 1s linear infinite', margin: '0 auto 1rem auto' }}></div>
-          <p style={{ color: '#64748b', fontWeight: '500' }}>Caricamento etichette QR Code...</p>
-        </div>
-      </div>
-    );
+    return <WineBottleLoader message="Caricamento Etichette QR Code..." />;
   }
 
   // Se non ci sono vini selezionati con il tik e l'utente non ha richiesto esplicitamente di caricare tutti i vini

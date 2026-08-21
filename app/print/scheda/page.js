@@ -3,9 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wine, ArrowLeft } from 'lucide-react';
+import WineBottleLoader from '@/components/WineBottleLoader';
 
 export default function PrintScheda() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [sections, setSections] = useState([]);
   const [locations, setLocations] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
@@ -128,6 +130,9 @@ export default function PrintScheda() {
           .catch(err => {
             console.error("Errore nel caricamento dati stampa:", err);
             alert("Errore nel caricamento dei dati per la stampa.");
+          })
+          .finally(() => {
+            setLoading(false);
           });
     }
   }, []);
@@ -259,8 +264,32 @@ export default function PrintScheda() {
     };
   };
 
+  if (loading) {
+    return <WineBottleLoader message="Caricamento Scheda Vino e Impaginazione..." />;
+  }
+
   if (sections.length === 0 || sections.every(s => s.groups.length === 0)) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Nessun dato da stampare. Torna alla home e riprova.</div>;
+    return (
+      <div style={{ padding: '3rem', textAlign: 'center', fontFamily: 'system-ui' }}>
+        <h2 style={{ color: '#1e293b' }}>Nessun dato da stampare</h2>
+        <p style={{ color: '#64748b' }}>Non sono stati trovati vini per i filtri o la selezione richiesta.</p>
+        <button
+          onClick={() => router.push('/')}
+          style={{
+            marginTop: '1rem',
+            padding: '0.65rem 1.4rem',
+            borderRadius: '8px',
+            background: '#4f46e5',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          ← Torna alla Home
+        </button>
+      </div>
+    );
   }
 
   const today = new Date().toLocaleDateString('it-IT');

@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Wine } from 'lucide-react';
 
+import WineBottleLoader from '@/components/WineBottleLoader';
+
 export default function PrintGiacenzeDettaglio() {
   const router = useRouter();
   const [wines, setWines] = useState([]);
@@ -61,7 +63,7 @@ export default function PrintGiacenzeDettaglio() {
     }
   }, []);
 
-  if (loading) return <div style={{ padding: '2rem' }}>Caricamento...</div>;
+  if (loading) return <WineBottleLoader message="Caricamento Giacenze Dettagliate..." />;
 
   const today = new Date().toLocaleDateString('it-IT');
 

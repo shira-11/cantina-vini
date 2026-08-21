@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Wine, Printer } from 'lucide-react';
 
+import WineBottleLoader from '@/components/WineBottleLoader';
+
 export default function PrintInventarioPage() {
   const router = useRouter();
   const [session, setSession] = useState(null);
@@ -33,7 +35,7 @@ export default function PrintInventarioPage() {
     }
   }, []);
 
-  if (loading) return <div style={{ padding: '2rem' }}>Caricamento foglio inventario...</div>;
+  if (loading) return <WineBottleLoader message="Caricamento Foglio Inventario..." />;
   if (!session) return <div style={{ padding: '2rem' }}>Nessuna sessione di inventario selezionata.</div>;
 
   const today = new Date(session.createdAt).toLocaleDateString('it-IT');
