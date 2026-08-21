@@ -148,13 +148,27 @@ export const MobileCatalog = ({
     recognition.start();
   };
 
+  const filteredMobileWines = wines.filter(w => {
+    if (!search || !search.trim()) return true;
+    const q = search.toLowerCase().trim();
+    const idMatch = String(w.id) === q;
+    const nameMatch = w.name?.toLowerCase().includes(q);
+    const producerMatch = (w.producerCellar || w.producer || '')?.toLowerCase().includes(q);
+    const vintageMatch = String(w.vintage || '').toLowerCase().includes(q);
+    const categoryMatch = w.category?.toLowerCase().includes(q);
+    const countryMatch = w.country?.toLowerCase().includes(q);
+    const regionMatch = w.region?.toLowerCase().includes(q);
+    const classificationMatch = w.classification?.toLowerCase().includes(q);
+    return idMatch || nameMatch || producerMatch || vintageMatch || categoryMatch || countryMatch || regionMatch || classificationMatch;
+  });
+
   // Reset visible count when wines list changes (e.g., due to filters/search)
   React.useEffect(() => {
     // eslint-disable-next-line
     setVisibleCount(20);
-  }, [wines]);
+  }, [wines, search]);
 
-  const visibleWines = wines.slice(0, visibleCount);
+  const visibleWines = filteredMobileWines.slice(0, visibleCount);
 
   // Prevent background scrolling when filters modal is open
   React.useEffect(() => {

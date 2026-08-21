@@ -510,7 +510,8 @@ export default function Home() {
 
   useEffect(() => {
     fetchWinesRef.current = fetchWines;
-  }, [search, showArchive, wines.length]);
+    fetchWines();
+  }, [search, showArchive]);
 
   const canViewFilter = (filterId) => {
     if (!currentUser || currentUser.role !== 'viewer') return true;
@@ -539,6 +540,22 @@ export default function Home() {
     }
     return { ...w, displayStock };
   }).filter(w => {
+    // Filtro per testo di ricerca o ID vino da QR code
+    if (search && search.trim()) {
+      const q = search.toLowerCase().trim();
+      const idMatch = String(w.id) === q;
+      const nameMatch = w.name?.toLowerCase().includes(q);
+      const producerMatch = (w.producerCellar || w.producer || '')?.toLowerCase().includes(q);
+      const vintageMatch = String(w.vintage || '').toLowerCase().includes(q);
+      const categoryMatch = w.category?.toLowerCase().includes(q);
+      const countryMatch = w.country?.toLowerCase().includes(q);
+      const regionMatch = w.region?.toLowerCase().includes(q);
+      const classificationMatch = w.classification?.toLowerCase().includes(q);
+      if (!idMatch && !nameMatch && !producerMatch && !vintageMatch && !categoryMatch && !countryMatch && !regionMatch && !classificationMatch) {
+        return false;
+      }
+    }
+
     if (canViewFilter('country') && filters.country && w.country !== filters.country) return false;
     if (canViewFilter('region') && filters.region && w.region !== filters.region) return false;
     if (canViewFilter('producerCellar') && filters.producerCellar && w.producerCellar !== filters.producerCellar) return false;
