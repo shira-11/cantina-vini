@@ -1506,31 +1506,7 @@ export default function WineDetail({ params }) {
                         {metadata.vintages.map(v => <option key={v} value={v} />)}
                       </datalist>
                     </div>
-                    <div className="form-grid">
-                      <label>Formato Bottiglia</label>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <input
-                          type="text"
-                          list="bottleType-list"
-                          placeholder="Es. Normale 0.75"
-                          value={wine.bottleType || ''}
-                          onChange={e => setWine({ ...wine, bottleType: e.target.value })}
-                          style={{ flex: 1 }}
-                        />
-                        <button
-                          type="button"
-                          className="btn"
-                          title="Gestisci Formato Bottiglia"
-                          onClick={(e) => { e.preventDefault(); openListModal('bottleType', 'Formato Bottiglia', metadata.bottleTypes); }}
-                          style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}
-                        >
-                          ✏️
-                        </button>
-                      </div>
-                      <datalist id="bottleType-list">
-                        {(metadata.bottleTypes || []).map(bt => <option key={bt} value={bt} />)}
-                      </datalist>
-                    </div>
+
                     <div className="form-grid">
                       <label>Nazione</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -1685,9 +1661,16 @@ export default function WineDetail({ params }) {
                         <div className="form-grid">
                           <label>Tipo Bottiglia</label>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <input type="text" list="bottle-list-initial" placeholder="Es. Normale 0.75" value={wine._initialBottleType || ''} onChange={e => setWine({ ...wine, _initialBottleType: e.target.value })} style={{ flex: 1 }} />
+                            <input
+                              type="text"
+                              list="bottle-list-initial"
+                              placeholder="Es. Normale 0.75"
+                              value={wine.bottleType || wine._initialBottleType || ''}
+                              onChange={e => setWine({ ...wine, bottleType: e.target.value, _initialBottleType: e.target.value })}
+                              style={{ flex: 1 }}
+                            />
                             {currentUser?.role !== 'viewer' && (
-                              <button type="button" className="btn" title="Gestisci Tipo Bottiglia" onClick={(e) => { e.preventDefault(); openListModal('_initialBottleType', 'Tipo Bottiglia', metadata.bottleTypes); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
+                              <button type="button" className="btn" title="Gestisci Tipo Bottiglia" onClick={(e) => { e.preventDefault(); openListModal('bottleType', 'Tipo Bottiglia', metadata.bottleTypes); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
                             )}
                           </div>
                           <datalist id="bottle-list-initial">
