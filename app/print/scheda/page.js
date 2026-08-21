@@ -1006,6 +1006,38 @@ export default function PrintScheda() {
                               </tr>
                             </thead>
                             <tbody>
+                              {isFirst && (() => {
+                                const groupTotDisp = group.wines.reduce((acc, w) => acc + (w.totalStock || 0), 0);
+                                return (
+                                  <tr style={{ background: '#f8fafc', fontWeight: 'bold', borderBottom: '2px solid #94a3b8' }}>
+                                    <td colSpan="4" style={{ textAlign: 'right', paddingRight: '0.5rem', fontStyle: 'italic', color: '#334155' }}>Totali:</td>
+                                    <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                                      {groupTotDisp > 0 ? groupTotDisp : 0}
+                                    </td>
+                                    {locationsToRender.map(loc => {
+                                      let dispSum = 0;
+                                      let usatoSum = 0;
+                                      group.wines.forEach(w => {
+                                        const stats = calculateLocationStats(w, loc);
+                                        dispSum += (stats.disp || 0);
+                                        usatoSum += (stats.usato || 0);
+                                      });
+                                      return (
+                                        <React.Fragment key={loc + '-group-totals'}>
+                                          <td style={{ fontWeight: 'bold', ...(showOnlyDisp ? { borderRight: '2px solid #ccc' } : {}) }}>
+                                            {dispSum > 0 ? dispSum : ''}
+                                          </td>
+                                          {!showOnlyDisp && (
+                                            <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold' }}>
+                                              {usatoSum > 0 ? usatoSum : ''}
+                                            </td>
+                                          )}
+                                        </React.Fragment>
+                                      );
+                                    })}
+                                  </tr>
+                                );
+                              })()}
                               {chunk.map((wine) => {
                                 let displayFormat = wine.bottleType || '';
                                 const btLower = displayFormat.toLowerCase();
