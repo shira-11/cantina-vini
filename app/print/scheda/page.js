@@ -1009,7 +1009,7 @@ export default function PrintScheda() {
                               {isFirst && (() => {
                                 const groupTotDisp = group.wines.reduce((acc, w) => acc + (w.totalStock || 0), 0);
                                 return (
-                                  <tr style={{ background: '#f8fafc', fontWeight: 'bold', borderBottom: '2px solid #94a3b8' }}>
+                                  <tr style={{ background: 'white', fontWeight: 'bold', borderBottom: '1px solid #ccc' }}>
                                     <td colSpan="4" style={{ textAlign: 'right', paddingRight: '0.5rem', fontStyle: 'italic', color: '#334155' }}>Totali:</td>
                                     <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold', fontSize: '0.95rem' }}>
                                       {groupTotDisp > 0 ? groupTotDisp : 0}
