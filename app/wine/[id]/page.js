@@ -1829,8 +1829,24 @@ export default function WineDetail({ params }) {
                     </div>
 
                     <div className="form-grid" style={{ alignItems: 'flex-start' }}>
-                      <label>Nota</label>
-                      <textarea rows={4} value={wine.notes || ''} onChange={e => setWine({ ...wine, notes: e.target.value })} />
+                      <label>Note</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Inserisci eventuali note o dettagli sul vino..."
+                        value={wine.notes || ''}
+                        onInput={(e) => {
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${Math.max(e.target.scrollHeight, 72)}px`;
+                        }}
+                        onChange={e => setWine({ ...wine, notes: e.target.value })}
+                        style={{
+                          minHeight: '72px',
+                          overflowY: 'hidden',
+                          resize: 'vertical',
+                          width: '100%',
+                          boxSizing: 'border-box'
+                        }}
+                      />
                     </div>
                   </div>
                 )}
