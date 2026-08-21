@@ -44,10 +44,15 @@ export async function GET(request) {
       }).catch(() => {});
     }
 
-    const sessions = await prisma.userSession.findMany({
+    // Pulizia automatica in background: elimina definitivamente le sessioni più vecchie di 6 mesi (180 giorni)
+    const sixMonthsAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
+    await prisma.userSession.deleteMany({
       where: {
-        isArchived: false
-      },
+        loginTime: { lt: sixMonthsAgo }
+      }
+    }).catch(() => {});
+
+    const sessions = await prisma.userSession.findMany({
       orderBy: { id: 'desc' },
       take: 200,
       include: {
@@ -73,18 +78,15 @@ export async function DELETE(request) {
   }
 
   try {
-    // Non cancelliamo definitivamente dal DB! Archiviamo solo lo storico concluso per pulire la vista
-    await prisma.userSession.updateMany({
+    // Svuotamento manuale: elimina definitivamente lo storico delle sessioni già concluse
+    await prisma.userSession.deleteMany({
       where: {
         logoutTime: { not: null }
-      },
-      data: {
-        isArchived: true
       }
     });
-    return NextResponse.json({ success: true, message: 'Vista storico concluso ripulita con successo.' });
+    return NextResponse.json({ success: true, message: 'Storico delle sessioni concluse eliminato definitivamente.' });
   } catch (error) {
-    console.error('Error archiving sessions:', error);
-    return NextResponse.json({ error: 'Errore nel ripulire lo storico delle sessioni' }, { status: 500 });
+    console.error('Error deleting sessions:', error);
+    return NextResponse.json({ error: 'Errore nella cancellazione dello storico sessioni' }, { status: 500 });
   }
 }

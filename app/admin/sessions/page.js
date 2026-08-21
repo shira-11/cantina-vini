@@ -56,7 +56,7 @@ export default function AdminSessionsPage() {
   }, [autoRefreshEnabled, refreshInterval]);
 
   const handleClearHistory = async () => {
-    if (!confirm("Vuoi nascondere lo storico delle sessioni già concluse dalla vista? (I dati storici rimarranno comunque salvati al sicuro in archivio)")) return;
+    if (!confirm("Sei sicuro di voler eliminare definitivamente lo storico delle sessioni già concluse dal database?")) return;
     try {
       const res = await fetch('/api/admin/sessions', { method: 'DELETE' });
       if (res.ok) {
@@ -244,7 +244,7 @@ export default function AdminSessionsPage() {
             onClick={handleClearHistory}
             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#fff1f2', border: '1px solid #fecdd3', color: '#e11d48', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}
           >
-            <Trash2 size={16} /> Pulisci Vista Storico
+            <Trash2 size={16} /> Svuota Storico Concluso
           </button>
         </div>
       </div>
