@@ -463,9 +463,6 @@ export default function PrintScheda() {
         }
         .info-container {
           flex: 1;
-          min-width: 0;
-          max-width: 100%;
-          box-sizing: border-box;
         }
         .wine-title {
           font-size: 24px;
@@ -483,13 +480,10 @@ export default function PrintScheda() {
         }
         .inventory-table {
           width: 100%;
-          max-width: 100%;
-          table-layout: fixed;
           border-collapse: collapse;
           margin-top: 1rem;
-          font-size: 10.5px;
+          font-size: 12px;
           page-break-inside: auto;
-          box-sizing: border-box;
         }
         .inventory-table tr {
           page-break-inside: avoid;
@@ -502,18 +496,14 @@ export default function PrintScheda() {
           display: table-footer-group;
         }
         .inventory-table th, .inventory-table td {
-          border: 1px solid #cbd5e1;
-          padding: 4px 2px;
+          border: 1px solid #ddd;
+          padding: 6px 4px;
           text-align: center;
           vertical-align: middle;
-          word-break: break-word;
-          overflow-wrap: break-word;
-          overflow: hidden;
         }
         .inventory-table th {
-          background-color: #f8fafc;
+          background-color: #f9fafb;
           font-weight: bold;
-          font-size: 10px;
         }
         .print-page-footer {
           position: absolute;
@@ -1018,145 +1008,111 @@ export default function PrintScheda() {
                         });
                       });
 
-                      const maxLocsPerBlock = showOnlyDisp
-                        ? (isLandscape ? 12 : 7)
-                        : (isLandscape ? 7 : 4);
-
-                      const locationBlocks = [];
-                      if (locationsToRender.length === 0) {
-                        locationBlocks.push([]);
-                      } else {
-                        for (let i = 0; i < locationsToRender.length; i += maxLocsPerBlock) {
-                          locationBlocks.push(locationsToRender.slice(i, i + maxLocsPerBlock));
-                        }
-                      }
-
                       return (
                         <div className="info-container" style={{ width: '100%' }}>
-                          {locationBlocks.map((locBlock, blockIdx) => {
-                            const colsPerLoc = showOnlyDisp ? 1 : 2;
-                            const totalLocCols = Math.max(1, locBlock.length * colsPerLoc);
-                            const locColWidth = (48 / totalLocCols).toFixed(2) + '%';
-                            const locHeaderWidth = (48 / Math.max(1, locBlock.length)).toFixed(2) + '%';
-                            const dynamicFontSize = totalLocCols > 10 ? '9px' : (totalLocCols > 6 ? '10px' : '11px');
-
-                            return (
-                              <table
-                                key={blockIdx}
-                                className="inventory-table"
-                                style={{
-                                  tableLayout: 'fixed',
-                                  width: '100%',
-                                  maxWidth: '100%',
-                                  boxSizing: 'border-box',
-                                  fontSize: dynamicFontSize,
-                                  marginBottom: blockIdx < locationBlocks.length - 1 ? '12px' : '0'
-                                }}
-                              >
-                                <thead>
-                                  <tr>
-                                    <th colSpan="5" style={{ textAlign: 'left', borderRight: '2px solid #ccc', width: '52%' }}>Vino / Annate</th>
-                                    {locBlock.map(loc => (
-                                      <th colSpan={colsPerLoc} key={loc} style={{ borderRight: '2px solid #ccc', width: locHeaderWidth }}>
-                                        {loc.replace(/cantina\s*/i, '').trim()}
-                                      </th>
-                                    ))}
+                          <table className="inventory-table">
+                            <thead>
+                              <tr>
+                                <th colSpan="5" style={{ textAlign: 'left', borderRight: '2px solid #ccc' }}>Vino / Annate</th>
+                                {locationsToRender.map(loc => (
+                                  <th colSpan={showOnlyDisp ? 1 : 2} key={loc} style={{ borderRight: '2px solid #ccc' }}>
+                                    {loc.replace(/cantina\s*/i, '').trim()}
+                                  </th>
+                                ))}
+                              </tr>
+                              <tr>
+                                <th>Annata</th>
+                                <th>Nazione</th>
+                                <th>Formato</th>
+                                <th>Prezzo</th>
+                                <th style={{ borderRight: '2px solid #ccc' }}>Disp.Tot</th>
+                                {locationsToRender.map(loc => (
+                                  <React.Fragment key={loc + '-sub'}>
+                                    <th style={showOnlyDisp ? { borderRight: '2px solid #ccc' } : {}}>Disp.</th>
+                                    {!showOnlyDisp && <th style={{ borderRight: '2px solid #ccc' }}>Usato</th>}
+                                  </React.Fragment>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {isFirst && (() => {
+                                const groupTotDisp = group.wines.reduce((acc, w) => acc + (w.totalStock || 0), 0);
+                                return (
+                                  <tr style={{ background: 'white', fontWeight: 'bold', borderBottom: '1px solid #ccc' }}>
+                                    <td colSpan="4" style={{ textAlign: 'right', paddingRight: '0.5rem', fontStyle: 'italic', color: '#334155' }}>Totali:</td>
+                                    <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                                      {groupTotDisp > 0 ? groupTotDisp : 0}
+                                    </td>
+                                    {locationsToRender.map(loc => {
+                                      let dispSum = 0;
+                                      let usatoSum = 0;
+                                      group.wines.forEach(w => {
+                                        const stats = calculateLocationStats(w, loc);
+                                        dispSum += (stats.disp || 0);
+                                        usatoSum += (stats.usato || 0);
+                                      });
+                                      return (
+                                        <React.Fragment key={loc + '-group-totals'}>
+                                          <td style={{ fontWeight: 'bold', ...(showOnlyDisp ? { borderRight: '2px solid #ccc' } : {}) }}>
+                                            {dispSum > 0 ? dispSum : ''}
+                                          </td>
+                                          {!showOnlyDisp && (
+                                            <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold' }}>
+                                              {usatoSum > 0 ? usatoSum : ''}
+                                            </td>
+                                          )}
+                                        </React.Fragment>
+                                      );
+                                    })}
                                   </tr>
-                                  <tr>
-                                    <th style={{ width: '8%' }}>Annata</th>
-                                    <th style={{ width: '14%' }}>Nazione</th>
-                                    <th style={{ width: '10%' }}>Formato</th>
-                                    <th style={{ width: '12%' }}>Prezzo</th>
-                                    <th style={{ width: '8%', borderRight: '2px solid #ccc' }}>Disp.Tot</th>
-                                    {locBlock.map(loc => (
-                                      <React.Fragment key={loc + '-sub'}>
-                                        <th style={{ width: locColWidth, ...(showOnlyDisp ? { borderRight: '2px solid #ccc' } : {}) }}>Disp.</th>
-                                        {!showOnlyDisp && <th style={{ width: locColWidth, borderRight: '2px solid #ccc' }}>Usato</th>}
-                                      </React.Fragment>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {isFirst && (() => {
-                                    const groupTotDisp = group.wines.reduce((acc, w) => acc + (w.totalStock || 0), 0);
-                                    return (
-                                      <tr style={{ background: 'white', fontWeight: 'bold', borderBottom: '1px solid #ccc' }}>
-                                        <td colSpan="4" style={{ textAlign: 'right', paddingRight: '0.5rem', fontStyle: 'italic', color: '#334155' }}>Totali:</td>
-                                        <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold', fontSize: '0.95rem' }}>
-                                          {groupTotDisp > 0 ? groupTotDisp : 0}
-                                        </td>
-                                        {locBlock.map(loc => {
-                                          let dispSum = 0;
-                                          let usatoSum = 0;
-                                          group.wines.forEach(w => {
-                                            const stats = calculateLocationStats(w, loc);
-                                            dispSum += (stats.disp || 0);
-                                            usatoSum += (stats.usato || 0);
-                                          });
-                                          return (
-                                            <React.Fragment key={loc + '-group-totals'}>
-                                              <td style={{ fontWeight: 'bold', ...(showOnlyDisp ? { borderRight: '2px solid #ccc' } : {}) }}>
-                                                {dispSum > 0 ? dispSum : ''}
-                                              </td>
-                                              {!showOnlyDisp && (
-                                                <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold' }}>
-                                                  {usatoSum > 0 ? usatoSum : ''}
-                                                </td>
-                                              )}
-                                            </React.Fragment>
-                                          );
-                                        })}
-                                      </tr>
-                                    );
-                                  })()}
-                                  {chunk.map((wine) => {
-                                    let displayFormat = wine.bottleType || '';
-                                    const btLower = displayFormat.toLowerCase();
-                                    if (btLower.includes('0.75') || btLower.includes('0,75') || btLower.includes('normale')) {
-                                      displayFormat = '';
-                                    } else {
-                                      const match = displayFormat.match(/(\d+(?:[.,]\d+)?\s*[Ll])/);
-                                      if (match) {
-                                        displayFormat = match[1].toUpperCase();
+                                );
+                              })()}
+                              {chunk.map((wine) => {
+                                let displayFormat = wine.bottleType || '';
+                                const btLower = displayFormat.toLowerCase();
+                                if (btLower.includes('0.75') || btLower.includes('0,75') || btLower.includes('normale')) {
+                                  displayFormat = '';
+                                } else {
+                                  const match = displayFormat.match(/(\d+(?:[.,]\d+)?\s*[Ll])/);
+                                  if (match) {
+                                    displayFormat = match[1].toUpperCase();
+                                  }
+                                }
+                                return (
+                                <tr key={wine.id}>
+                                  <td>{wine.vintage}</td>
+                                  <td>{getCountryFlag(wine.country)} {wine.country || '-'}</td>
+                                  <td style={{ fontWeight: 'bold' }}>{displayFormat}</td>
+                                  <td>{formatCurrency((() => {
+                                    if (!wine.movements || wine.movements.length === 0) return null;
+                                    const ingressi = wine.movements.filter(m => m.movementType === 'Ingresso' && m.price != null && m.price > 0 && m.quantity > 0);
+                                    if (ingressi.length > 0) {
+                                      let totalCost = 0;
+                                      let totalQty = 0;
+                                      for (const m of ingressi) {
+                                        totalCost += m.price * m.quantity;
+                                        totalQty += m.quantity;
                                       }
+                                      return totalCost / totalQty;
                                     }
+                                    const movementsWithPrice = [...wine.movements].filter(m => m.price != null).sort((a, b) => new Date(b.date) - new Date(a.date));
+                                    return movementsWithPrice.length > 0 ? movementsWithPrice[0].price : null;
+                                  })())}</td>
+                                  <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold' }}>{wine.totalStock || 0}</td>
+                                  {locationsToRender.map(loc => {
+                                    const stats = calculateLocationStats(wine, loc);
                                     return (
-                                      <tr key={wine.id}>
-                                        <td>{wine.vintage}</td>
-                                        <td>{getCountryFlag(wine.country)} {wine.country || '-'}</td>
-                                        <td style={{ fontWeight: 'bold' }}>{displayFormat}</td>
-                                        <td>{formatCurrency((() => {
-                                          if (!wine.movements || wine.movements.length === 0) return null;
-                                          const ingressi = wine.movements.filter(m => m.movementType === 'Ingresso' && m.price != null && m.price > 0 && m.quantity > 0);
-                                          if (ingressi.length > 0) {
-                                            let totalCost = 0;
-                                            let totalQty = 0;
-                                            for (const m of ingressi) {
-                                              totalCost += m.price * m.quantity;
-                                              totalQty += m.quantity;
-                                            }
-                                            return totalCost / totalQty;
-                                          }
-                                          const movementsWithPrice = [...wine.movements].filter(m => m.price != null).sort((a, b) => new Date(b.date) - new Date(a.date));
-                                          return movementsWithPrice.length > 0 ? movementsWithPrice[0].price : null;
-                                        })())}</td>
-                                        <td style={{ borderRight: '2px solid #ccc', fontWeight: 'bold' }}>{wine.totalStock || 0}</td>
-                                        {locBlock.map(loc => {
-                                          const stats = calculateLocationStats(wine, loc);
-                                          return (
-                                            <React.Fragment key={loc + '-data'}>
-                                              <td style={showOnlyDisp ? { borderRight: '2px solid #ccc' } : {}}>{stats.disp > 0 ? stats.disp : ''}</td>
-                                              {!showOnlyDisp && <td style={{ borderRight: '2px solid #ccc' }}>{stats.usato > 0 ? stats.usato : ''}</td>}
-                                            </React.Fragment>
-                                          );
-                                        })}
-                                      </tr>
+                                      <React.Fragment key={loc + '-data'}>
+                                        <td style={showOnlyDisp ? { borderRight: '2px solid #ccc' } : {}}>{stats.disp > 0 ? stats.disp : ''}</td>
+                                        {!showOnlyDisp && <td style={{ borderRight: '2px solid #ccc' }}>{stats.usato > 0 ? stats.usato : ''}</td>}
+                                      </React.Fragment>
                                     );
                                   })}
-                                </tbody>
-                              </table>
-                            );
-                          })}
+                                </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
                         </div>
                       );
                     })()}

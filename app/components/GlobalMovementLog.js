@@ -29,6 +29,34 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
     }
   };
 
+  const handleClearLog = async () => {
+    const userPin = prompt("🔑 INSERISCI IL PIN DI SICUREZZA PER SVUOTARE IL REGISTRO:\n\nInserisci il PIN per confermare l'eliminazione dell'intero storico del registro:");
+    if (!userPin) return;
+
+    if (!confirm("⚠️ SEI SICURO DI VOLER SVUOTARE L'INTERO REGISTRO MOVIMENTI?\n\nTutti gli eventi registrati nello storico verranno eliminati definitivamente.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/movements/global', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: userPin })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("✅ " + (data.message || "Registro movimenti svuotato con successo!"));
+        fetchMovements();
+      } else {
+        alert("❌ " + (data.error || "Errore durante lo svuotamento"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Errore durante l'operazione di svuotamento.");
+    }
+  };
+
   if (!isOpen) return null;
 
   // Classifica i tipi di movimento
@@ -76,8 +104,8 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
             <button className="btn btn-close" onClick={onClose} style={{ color: 'white', background: 'rgba(255,255,255,0.1)', borderRadius: '50%', padding: '0.5rem' }}><X size={20} /></button>
           </div>
 
-          {/* Sezione Filtri Tab (Tutti, Carichi/Scarichi, Sezione Modifiche) */}
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {/* Sezione Filtri Tab & Tasto Svuota con PIN */}
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <button
               onClick={() => setActiveTab('all')}
               style={{
@@ -114,6 +142,29 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
             >
               <Edit3 size={15} /> Sezione Modifiche & Eliminazioni
             </button>
+
+            {/* Tasto Svuota Registro con PIN */}
+            <button
+              onClick={handleClearLog}
+              title="Svuota l'intero registro attività inserendo il PIN di sicurezza"
+              style={{
+                marginLeft: 'auto',
+                padding: '0.45rem 0.85rem',
+                borderRadius: '8px',
+                border: '1px solid #fca5a5',
+                backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                color: '#f87171',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '0.825rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Trash2 size={14} /> Svuota Registro
+            </button>
           </div>
 
           {/* Campo di Ricerca Interno */}
@@ -121,7 +172,7 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input
               type="text"
-              placeholder="Filtra per vino, utente, cantina o nota..."
+              placeholder="Filtra per vino, utente (es. Shirantha), cantina o nota..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{

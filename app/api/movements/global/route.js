@@ -45,3 +45,35 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Failed to fetch global movements' }, { status: 500 });
   }
 }
+
+export async function DELETE(request) {
+  try {
+    const role = request.headers.get('x-user-role');
+    if (role === 'viewer') {
+      return NextResponse.json({ error: "Forbidden: Viewer cannot perform this action" }, { status: 403 });
+    }
+    const currentUser = request.headers.get('x-user-username');
+    const { pin } = await request.json();
+
+    // Verification of Deletion PIN from SystemSettings
+    const pinSetting = await prisma.systemSettings.findFirst({
+      where: { key: 'deletion_pin' }
+    });
+    const expectedPin = pinSetting?.value || '1234';
+
+    if (String(pin || '').trim() !== String(expectedPin).trim()) {
+      return NextResponse.json({ error: "PIN di sicurezza errato. Operazione annullata." }, { status: 401 });
+    }
+
+    // Eliminazione di tutti i movimenti registrati nello storico
+    await prisma.movement.deleteMany({});
+
+    const { syncEventEmitter } = await import('@/lib/eventEmitter');
+    syncEventEmitter.emit('db_update');
+
+    return NextResponse.json({ success: true, message: 'Registro movimenti svuotato con successo.' });
+  } catch (error) {
+    console.error('Error clearing global movements:', error);
+    return NextResponse.json({ error: 'Errore durante lo svuotamento del registro' }, { status: 500 });
+  }
+}
