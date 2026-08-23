@@ -11,7 +11,9 @@ export async function DELETE(request, { params }) {
     const { id } = await params;
     const movementId = parseInt(id);
 
-    // Trova il movimento per vedere se ha un Ingresso associato
+    const currentUser = request.headers.get('x-user-username');
+
+    // Trova il movimento per vedere se ha un Ingresso associato ed effettuare il tracciamento
     const movement = await prisma.movement.findUnique({ where: { id: movementId } });
     if (movement && movement.movementType === 'Uscita') {
        const pairedMovements = await prisma.movement.findMany({
@@ -38,6 +40,22 @@ export async function DELETE(request, { params }) {
        }
     }
 
+    // Registra evento nel log storico prima di eliminare il movimento principale
+    if (movement && !movement.movementType.includes('Eliminazione')) {
+      await prisma.movement.create({
+        data: {
+          date: new Date(),
+          movementType: 'Eliminazione Movimento',
+          quantity: 0,
+          reason: `Eliminato movimento di ${movement.movementType}`,
+          locationId: movement.locationId,
+          wineId: movement.wineId,
+          notes: `Movimento (${movement.movementType}: ${movement.quantity > 0 ? movement.quantity + ' bt' : '0 bt'}, ${movement.reason || ''}) eliminato`,
+          user: currentUser || null
+        }
+      });
+    }
+
     await prisma.movement.delete({
       where: { id: movementId }
     });
@@ -59,7 +77,23 @@ export async function PUT(request, { params }) {
     const movementId = parseInt(id);
     const body = await request.json();
     
+    const currentUser = request.headers.get('x-user-username');
     const oldMovement = await prisma.movement.findUnique({ where: { id: movementId } });
+
+    if (oldMovement && !oldMovement.movementType.includes('Modifica Movimento')) {
+      await prisma.movement.create({
+        data: {
+          date: new Date(),
+          movementType: 'Modifica Movimento',
+          quantity: 0,
+          reason: `Modificato movimento di ${oldMovement.movementType}`,
+          locationId: parseInt(body.locationId) || oldMovement.locationId,
+          wineId: oldMovement.wineId,
+          notes: `Movimento (${oldMovement.movementType}) aggiornato: Qta ${oldMovement.quantity} ➔ ${body.quantity}`,
+          user: currentUser || null
+        }
+      });
+    }
 
     const updatedMovement = await prisma.movement.update({
       where: { id: movementId },
