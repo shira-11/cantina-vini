@@ -49,6 +49,7 @@ export default function WineDetail({ params }) {
   const [savingProgress, setSavingProgress] = useState(null);
   const [fullscreenImages, setFullscreenImages] = useState([]);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
+  const [fullscreenZoom, setFullscreenZoom] = useState(1);
   const [showMovementsModal, setShowMovementsModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [confirmDialog, setConfirmDialog] = useState(null);
@@ -787,32 +788,93 @@ export default function WineDetail({ params }) {
       />
       {fullscreenImages && fullscreenImages.length > 0 && (
         <div
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out', touchAction: 'none' }}
-          onClick={() => setFullscreenImages([])}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 9999,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            overflow: 'auto', touchAction: 'pan-x pan-y pinch-zoom'
+          }}
+          onClick={() => { setFullscreenImages([]); setFullscreenZoom(1); }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'white', color: 'black', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
-            &times;
+          {/* Header con Tasto Chiusura e Controlli Zoom (+ / - / Reset) */}
+          <div
+            style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.6rem', zIndex: 10002 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setFullscreenZoom(prev => Math.min(prev + 0.5, 4))}
+              style={{ background: 'white', color: 'black', border: 'none', borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 8px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Ingrandisci / Zooma (+)"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => setFullscreenZoom(prev => Math.max(prev - 0.5, 1))}
+              style={{ background: 'white', color: 'black', border: 'none', borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 8px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Riduci / Zooma (-)"
+            >
+              −
+            </button>
+            {fullscreenZoom > 1 && (
+              <button
+                type="button"
+                onClick={() => setFullscreenZoom(1)}
+                style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '20px', padding: '0 0.8rem', height: '42px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 8px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title="Ripristina dimensione originale"
+              >
+                Reset
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => { setFullscreenImages([]); setFullscreenZoom(1); }}
+              style={{ background: 'white', color: 'black', border: 'none', borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 8px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Chiudi"
+            >
+              &times;
+            </button>
           </div>
 
           {fullscreenImages.length > 1 && (
             <div
-              style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'white', color: 'black', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer', zIndex: 10001 }}
-              onClick={(e) => { e.stopPropagation(); setFullscreenIndex((prev) => (prev > 0 ? prev - 1 : fullscreenImages.length - 1)); }}
+              style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'white', color: 'black', borderRadius: '50%', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer', zIndex: 10001 }}
+              onClick={(e) => { e.stopPropagation(); setFullscreenIndex((prev) => (prev > 0 ? prev - 1 : fullscreenImages.length - 1)); setFullscreenZoom(1); }}
               className="desktop-only-arrow"
             >
               &#8249;
             </div>
           )}
 
-          <img src={fullscreenImages[fullscreenIndex]} style={{ maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }} alt="Zoomed in" onClick={(e) => e.stopPropagation()} />
+          <img
+            src={fullscreenImages[fullscreenIndex]}
+            style={{
+              maxHeight: fullscreenZoom > 1 ? 'none' : '88vh',
+              maxWidth: fullscreenZoom > 1 ? 'none' : '90vw',
+              transform: `scale(${fullscreenZoom})`,
+              transformOrigin: 'center center',
+              transition: 'transform 0.25s ease-out',
+              objectFit: 'contain',
+              borderRadius: '8px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.6)',
+              cursor: fullscreenZoom > 1 ? 'grab' : 'zoom-in',
+              touchAction: 'pan-x pan-y pinch-zoom'
+            }}
+            alt="Foto Vino Ingrandita"
+            onClick={(e) => {
+              e.stopPropagation();
+              setFullscreenZoom(prev => (prev === 1 ? 2 : (prev === 2 ? 3 : 1)));
+            }}
+          />
 
           {fullscreenImages.length > 1 && (
             <div
-              style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'white', color: 'black', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer', zIndex: 10001 }}
-              onClick={(e) => { e.stopPropagation(); setFullscreenIndex((prev) => (prev < fullscreenImages.length - 1 ? prev + 1 : 0)); }}
+              style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'white', color: 'black', borderRadius: '50%', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer', zIndex: 10001 }}
+              onClick={(e) => { e.stopPropagation(); setFullscreenIndex((prev) => (prev < fullscreenImages.length - 1 ? prev + 1 : 0)); setFullscreenZoom(1); }}
               className="desktop-only-arrow"
             >
               &#8250;
