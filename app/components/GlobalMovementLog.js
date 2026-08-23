@@ -30,10 +30,17 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
   };
 
   const handleClearLog = async () => {
-    const userPin = prompt("🔑 INSERISCI IL PIN DI SICUREZZA PER SVUOTARE IL REGISTRO:\n\nInserisci il PIN per confermare l'eliminazione dell'intero storico del registro:");
+    const tabNames = {
+      'all': 'l\'intero registro attività',
+      'stock': 'l\'elenco dei carichi e scarichi',
+      'edits': 'la Sezione Modifiche & Eliminazioni'
+    };
+    const scopeName = tabNames[activeTab] || 'questo elenco';
+
+    const userPin = prompt(`🔑 INSERISCI IL PIN DI SICUREZZA PER SVUOTARE:\n\nInserisci il PIN per svuotare ${scopeName}:`);
     if (!userPin) return;
 
-    if (!confirm("⚠️ SEI SICURO DI VOLER SVUOTARE L'INTERO REGISTRO MOVIMENTI?\n\nTutti gli eventi registrati nello storico verranno eliminati definitivamente.")) {
+    if (!confirm(`⚠️ SEI SICURO DI VOLER SVUOTARE ${scopeName.toUpperCase()}?\n\nGli eventi visualizzati in questa vista verranno cancellati dall'elenco del registro.`)) {
       return;
     }
 
@@ -41,12 +48,12 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
       const res = await fetch('/api/movements/global', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: userPin })
+        body: JSON.stringify({ pin: userPin, scope: activeTab })
       });
 
       const data = await res.json();
       if (res.ok) {
-        alert("✅ " + (data.message || "Registro movimenti svuotato con successo!"));
+        alert("✅ " + (data.message || "Elenco del registro svuotato con successo!"));
         fetchMovements();
       } else {
         alert("❌ " + (data.error || "Errore durante lo svuotamento"));
@@ -143,10 +150,10 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
               <Edit3 size={15} /> Sezione Modifiche & Eliminazioni
             </button>
 
-            {/* Tasto Svuota Registro con PIN */}
+            {/* Tasto Svuota Elenco Attivo con PIN */}
             <button
               onClick={handleClearLog}
-              title="Svuota l'intero registro attività inserendo il PIN di sicurezza"
+              title="Svuota gli elementi dell'elenco attualmente selezionato con il PIN di sicurezza"
               style={{
                 marginLeft: 'auto',
                 padding: '0.45rem 0.85rem',
@@ -163,7 +170,7 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
                 transition: 'all 0.2s'
               }}
             >
-              <Trash2 size={14} /> Svuota Registro
+              <Trash2 size={14} /> {activeTab === 'edits' ? 'Svuota Modifiche' : (activeTab === 'stock' ? 'Svuota Carichi/Scarichi' : 'Svuota Registro')}
             </button>
           </div>
 
