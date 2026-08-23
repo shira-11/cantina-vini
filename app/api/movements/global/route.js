@@ -69,47 +69,24 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "PIN di sicurezza errato. Operazione annullata." }, { status: 401 });
     }
 
-    if (scope === 'edits') {
-      // Svuota ESCLUSIVAMENTE la Sezione Modifiche & Eliminazioni dall'elenco
-      await prisma.movement.deleteMany({
-        where: {
-          OR: [
-            { movementType: 'Modifica' },
-            { movementType: 'Modifica Scheda' },
-            { movementType: 'Modifica Movimento' },
-            { movementType: 'Eliminazione Movimento' },
-            { reason: 'Nuova Scheda Vino' },
-            { reason: 'Modifica della scheda' }
-          ]
-        }
-      });
-    } else if (scope === 'stock') {
-      // Svuota l'elenco dei carichi e scarichi nel registro
-      await prisma.movement.deleteMany({
-        where: {
-          movementType: { in: ['Ingresso', 'Uscita'] }
-        }
-      });
-    } else {
-      // Svuota gli eventi di log dell'elenco registro
-      await prisma.movement.deleteMany({
-        where: {
-          OR: [
-            { movementType: 'Modifica' },
-            { movementType: 'Modifica Scheda' },
-            { movementType: 'Modifica Movimento' },
-            { movementType: 'Eliminazione Movimento' },
-            { reason: 'Nuova Scheda Vino' },
-            { reason: 'Modifica della scheda' }
-          ]
-        }
-      });
-    }
+    // Svuota ESCLUSIVAMENTE la lista degli eventi di log/audit, SENZA MAI TOCCARE LE BOTTIGLIE E LE GIACENZE REALI (Ingresso/Uscita)!
+    await prisma.movement.deleteMany({
+      where: {
+        OR: [
+          { movementType: 'Modifica' },
+          { movementType: 'Modifica Scheda' },
+          { movementType: 'Modifica Movimento' },
+          { movementType: 'Eliminazione Movimento' },
+          { reason: 'Nuova Scheda Vino' },
+          { reason: 'Modifica della scheda' }
+        ]
+      }
+    });
 
     const { syncEventEmitter } = await import('@/lib/eventEmitter');
     syncEventEmitter.emit('db_update');
 
-    return NextResponse.json({ success: true, message: 'Elenco del registro svuotato con successo.' });
+    return NextResponse.json({ success: true, message: 'Visualizzazione del registro svuotata con successo. Le giacenze e le bottiglie in cantina sono rimaste intatte al 100%.' });
   } catch (error) {
     console.error('Error clearing global movement log:', error);
     return NextResponse.json({ error: 'Errore durante lo svuotamento del registro' }, { status: 500 });

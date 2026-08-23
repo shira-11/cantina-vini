@@ -30,17 +30,10 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
   };
 
   const handleClearLog = async () => {
-    const tabNames = {
-      'all': 'l\'intero registro attività',
-      'stock': 'l\'elenco dei carichi e scarichi',
-      'edits': 'la Sezione Modifiche & Eliminazioni'
-    };
-    const scopeName = tabNames[activeTab] || 'questo elenco';
-
-    const userPin = prompt(`🔑 INSERISCI IL PIN DI SICUREZZA PER SVUOTARE:\n\nInserisci il PIN per svuotare ${scopeName}:`);
+    const userPin = prompt("🔑 INSERISCI IL PIN DI SICUREZZA PER SVUOTARE LA LISTA DEL REGISTRO:\n\nInserisci il PIN per svuotare l'elenco delle attività:");
     if (!userPin) return;
 
-    if (!confirm(`⚠️ SEI SICURO DI VOLER SVUOTARE ${scopeName.toUpperCase()}?\n\nGli eventi visualizzati in questa vista verranno cancellati dall'elenco del registro.`)) {
+    if (!confirm("⚠️ SEI SICURO DI VOLER SVUOTARE LA LISTA DEL REGISTRO?\n\nQuesta operazione cancella ESCLUSIVAMENTE la visualizzazione dell'elenco delle attività. Le bottiglie e le giacenze dei vini in magazzino RIMARRANNO INTATTE AL 100%.")) {
       return;
     }
 
@@ -48,7 +41,7 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
       const res = await fetch('/api/movements/global', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: userPin, scope: activeTab })
+        body: JSON.stringify({ pin: userPin })
       });
 
       const data = await res.json();
@@ -170,7 +163,7 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
                 transition: 'all 0.2s'
               }}
             >
-              <Trash2 size={14} /> {activeTab === 'edits' ? 'Svuota Modifiche' : (activeTab === 'stock' ? 'Svuota Carichi/Scarichi' : 'Svuota Registro')}
+              <Trash2 size={14} /> Svuota Elenco Registro
             </button>
           </div>
 
