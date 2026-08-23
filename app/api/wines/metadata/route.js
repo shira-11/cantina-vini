@@ -42,7 +42,7 @@ export async function GET() {
     ];
 
     const defaultReasons = [
-      'Acquisto', 'Consumo', 'Giulio', 'Inventario', 'Regalo', 'Vendita'
+      'Acquisto', 'Allineamento da PDF', 'Consumo', 'Giulio', 'Inventario', 'Inventario 2026', 'Regalo', 'Vendita'
     ];
 
     const defaultGrapeVarieties = [

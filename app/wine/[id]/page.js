@@ -1221,6 +1221,9 @@ export default function WineDetail({ params }) {
                         <div style={{ display: 'flex', gap: '0.5rem', maxWidth: '400px' }}>
                           <select value={newMovement.reason} onChange={e => setNewMovement({ ...newMovement, reason: e.target.value })} style={{ flex: 1 }}>
                             <option value=""></option>
+                            {newMovement.reason && !metadata.reasons?.includes(newMovement.reason) && (
+                              <option value={newMovement.reason}>{newMovement.reason}</option>
+                            )}
                             {metadata.reasons?.map(r => <option key={r} value={r}>{r}</option>)}
                           </select>
                           <button type="button" className="btn" title="Gestisci Causale" onClick={(e) => { e.preventDefault(); openListModal('reason', 'Causale', metadata.reasons); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
