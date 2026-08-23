@@ -65,13 +65,24 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "PIN di sicurezza errato. Operazione annullata." }, { status: 401 });
     }
 
-    // Eliminazione di tutti i movimenti registrati nello storico
-    await prisma.movement.deleteMany({});
+    // Eliminazione ESCLUSIVA degli eventi di log di audit/modifica, MANTENENDO TUTTI I CARICHI E SCARICHI DEL MAGAZZINO (Ingresso/Uscita)!
+    await prisma.movement.deleteMany({
+      where: {
+        OR: [
+          { movementType: 'Modifica' },
+          { movementType: 'Modifica Scheda' },
+          { movementType: 'Modifica Movimento' },
+          { movementType: 'Eliminazione Movimento' },
+          { reason: 'Nuova Scheda Vino' },
+          { reason: 'Modifica della scheda' }
+        ]
+      }
+    });
 
     const { syncEventEmitter } = await import('@/lib/eventEmitter');
     syncEventEmitter.emit('db_update');
 
-    return NextResponse.json({ success: true, message: 'Registro movimenti svuotato con successo.' });
+    return NextResponse.json({ success: true, message: 'Storico registro modifiche svuotato con successo (i carichi e scarichi delle bottiglie in magazzino sono rimasti intatti).' });
   } catch (error) {
     console.error('Error clearing global movements:', error);
     return NextResponse.json({ error: 'Errore durante lo svuotamento del registro' }, { status: 500 });
