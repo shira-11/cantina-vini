@@ -12,7 +12,22 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page')) || 1;
     const skip = (page - 1) * limit;
 
+    // Controllo data di azzeramento visivo del registro
+    const clearedSetting = await prisma.systemSettings.findFirst({
+      where: { key: 'global_log_cleared_at' }
+    });
+
+    let dateFilter = {};
+    if (clearedSetting && clearedSetting.value) {
+      dateFilter = {
+        date: {
+          gt: new Date(clearedSetting.value)
+        }
+      };
+    }
+
     const movements = await prisma.movement.findMany({
+      where: dateFilter,
       skip,
       take: limit,
       orderBy: {
@@ -36,7 +51,7 @@ export async function GET(request) {
       }
     });
 
-    const total = await prisma.movement.count();
+    const total = await prisma.movement.count({ where: dateFilter });
 
     return NextResponse.json({
       movements,
@@ -57,7 +72,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "Forbidden: Viewer cannot perform this action" }, { status: 403 });
     }
     const currentUser = request.headers.get('x-user-username');
-    const { pin, scope } = await request.json();
+    const { pin } = await request.json();
 
     // Verification of Deletion PIN from SystemSettings
     const pinSetting = await prisma.systemSettings.findFirst({
@@ -69,7 +84,27 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "PIN di sicurezza errato. Operazione annullata." }, { status: 401 });
     }
 
-    // Svuota ESCLUSIVAMENTE la lista degli eventi di log/audit, SENZA MAI TOCCARE LE BOTTIGLIE E LE GIACENZE REALI (Ingresso/Uscita)!
+    // Imposta la data di azzeramento visivo dell'elenco del registro ad ADESSO
+    const nowIso = new Date().toISOString();
+    const existing = await prisma.systemSettings.findFirst({
+      where: { key: 'global_log_cleared_at' }
+    });
+
+    if (existing) {
+      await prisma.systemSettings.update({
+        where: { id: existing.id },
+        data: { value: nowIso }
+      });
+    } else {
+      await prisma.systemSettings.create({
+        data: {
+          key: 'global_log_cleared_at',
+          value: nowIso
+        }
+      });
+    }
+
+    // Elimina fisicamente solo le note/audit logs di modifica
     await prisma.movement.deleteMany({
       where: {
         OR: [
@@ -86,7 +121,7 @@ export async function DELETE(request) {
     const { syncEventEmitter } = await import('@/lib/eventEmitter');
     syncEventEmitter.emit('db_update');
 
-    return NextResponse.json({ success: true, message: 'Visualizzazione del registro svuotata con successo. Le giacenze e le bottiglie in cantina sono rimaste intatte al 100%.' });
+    return NextResponse.json({ success: true, message: 'Elenco del registro svuotato con successo. Le giacenze e le bottiglie in cantina sono rimaste intatte al 100%.' });
   } catch (error) {
     console.error('Error clearing global movement log:', error);
     return NextResponse.json({ error: 'Errore durante lo svuotamento del registro' }, { status: 500 });
