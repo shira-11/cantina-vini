@@ -535,6 +535,7 @@ export default function WineDetail({ params }) {
   };
 
   const handleDeleteMovement = async (movementId) => {
+    if (!verifyDeletionPin()) return;
     if (window.confirm("Sei sicuro di voler eliminare questo movimento? La giacenza verrà aggiornata di conseguenza.")) {
       try {
         if (String(movementId).startsWith('temp-')) {
