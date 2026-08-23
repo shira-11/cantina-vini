@@ -1018,7 +1018,10 @@ export default function PrintScheda() {
                         });
                       });
 
-                      const maxLocsPerBlock = isLandscape ? 5 : 3;
+                      const maxLocsPerBlock = showOnlyDisp
+                        ? (isLandscape ? 12 : 7)
+                        : (isLandscape ? 7 : 4);
+
                       const locationBlocks = [];
                       if (locationsToRender.length === 0) {
                         locationBlocks.push([]);
@@ -1035,6 +1038,7 @@ export default function PrintScheda() {
                             const totalLocCols = Math.max(1, locBlock.length * colsPerLoc);
                             const locColWidth = (48 / totalLocCols).toFixed(2) + '%';
                             const locHeaderWidth = (48 / Math.max(1, locBlock.length)).toFixed(2) + '%';
+                            const dynamicFontSize = totalLocCols > 10 ? '9px' : (totalLocCols > 6 ? '10px' : '11px');
 
                             return (
                               <table
@@ -1045,6 +1049,7 @@ export default function PrintScheda() {
                                   width: '100%',
                                   maxWidth: '100%',
                                   boxSizing: 'border-box',
+                                  fontSize: dynamicFontSize,
                                   marginBottom: blockIdx < locationBlocks.length - 1 ? '12px' : '0'
                                 }}
                               >
