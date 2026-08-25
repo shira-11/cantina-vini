@@ -14,11 +14,25 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-const targetFileName = process.argv[2] || files[0];
-const backupPath = path.join(backupDir, targetFileName);
+let inputArg = process.argv[2] || '';
+let selectedFile = files[0];
+
+if (inputArg) {
+  // Se l'utente passa un'ora come "11:26" o "11h26m" o "11.26"
+  const cleanSearch = inputArg.replace(/[:.]/g, 'h');
+  const matched = files.find(f => f.includes(inputArg) || f.includes(cleanSearch) || (inputArg.includes('11') && inputArg.includes('26') && f.includes('11h26m')));
+  if (matched) {
+    selectedFile = matched;
+  } else {
+    const directFile = files.find(f => f === inputArg);
+    if (directFile) selectedFile = directFile;
+  }
+}
+
+const backupPath = path.join(backupDir, selectedFile);
 
 if (!fs.existsSync(backupPath)) {
-  console.error('❌ File non trovato:', backupPath);
+  console.error('❌ File di backup non trovato:', backupPath);
   console.log('Elenco backup disponibili:', files);
   process.exit(1);
 }
@@ -29,5 +43,5 @@ const target2 = path.join(__dirname, '..', 'prisma', 'cantina.db');
 fs.copyFileSync(backupPath, target1);
 fs.copyFileSync(backupPath, target2);
 
-console.log(`✅ Database ripristinato dal backup: ${targetFileName}`);
-console.log('🍷 Database pronto e funzionante con vini e giacenze intatte.');
+console.log(`✅ Database ripristinato con successo dal backup: ${selectedFile}`);
+console.log('🍷 Database pronto con tutti i vini e movimenti intatti.');
