@@ -77,8 +77,8 @@ model Movement {
   wineId        Int
   wine          Wine     @relation(fields: [wineId], references: [id], onDelete: Cascade)
   
-  locationId    Int
-  location      Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId    Int?
+  location      Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 }
 
 model WinePhoto {

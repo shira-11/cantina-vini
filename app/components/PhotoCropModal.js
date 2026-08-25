@@ -10,12 +10,22 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [saving, setSaving] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const [imgDimensions, setImgDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef(null);
 
-  const BOX_WIDTH = 320;
-  const BOX_HEIGHT = 460;
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640 || window.innerHeight < 780);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const BOX_WIDTH = isMobile ? 250 : 320;
+  const BOX_HEIGHT = isMobile ? 330 : 440;
 
   useEffect(() => {
     if (isOpen && photoUrl) {
@@ -142,6 +152,14 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
         }
 
         const file = new File([blob], `cropped_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+        if (type === 'ai') {
+          onSave(file, 'ai');
+          onClose();
+          setSaving(false);
+          return;
+        }
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('wineName', wineName || 'Vino');
@@ -181,14 +199,14 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '0.75rem'
+      padding: isMobile ? '0.25rem' : '0.75rem'
     }}>
       {/* Modal Container */}
       <div style={{
         background: '#ffffff',
         borderRadius: '16px',
         width: '100%',
-        maxWidth: '500px',
+        maxWidth: '480px',
         maxHeight: '96vh',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
         display: 'flex',
@@ -198,12 +216,13 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
 
         {/* Top Header */}
         <div style={{
-          padding: '0.85rem 1.25rem',
+          padding: isMobile ? '0.65rem 1rem' : '0.85rem 1.25rem',
           borderBottom: '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          background: '#f8fafc'
+          justify: 'space-between',
+          background: '#f8fafc',
+          flexShrink: 0
         }}>
           <button
             type="button"
@@ -212,21 +231,21 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
               background: 'white',
               border: '1px solid #cbd5e1',
               borderRadius: '8px',
-              padding: '0.4rem 0.75rem',
+              padding: '0.35rem 0.65rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              gap: '0.3rem',
               cursor: 'pointer',
               fontWeight: 600,
               color: '#334155',
-              fontSize: '0.9rem'
+              fontSize: '0.85rem'
             }}
             title="Torna indietro"
           >
-            <ArrowLeft size={18} /> Indietro
+            <ArrowLeft size={16} /> Indietro
           </button>
-          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Crop size={20} color="#8b5cf6" /> Editor & Taglio Foto
+          <div style={{ fontWeight: 700, fontSize: isMobile ? '0.95rem' : '1.05rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <Crop size={18} color="#8b5cf6" /> {type === 'ai' ? '🔍 Anteprima Etichetta (IA)' : 'Editor & Taglio Foto'}
           </div>
           <button
             type="button"
@@ -238,147 +257,178 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
           </button>
         </div>
 
-        {/* Crop Viewport Box */}
-        <div style={{
-          padding: '1rem',
-          background: '#090d16',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          userSelect: 'none',
-          position: 'relative'
-        }}>
-          <div
-            ref={containerRef}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onTouchStart={handleMouseDown}
-            onTouchMove={handleMouseMove}
-            onTouchEnd={handleMouseUp}
-            style={{
-              width: `${BOX_WIDTH}px`,
-              height: `${BOX_HEIGHT}px`,
-              border: '2px dashed #8b5cf6',
-              borderRadius: '12px',
-              position: 'relative',
-              overflow: 'hidden',
-              cursor: isDragging ? 'grabbing' : 'grab',
-              backgroundColor: '#1e293b',
-              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.65)'
-            }}
-          >
-            {/* Grid Helper Lines */}
-            <div style={{ position: 'absolute', top: '33.33%', left: 0, right: 0, borderTop: '1px solid rgba(255,255,255,0.25)', pointerEvents: 'none', zIndex: 2 }} />
-            <div style={{ position: 'absolute', top: '66.66%', left: 0, right: 0, borderTop: '1px solid rgba(255,255,255,0.25)', pointerEvents: 'none', zIndex: 2 }} />
-            <div style={{ position: 'absolute', left: '33.33%', top: 0, bottom: 0, borderLeft: '1px solid rgba(255,255,255,0.25)', pointerEvents: 'none', zIndex: 2 }} />
-            <div style={{ position: 'absolute', left: '66.66%', top: 0, bottom: 0, borderLeft: '1px solid rgba(255,255,255,0.25)', pointerEvents: 'none', zIndex: 2 }} />
+        {/* Scrollable Body (Crop Viewport Box + Controls) */}
+        <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column' }}>
 
-            {/* Fitted Image */}
-            {imgDimensions.width > 0 && (
-              <img
-                src={photoUrl}
-                alt="Anteprima foto"
-                draggable={false}
+          {/* Crop Viewport Box */}
+          <div style={{
+            padding: isMobile ? '0.5rem' : '1rem',
+            background: '#090d16',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justify: 'center',
+            userSelect: 'none',
+            position: 'relative'
+          }}>
+            <div
+              ref={containerRef}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleMouseDown}
+              onTouchMove={handleMouseMove}
+              onTouchEnd={handleMouseUp}
+              style={{
+                width: `${BOX_WIDTH}px`,
+                height: `${BOX_HEIGHT}px`,
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '12px',
+                border: '2px dashed rgba(168, 85, 247, 0.8)',
+                boxShadow: '0 0 0 9999px rgba(9, 13, 22, 0.75)',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                touchAction: 'none'
+              }}
+            >
+              {/* Grid overlay lines */}
+              <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr', pointerEvents: 'none', zIndex: 10 }}>
+                <div style={{ borderRight: '1px dashed rgba(255,255,255,0.2)', borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+                <div style={{ borderRight: '1px dashed rgba(255,255,255,0.2)', borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+                <div style={{ borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+                <div style={{ borderRight: '1px dashed rgba(255,255,255,0.2)', borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+                <div style={{ borderRight: '1px dashed rgba(255,255,255,0.2)', borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+                <div style={{ borderBottom: '1px dashed rgba(255,255,255,0.2)' }} />
+                <div style={{ borderRight: '1px dashed rgba(255,255,255,0.2)' }} />
+                <div style={{ borderRight: '1px dashed rgba(255,255,255,0.2)' }} />
+                <div />
+              </div>
+
+              {/* The Image being edited */}
+              <div
                 style={{
                   position: 'absolute',
                   top: '50%',
                   left: '50%',
                   width: `${displayWidth}px`,
                   height: `${displayHeight}px`,
-                  maxWidth: 'none',
-                  maxHeight: 'none',
                   transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) rotate(${rotation}deg) scale(${zoom})`,
                   transformOrigin: 'center center',
-                  transition: isDragging ? 'none' : 'transform 0.15s ease-out',
-                  pointerEvents: 'none',
-                  display: 'block'
+                  transition: isDragging ? 'none' : 'transform 0.1s ease-out'
                 }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photoUrl}
+                  alt="Crop preview"
+                  draggable={false}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    pointerEvents: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: '0.4rem', color: '#94a3b8', fontSize: '0.75rem', textAlign: 'center' }}>
+              🖐️ Trascina | Ingrandisci e ruota con i tasti sotto
+            </div>
+          </div>
+
+          {/* Controls Panel */}
+          <div style={{
+            padding: isMobile ? '0.65rem 0.85rem' : '1rem 1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.65rem',
+            background: '#ffffff'
+          }}>
+            {/* Zoom Slider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => handleZoomChange(zoom - 0.2)}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.35rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                title="Riduci zoom"
+              >
+                <ZoomOut size={18} color="#475569" />
+              </button>
+              <input
+                type="range"
+                min="1"
+                max="4"
+                step="0.05"
+                value={zoom}
+                onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
+                style={{ flex: 1, accentColor: '#8b5cf6', cursor: 'pointer' }}
               />
-            )}
+              <button
+                type="button"
+                onClick={() => handleZoomChange(zoom + 0.2)}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.35rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                title="Ingrandisci zoom"
+              >
+                <ZoomIn size={18} color="#475569" />
+              </button>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, minWidth: '45px', textAlign: 'right', color: '#64748b' }}>
+                {Math.round(zoom * 100)}%
+              </span>
+            </div>
+
+            {/* Quick Preset Buttons */}
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={handleFitFull}
+                style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                title="Mostra tutta la foto della bottiglia"
+              >
+                <Maximize2 size={15} /> Foto Intera
+              </button>
+              <button
+                type="button"
+                onClick={handleRotateLeft}
+                style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                title="Ruota 90° a sinistra"
+              >
+                <RotateCcw size={15} /> -90°
+              </button>
+              <button
+                type="button"
+                onClick={handleRotateRight}
+                style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                title="Ruota 90° a destra"
+              >
+                <RotateCw size={15} /> +90°
+              </button>
+              <button
+                type="button"
+                onClick={handleReset}
+                style={{ background: '#fef2f2', border: '1px solid #fecdd3', color: '#e11d48', borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                title="Ripristina formato e posizione iniziale"
+              >
+                <RefreshCw size={15} /> Reset
+              </button>
+            </div>
+
           </div>
-          <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.5rem', textAlign: 'center' }}>
-            🖐️ Trascina per spostare | Usa i tasti o la barra in basso per zoomare e ruotare
-          </div>
+
         </div>
 
-        {/* Toolbar & Controls */}
-        <div style={{ padding: '1rem 1.25rem', background: '#ffffff', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-          
-          {/* Zoom Slider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button
-              type="button"
-              onClick={() => handleZoomChange(zoom - 0.2)}
-              style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.35rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              title="Riduci zoom"
-            >
-              <ZoomOut size={18} color="#475569" />
-            </button>
-
-            <input
-              type="range"
-              min="1"
-              max="4"
-              step="0.05"
-              value={zoom}
-              onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
-              style={{ flex: 1, accentColor: '#8b5cf6', cursor: 'pointer' }}
-            />
-
-            <button
-              type="button"
-              onClick={() => handleZoomChange(zoom + 0.2)}
-              style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.35rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              title="Ingrandisci zoom"
-            >
-              <ZoomIn size={18} color="#475569" />
-            </button>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, minWidth: '45px', textAlign: 'right', color: '#64748b' }}>
-              {Math.round(zoom * 100)}%
-            </span>
-          </div>
-
-          {/* Quick Preset Buttons */}
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button
-              type="button"
-              onClick={handleFitFull}
-              style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '8px', padding: '0.45rem 0.75rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
-              title="Mostra tutta la foto della bottiglia"
-            >
-              <Maximize2 size={16} /> Foto Intera
-            </button>
-            <button
-              type="button"
-              onClick={handleRotateLeft}
-              style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.85rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
-              title="Ruota 90° a sinistra"
-            >
-              <RotateCcw size={16} /> -90°
-            </button>
-            <button
-              type="button"
-              onClick={handleRotateRight}
-              style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.85rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
-              title="Ruota 90° a destra"
-            >
-              <RotateCw size={16} /> +90°
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              style={{ background: '#fef2f2', border: '1px solid #fecdd3', color: '#e11d48', borderRadius: '8px', padding: '0.45rem 0.75rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
-              title="Ripristina formato e posizione iniziale"
-            >
-              <RefreshCw size={16} /> Reset
-            </button>
-          </div>
-
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem' }}>
+        {/* Fixed Sticky Bottom Action Bar */}
+        <div style={{
+          padding: isMobile ? '0.65rem 0.85rem' : '0.85rem 1.25rem',
+          borderTop: '1px solid #e2e8f0',
+          background: '#ffffff',
+          flexShrink: 0,
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 20
+        }}>
+          <div style={{ display: 'flex', gap: '0.6rem' }}>
             <button
               type="button"
               onClick={onClose}
@@ -394,7 +444,8 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.4rem'
+                gap: '0.4rem',
+                fontSize: '0.95rem'
               }}
             >
               <ArrowLeft size={18} /> Annulla
@@ -404,26 +455,26 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
               onClick={handleSaveCrop}
               disabled={saving}
               style={{
-                flex: 1,
+                flex: 1.4,
                 padding: '0.75rem',
                 border: 'none',
                 borderRadius: '10px',
-                background: '#8b5cf6',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
                 color: 'white',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: saving ? 'wait' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.4rem',
-                boxShadow: '0 4px 6px -1px rgba(139, 92, 246, 0.3)',
+                fontSize: '1rem',
+                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.35)',
                 opacity: saving ? 0.8 : 1
               }}
             >
-              {saving ? 'Salvataggio...' : <><Check size={18} /> Applica & Salva</>}
+              {saving ? 'Salvataggio...' : (type === 'ai' ? <><Check size={18} /> ✨ Analizza con IA</> : <><Check size={18} /> Applica & Salva</>)}
             </button>
           </div>
-
         </div>
 
       </div>

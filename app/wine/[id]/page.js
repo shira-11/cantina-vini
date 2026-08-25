@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Trash, Image as ImageIcon, Edit2, List, FileText, ArrowRightLeft, Camera, Wine, Printer, RotateCw, Crop, QrCode, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, Trash, Image as ImageIcon, Edit2, List, FileText, ArrowRightLeft, Camera, Wine, Printer, RotateCw, Crop, QrCode, Plus, X, Sparkles } from 'lucide-react';
 import { use } from 'react';
 import PhotoCropModal from '../../components/PhotoCropModal';
 import QRCodeModal from '@/components/QRCodeModal';
+import WebcamCameraModal from '../../../components/WebcamCameraModal';
 
 const getCountryFlag = (country) => {
   if (!country) return '';
@@ -157,6 +158,7 @@ export default function WineDetail({ params }) {
   const [showExtraColumns, setShowExtraColumns] = useState(false);
   const [locationMigration, setLocationMigration] = useState({ isOpen: false, locationToDeleteName: '', locationToDeleteId: null, migrateToId: '' });
   const [isMobile, setIsMobile] = useState(false);
+  const [showWebcamModal, setShowWebcamModal] = useState({ isOpen: false, targetType: '' });
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -496,6 +498,104 @@ export default function WineDetail({ params }) {
     });
   };
 
+  const processAiFileScan = async (file) => {
+    setUploading(true);
+    customAlert('🔍 Lettura ed analisi etichetta in corso...');
+    try {
+      const compressedFile = await compressImage(file);
+      let recognizedText = '';
+
+      // Tenta la lettura via Tesseract nel browser client (funziona al 100% su Vercel online senza timeout)
+      try {
+        const TesseractModule = await import('tesseract.js');
+        const Tesseract = TesseractModule.default || TesseractModule;
+        
+        const worker = await Tesseract.createWorker('ita+eng');
+        const ret = await worker.recognize(compressedFile);
+        recognizedText = ret?.data?.text || '';
+        await worker.terminate();
+      } catch (clientOcrErr) {
+        console.warn("Client Tesseract fallback to server:", clientOcrErr);
+      }
+
+      let ocrRes;
+      if (recognizedText && recognizedText.trim().length > 3) {
+        ocrRes = await fetch('/api/ocr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: recognizedText })
+        });
+      } else {
+        const ocrFormData = new FormData();
+        ocrFormData.append('file', compressedFile);
+        ocrRes = await fetch('/api/ocr', {
+          method: 'POST',
+          body: ocrFormData
+        });
+      }
+
+      const ocrData = await ocrRes.json();
+      if (ocrRes.ok && ocrData.fields) {
+        const f = ocrData.fields;
+        const pCellar = f.producerCellar || f.producer || '';
+        const pProd = f.producer || f.producerCellar || pCellar;
+        setWine(prev => ({
+          ...prev,
+          name: f.name || prev.name,
+          vintage: f.vintage || prev.vintage,
+          country: f.country || prev.country,
+          region: f.region || prev.region,
+          producerCellar: pCellar || prev.producerCellar,
+          producer: pProd || prev.producer,
+          classification: f.classification || prev.classification,
+          category: f.category || prev.category,
+          type: f.type || prev.type,
+          alcohol: f.alcohol || prev.alcohol,
+          tempMin: f.tempMin || prev.tempMin,
+          tempMax: f.tempMax || prev.tempMax,
+          grapeVarieties: (f.grapeVarieties && f.grapeVarieties.length > 0) ? f.grapeVarieties : prev.grapeVarieties,
+          notes: f.notes || prev.notes
+        }));
+
+        if (ocrData.isUnclear && (!f.name && !f.vintage)) {
+          if (ocrData.warning) customAlert(ocrData.warning);
+        } else {
+          customAlert('✨ Dettagli vino estratti e compilati con successo dall\'etichetta! Seleziona la Cantina Fisica.');
+        }
+      } else {
+        customAlert('⚠️ Impossibile leggere l\'etichetta. Ti consigliamo di inquadrare l\'etichetta più da vicino o compilare i dati a mano.');
+      }
+    } catch (err) {
+      console.error("AI Scan Error:", err);
+      customAlert('⚠️ Errore durante la lettura dell\'etichetta.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAiLabelScan = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Apri la modal di Anteprima, Zoom e Ritaglio prima di analizzare!
+    const blobUrl = URL.createObjectURL(file);
+    setCropModal({ isOpen: true, photoUrl: blobUrl, type: 'ai' });
+    if (e?.target) e.target.value = '';
+  };
+
+  const handleWebcamCapture = async (file) => {
+    const targetType = showWebcamModal.targetType;
+    setShowWebcamModal({ isOpen: false, targetType: '' });
+
+    if (targetType === 'ai') {
+      const blobUrl = URL.createObjectURL(file);
+      setCropModal({ isOpen: true, photoUrl: blobUrl, type: 'ai' });
+    } else if (targetType === 'front' || targetType === 'back') {
+      const fakeEvent = { target: { files: [file], value: '' } };
+      await handleUpload(fakeEvent, targetType);
+    }
+  };
+
   const handleUpload = async (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -524,6 +624,47 @@ export default function WineDetail({ params }) {
           setWine(prev => ({ ...prev, photoBack: data.url }));
         }
         setCropModal({ isOpen: true, photoUrl: data.url, type });
+
+        // Lettura ed estrazione automatica informazioni dall'etichetta SOLO nella pagina Nuovo Vino!
+        if (unwrappedParams?.id === 'new') {
+          customAlert('🔍 Lettura ed analisi etichetta in corso...');
+          try {
+            const ocrFormData = new FormData();
+            ocrFormData.append('file', compressedFile);
+            const ocrRes = await fetch('/api/ocr', {
+              method: 'POST',
+              body: ocrFormData
+            });
+            const ocrData = await ocrRes.json();
+            if (ocrRes.ok && ocrData.fields) {
+              const f = ocrData.fields;
+              const pCellar = f.producerCellar || f.producer || '';
+              const pProd = f.producer || f.producerCellar || pCellar;
+              setWine(prev => ({
+                ...prev,
+                name: prev.name ? prev.name : (f.name || prev.name),
+                vintage: prev.vintage ? prev.vintage : (f.vintage || prev.vintage),
+                country: prev.country ? prev.country : (f.country || prev.country),
+                region: prev.region ? prev.region : (f.region || prev.region),
+                producerCellar: prev.producerCellar ? prev.producerCellar : (pCellar || prev.producerCellar),
+                producer: prev.producer ? prev.producer : (pProd || prev.producer),
+                classification: prev.classification ? prev.classification : (f.classification || prev.classification),
+                category: prev.category ? prev.category : (f.category || prev.category),
+                type: prev.type ? prev.type : (f.type || prev.type),
+                alcohol: prev.alcohol ? prev.alcohol : (f.alcohol || prev.alcohol),
+                tempMin: prev.tempMin ? prev.tempMin : (f.tempMin || prev.tempMin),
+                tempMax: prev.tempMax ? prev.tempMax : (f.tempMax || prev.tempMax),
+                grapeVarieties: (prev.grapeVarieties && prev.grapeVarieties.length > 0) ? prev.grapeVarieties : (f.grapeVarieties || prev.grapeVarieties),
+                notes: prev.notes ? prev.notes : (f.notes || '')
+                // N.B.: La Cantina Fisica NON viene mai toccata ed è lasciata alla scelta dell'utente!
+              }));
+              customAlert('✨ Dettagli vino compilati automaticamente dall\'etichetta! Seleziona la Cantina Fisica.');
+            }
+          } catch (ocrErr) {
+            console.warn("OCR auto-fill warning:", ocrErr);
+          }
+        }
+
       } else {
         customAlert('Errore caricamento: ' + data.error);
       }
@@ -778,11 +919,13 @@ export default function WineDetail({ params }) {
         wineName={wine.name}
         vintage={wine.vintage}
         onClose={() => setCropModal({ isOpen: false, photoUrl: null, type: 'front' })}
-        onSave={(croppedUrl, cropType) => {
-          if (cropType === 'front') {
-            setWine(prev => ({ ...prev, photo: croppedUrl }));
+        onSave={(croppedUrlOrFile, cropType) => {
+          if (cropType === 'ai') {
+            processAiFileScan(croppedUrlOrFile);
+          } else if (cropType === 'front') {
+            setWine(prev => ({ ...prev, photo: croppedUrlOrFile }));
           } else {
-            setWine(prev => ({ ...prev, photoBack: croppedUrl }));
+            setWine(prev => ({ ...prev, photoBack: croppedUrlOrFile }));
           }
         }}
       />
@@ -1570,6 +1713,35 @@ export default function WineDetail({ params }) {
 
                 {showFullForm && (
                   <div className="panel">
+                    {unwrappedParams.id === 'new' && (
+                      <div style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '1px solid #93c5fd', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', boxShadow: '0 2px 8px rgba(59,130,246,0.1)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ background: '#2563eb', color: 'white', padding: '0.6rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Sparkles size={24} />
+                          </div>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', color: '#1e3a8a' }}>Compilazione Automatica Scheda con IA</h3>
+                            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: '#1e40af' }}>
+                              Scatta o carica una foto dell'etichetta per compilare la scheda. La foto usata per la lettura <strong>non viene salvata</strong> e viene eliminata subito.
+                            </p>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={() => setShowWebcamModal({ isOpen: true, targetType: 'ai' })}
+                            style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#2563eb', border: 'none', padding: '0.65rem 1.25rem', fontSize: '0.95rem', fontWeight: 'bold', borderRadius: '8px' }}
+                          >
+                            <Camera size={18} /> 📷 Scatta Foto con Fotocamera (Webcam)
+                          </button>
+                          <label className="btn" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#ffffff', color: '#1e40af', border: '1px solid #bfdbfe', padding: '0.65rem 1.25rem', fontSize: '0.95rem', fontWeight: 'bold', borderRadius: '8px' }}>
+                            <ImageIcon size={18} /> 🖼️ Carica Foto dalla Galleria
+                            <input type="file" accept="image/*" onChange={handleAiLabelScan} style={{ display: 'none' }} disabled={uploading} />
+                          </label>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="form-grid">
                       <label>Nome</label>
@@ -1585,11 +1757,14 @@ export default function WineDetail({ params }) {
                               if (res.ok) {
                                 const existingData = await res.json();
                                 if (existingData) {
+                                  const pCellar = existingData.producerCellar || existingData.producer || '';
+                                  const pProd = existingData.producer || existingData.producerCellar || pCellar;
                                   setWine(prev => ({
                                     ...prev,
                                     photo: prev.photo || existingData.photo || '',
                                     photoBack: prev.photoBack || existingData.photoBack || '',
-                                    producer: prev.producer || existingData.producer || '',
+                                    producerCellar: prev.producerCellar || pCellar,
+                                    producer: prev.producer || pProd,
                                     region: prev.region || existingData.region || '',
                                     category: prev.category || existingData.category || '',
                                     classification: prev.classification || existingData.classification || '',
@@ -1670,7 +1845,21 @@ export default function WineDetail({ params }) {
                     <div className="form-grid">
                       <label>Cantina Produttrice</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <input type="text" list="producer-list" placeholder="Es. Marchesi di Barolo" value={wine.producerCellar || ''} onChange={e => setWine({ ...wine, producerCellar: e.target.value })} style={{ flex: 1 }} />
+                        <input
+                          type="text"
+                          list="producer-list"
+                          placeholder="Es. Marchesi di Barolo"
+                          value={wine.producerCellar || ''}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setWine(prev => ({
+                              ...prev,
+                              producerCellar: val,
+                              producer: (!prev.producer || prev.producer === prev.producerCellar) ? val : prev.producer
+                            }));
+                          }}
+                          style={{ flex: 1 }}
+                        />
                         {currentUser?.role !== 'viewer' && (
                           <button type="button" className="btn" title="Gestisci Cantina Produttrice" onClick={(e) => { e.preventDefault(); openListModal('producerCellar', 'Cantina Produttrice', metadata.producers); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
                         )}
@@ -1682,7 +1871,21 @@ export default function WineDetail({ params }) {
                     <div className="form-grid">
                       <label>Produttore</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <input type="text" list="producer-name-list" placeholder="Es. Gaja" value={wine.producer || ''} onChange={e => setWine({ ...wine, producer: e.target.value })} style={{ flex: 1 }} />
+                        <input
+                          type="text"
+                          list="producer-name-list"
+                          placeholder="Es. Gaja"
+                          value={wine.producer || ''}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setWine(prev => ({
+                              ...prev,
+                              producer: val,
+                              producerCellar: (!prev.producerCellar || prev.producerCellar === prev.producer) ? val : prev.producerCellar
+                            }));
+                          }}
+                          style={{ flex: 1 }}
+                        />
                         {currentUser?.role !== 'viewer' && (
                           <button type="button" className="btn" title="Gestisci Produttore" onClick={(e) => { e.preventDefault(); openListModal('producer', 'Produttore', metadata.producerNames || []); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
                         )}
@@ -1922,8 +2125,8 @@ export default function WineDetail({ params }) {
 
           {/* Right Column: Photos */}
           {activeTab === 'riepilogo' && showFullForm && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              <div className="panel" style={{ alignSelf: 'start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+              <div className="panel" style={{ width: '100%', boxSizing: 'border-box' }}>
                 <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Foto Fronte</h3>
                 {wine.photo ? (
                   <div style={{ position: 'relative' }}>
@@ -1951,12 +2154,9 @@ export default function WineDetail({ params }) {
                   </div>
                 )}
                 <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                  <div style={{ position: 'relative', flex: 1 }}>
-                    <input type="file" accept="image/*" capture="environment" onChange={(e) => handleUpload(e, 'front')} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={uploading} />
-                    <button className="btn" style={{ width: '100%', border: '1px solid var(--border-color)', justifyContent: 'center', padding: '0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }} disabled={uploading} title="Scatta foto">
-                      {uploading ? '...' : <Camera size={20} />}
-                    </button>
-                  </div>
+                  <button type="button" className="btn" style={{ flex: 1, border: '1px solid var(--border-color)', justifyContent: 'center', padding: '0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }} disabled={uploading} onClick={() => setShowWebcamModal({ isOpen: true, targetType: 'front' })} title="Scatta foto con fotocamera (Webcam)">
+                    {uploading ? '...' : <Camera size={20} />}
+                  </button>
                   <div style={{ position: 'relative', flex: 1 }}>
                     <input type="file" accept="image/*" onChange={(e) => handleUpload(e, 'front')} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={uploading} />
                     <button className="btn" style={{ width: '100%', border: '1px solid var(--border-color)', justifyContent: 'center', padding: '0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }} disabled={uploading} title="Scegli dalla galleria">
@@ -1967,7 +2167,7 @@ export default function WineDetail({ params }) {
               </div>
 
               {/* Back Photo */}
-              <div className="panel" style={{ alignSelf: 'start' }}>
+              <div className="panel" style={{ width: '100%', boxSizing: 'border-box' }}>
                 <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Foto Retro</h3>
                 {wine.photoBack ? (
                   <div style={{ position: 'relative' }}>
@@ -1995,12 +2195,9 @@ export default function WineDetail({ params }) {
                   </div>
                 )}
                 <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                  <div style={{ position: 'relative', flex: 1 }}>
-                    <input type="file" accept="image/*" capture="environment" onChange={(e) => handleUpload(e, 'back')} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={uploading} />
-                    <button className="btn" style={{ width: '100%', border: '1px solid var(--border-color)', justifyContent: 'center', padding: '0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }} disabled={uploading} title="Scatta foto">
-                      {uploading ? '...' : <Camera size={20} />}
-                    </button>
-                  </div>
+                  <button type="button" className="btn" style={{ flex: 1, border: '1px solid var(--border-color)', justifyContent: 'center', padding: '0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }} disabled={uploading} onClick={() => setShowWebcamModal({ isOpen: true, targetType: 'back' })} title="Scatta foto con fotocamera (Webcam)">
+                    {uploading ? '...' : <Camera size={20} />}
+                  </button>
                   <div style={{ position: 'relative', flex: 1 }}>
                     <input type="file" accept="image/*" onChange={(e) => handleUpload(e, 'back')} style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 2 }} disabled={uploading} />
                     <button className="btn" style={{ width: '100%', border: '1px solid var(--border-color)', justifyContent: 'center', padding: '0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }} disabled={uploading} title="Scegli dalla galleria">
@@ -2009,8 +2206,9 @@ export default function WineDetail({ params }) {
                   </div>
                 </div>
               </div>
+
               {/* Photo Archive inside Right Column */}
-              <div className="panel" style={{ alignSelf: 'start', marginTop: '1rem', padding: '1rem' }}>
+              <div className="panel" style={{ width: '100%', boxSizing: 'border-box', marginTop: '1.5rem', padding: '1rem' }}>
                 <button
                   className="btn"
                   onClick={(e) => { e.preventDefault(); setShowArchive(!showArchive); }}
@@ -2664,6 +2862,13 @@ export default function WineDetail({ params }) {
             </div>
           </div>
         </div>
+      )}
+
+      {showWebcamModal.isOpen && (
+        <WebcamCameraModal
+          onClose={() => setShowWebcamModal({ isOpen: false, targetType: '' })}
+          onCapture={handleWebcamCapture}
+        />
       )}
     </div>
   );

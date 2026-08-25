@@ -50,21 +50,30 @@ export async function GET(request) {
     }
 
     // Fetch wines along with their movements to calculate total stock
-    const wines = await prisma.wine.findMany({
+    const locations = await prisma.location.findMany();
+    const locMap = new Map(locations.map(l => [l.id, l]));
+
+    const raw = await prisma.wine.findMany({
       where: {
         isArchived: showArchived,
         ...(searchConditions.length > 0 ? { AND: searchConditions } : {})
       },
       include: {
         grapeVarieties: true,
-        movements: {
-          include: { location: true }
-        }
+        movements: true
       },
       orderBy: {
         name: 'asc'
       }
     });
+
+    const wines = raw.map(w => ({
+      ...w,
+      movements: (w.movements || []).map(m => ({
+        ...m,
+        location: locMap.get(m.locationId) || null
+      }))
+    }));
 
     // Calculate total quantity for each wine
     const winesWithStock = wines.map(wine => {
