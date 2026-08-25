@@ -604,7 +604,16 @@ export default function WineDetail({ params }) {
     
     // Comprime l'immagine prima di inviarla (risolve il limite del server)
     const compressedFile = await compressImage(file);
-    
+    const localBlobUrl = URL.createObjectURL(compressedFile);
+
+    // Mostra subito l'anteprima foto all'utente ed apri il crop modal!
+    if (type === 'front') {
+      setWine(prev => ({ ...prev, photo: localBlobUrl }));
+    } else {
+      setWine(prev => ({ ...prev, photoBack: localBlobUrl }));
+    }
+    setCropModal({ isOpen: true, photoUrl: localBlobUrl, type });
+
     const formData = new FormData();
     formData.append('file', compressedFile);
     formData.append('wineName', wine.name || 'Sconosciuto');
@@ -617,7 +626,7 @@ export default function WineDetail({ params }) {
         body: formData
       });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.url) {
         if (type === 'front') {
           setWine(prev => ({ ...prev, photo: data.url }));
         } else {
@@ -664,8 +673,7 @@ export default function WineDetail({ params }) {
             console.warn("OCR auto-fill warning:", ocrErr);
           }
         }
-
-      } else {
+      } else if (data.error) {
         customAlert('Errore caricamento: ' + data.error);
       }
     } catch (error) {

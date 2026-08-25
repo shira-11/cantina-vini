@@ -41,7 +41,14 @@ export async function POST(request) {
     const savedFilename = `${safeName}${safeVintage ? '_' + safeVintage : ''}_${type}_${timestamp}${extension}`;
     const filePath = path.join(uploadDir, savedFilename);
 
-    await fs.writeFile(filePath, buffer);
+    let photoUrl = `/foto_bottiglie/${savedFilename}`;
+    try {
+      await fs.writeFile(filePath, buffer);
+    } catch (writeErr) {
+      console.warn('Filesystem write unavailable (Vercel serverless), returning base64 data URL:', writeErr);
+      const mimeType = file.type || 'image/jpeg';
+      photoUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
+    }
 
     // Esegui la pulizia (cleanup) delle vecchie foto archiviate
     try {
@@ -53,7 +60,7 @@ export async function POST(request) {
       });
 
       for (const oldPhoto of oldPhotos) {
-        if (oldPhoto.url) {
+        if (oldPhoto.url && !oldPhoto.url.startsWith('data:')) {
           try {
             const filename = oldPhoto.url.split('/').pop();
             const oldFilePath = path.join(uploadDir, filename);
@@ -74,7 +81,7 @@ export async function POST(request) {
       console.error('Error during photo cleanup:', cleanupError);
     }
 
-    return NextResponse.json({ url: `/foto_bottiglie/${savedFilename}` }, { status: 201 });
+    return NextResponse.json({ url: photoUrl }, { status: 201 });
   } catch (error) {
     console.error('Error uploading file:', error);
     return NextResponse.json({ error: 'Error uploading file' }, { status: 500 });
