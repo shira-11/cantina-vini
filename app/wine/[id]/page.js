@@ -1584,19 +1584,19 @@ export default function WineDetail({ params }) {
                         <tbody>
                           {wine.movements && [...wine.movements]
                             .sort((a, b) => {
-                              // Carico Iniziale va sempre in fondo (è il più vecchio per definizione)
-                              const isACarico = (a.reason || '').toLowerCase().trim() === 'carico iniziale';
-                              const isBCarico = (b.reason || '').toLowerCase().trim() === 'carico iniziale';
-                              if (isACarico && !isBCarico) return 1;
-                              if (!isACarico && isBCarico) return -1;
+                              // L'ultimo movimento (più recente per data e inserimento) va SEMPRE in cima!
+                              const dateA = new Date(a.date || 0).getTime();
+                              const dateB = new Date(b.date || 0).getTime();
+                              if (dateA !== dateB) return dateB - dateA;
 
-                              const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-                              if (dateDiff !== 0) return dateDiff;
+                              const isATemp = typeof a.id === 'string' && a.id.startsWith('temp-');
+                              const isBTemp = typeof b.id === 'string' && b.id.startsWith('temp-');
+                              if (isATemp && !isBTemp) return -1;
+                              if (!isATemp && isBTemp) return 1;
 
-                              // Fallback on ID if dates are exactly the same
-                              const idA = typeof a.id === 'string' ? parseInt(a.id.replace('temp-', '')) + 999999999 : a.id;
-                              const idB = typeof b.id === 'string' ? parseInt(b.id.replace('temp-', '')) + 999999999 : b.id;
-                              return idB - idA;
+                              const idNumA = typeof a.id === 'number' ? a.id : parseInt(String(a.id).replace(/\D/g, '')) || 0;
+                              const idNumB = typeof b.id === 'number' ? b.id : parseInt(String(b.id).replace(/\D/g, '')) || 0;
+                              return idNumB - idNumA;
                             })
                             .filter(m => !selectedLocationFilter || m.locationId?.toString() === selectedLocationFilter)
                             .slice(0, showAllMovements ? undefined : 5)

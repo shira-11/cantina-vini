@@ -81,11 +81,19 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
       const reason = (m.reason || '').toLowerCase();
       const location = (m.location?.name || '').toLowerCase();
       
-      const match = wineName.includes(q) || producer.includes(q) || user.includes(q) || notes.includes(q) || reason.includes(q) || location.includes(q);
       if (!match) return false;
     }
 
     return true;
+  });
+
+  const sortedMovements = [...filteredMovements].sort((a, b) => {
+    const dateA = new Date(a.date || 0).getTime();
+    const dateB = new Date(b.date || 0).getTime();
+    if (dateA !== dateB) return dateB - dateA;
+    const numA = typeof a.id === 'number' ? a.id : parseInt(String(a.id).replace(/\D/g, '')) || 0;
+    const numB = typeof b.id === 'number' ? b.id : parseInt(String(b.id).replace(/\D/g, '')) || 0;
+    return numB - numA;
   });
 
   return (
@@ -193,14 +201,14 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
         <div style={{ padding: '1rem', overflowY: 'auto', flex: 1, backgroundColor: '#f1f5f9' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '3rem' }}><Loader2 className="animate-spin" size={36} color="#4f46e5" /></div>
-          ) : filteredMovements.length === 0 ? (
+          ) : sortedMovements.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
               <p style={{ fontSize: '1rem', fontWeight: '500', margin: 0 }}>Nessun evento registrato in questa sezione.</p>
               {searchQuery && <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Prova a modificare la ricerca "{searchQuery}".</p>}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {filteredMovements.map(m => {
+              {sortedMovements.map(m => {
                 const typeLower = (m.movementType || '').toLowerCase();
                 const isIngresso = m.movementType === 'Ingresso';
                 const isUscita = m.movementType === 'Uscita';
