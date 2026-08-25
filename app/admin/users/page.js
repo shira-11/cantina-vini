@@ -112,12 +112,6 @@ export default function AdminUsersPage() {
   };
 
   const handleDelete = async (user) => {
-    const input = window.prompt(`🔐 ATTENZIONE! Inserisci il PIN di sicurezza per eliminare l'utente ${user.username}:`);
-    if (input === null) return;
-    if (input.trim() !== String(deletionPin || '1234').trim()) {
-      alert("❌ PIN di Sicurezza errato! Eliminazione annullata.");
-      return;
-    }
     if (window.confirm(`Sei sicuro di voler eliminare l'utente ${user.username}? Questa azione è irreversibile.`)) {
       try {
         const res = await fetch(`/api/admin/users/${user.id}`, { method: 'DELETE' });

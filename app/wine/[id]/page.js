@@ -62,12 +62,6 @@ export default function WineDetail({ params }) {
   const customAlert = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(''), 4000); };
 
   const verifyDeletionPin = () => {
-    const input = window.prompt("🔐 ATTENZIONE! PIN DI SICUREZZA RICHIESTO\nInserisci il PIN per confermare l'eliminazione:");
-    if (input === null) return false;
-    if (input.trim() !== String(deletionPin || '1234').trim()) {
-      customAlert("❌ PIN di Sicurezza Errato!\nEliminazione annullata.");
-      return false;
-    }
     return true;
   };
   const touchStartX = useRef(null);
