@@ -26,6 +26,8 @@ export async function proxy(request) {
     pathname === '/api/events'
   );
 
+  const isAuthApi = pathname.startsWith('/api/auth');
+
   if (isPublicPath || isAuthApi || isGetCatalogApi) {
     return NextResponse.next();
   }
