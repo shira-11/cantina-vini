@@ -17,9 +17,16 @@ export async function proxy(request) {
     pathname.startsWith('/foto_bottiglie') || 
     pathname.startsWith('/uploads') ||
     /\.(png|jpg|jpeg|gif|svg|ico|webp|json)$/i.test(pathname);
-  const isAuthApi = pathname.startsWith('/api/auth');
+  const isGetCatalogApi = request.method === 'GET' && (
+    pathname === '/api/wines' ||
+    pathname.startsWith('/api/wines/') ||
+    pathname === '/api/locations' ||
+    pathname.startsWith('/api/locations/') ||
+    pathname === '/api/settings' ||
+    pathname === '/api/events'
+  );
 
-  if (isPublicPath || isAuthApi) {
+  if (isPublicPath || isAuthApi || isGetCatalogApi) {
     return NextResponse.next();
   }
 
