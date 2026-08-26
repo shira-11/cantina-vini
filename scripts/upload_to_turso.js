@@ -13,7 +13,7 @@ const tursoClient = createClient({
 });
 
 async function migrateAndUpload() {
-  console.log("Creating tables on Turso cloud database...");
+  console.log("Ensuring schema integrity on Turso cloud database...");
 
   await tursoClient.execute(`
     CREATE TABLE IF NOT EXISTS Wine (
@@ -162,7 +162,17 @@ async function migrateAndUpload() {
     );
   `);
 
-  console.log("Tables created successfully on Turso!");
+  console.log("Schema checked on Turso!");
+
+  // SAFETY GUARD: Check if Turso already has data. Never wipe unless --force-overwrite is passed.
+  const isForce = process.argv.includes('--force-overwrite');
+  const cloudWineCount = (await tursoClient.execute(`SELECT COUNT(*) as c FROM Wine`)).rows[0].c;
+
+  if (cloudWineCount > 0 && !isForce) {
+    console.log(`🛡️ SAFETY GUARD: Turso Cloud DB already contains ${cloudWineCount} wines.`);
+    console.log(`Live user data on Turso Cloud DB is preserved and protected from overwrite.`);
+    return;
+  }
 
   const modelMap = {
     Location: () => prisma.location.findMany(),
@@ -177,7 +187,6 @@ async function migrateAndUpload() {
     InventoryItem: () => prisma.inventoryItem.findMany()
   };
 
-  // Wipe Turso tables first in reverse dependency order for 100% exact 1-to-1 sync
   const deleteOrder = ['InventoryItem', 'InventorySession', 'UserSession', 'WinePhoto', 'Movement', 'GrapeVariety', 'Wine', 'SystemSettings', 'User', 'Location'];
   for (const tbl of deleteOrder) {
     try {
