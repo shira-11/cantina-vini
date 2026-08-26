@@ -5,6 +5,9 @@ import { SignJWT } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'secret-vino-app-very-secure');
 
+// In-memory rate-limiter for maximum security against brute-force attacks
+const failedAttemptsMap = new Map();
+
 export async function POST(request) {
   try {
     const { username, password } = await request.json();
@@ -14,6 +17,18 @@ export async function POST(request) {
     }
 
     const trimmedUsername = username ? username.trim() : '';
+    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+    const rateKey = `${ipAddress}:${trimmedUsername.toLowerCase()}`;
+    const now = Date.now();
+
+    // Check brute-force lock state
+    const attemptData = failedAttemptsMap.get(rateKey) || { count: 0, lockUntil: 0 };
+    if (attemptData.lockUntil > now) {
+      const remainingMins = Math.ceil((attemptData.lockUntil - now) / (60 * 1000));
+      return NextResponse.json({
+        error: `⛔ Troppi tentativi di accesso falliti. Per motivi di sicurezza, l'accesso è bloccato per altri ${remainingMins} minuti.`
+      }, { status: 429 });
+    }
 
     let user = await prisma.user.findFirst({
       where: {
@@ -27,6 +42,10 @@ export async function POST(request) {
     }
 
     if (!user) {
+      // Record failed attempt
+      const newCount = attemptData.count + 1;
+      const lockUntil = newCount >= 5 ? now + 15 * 60 * 1000 : 0;
+      failedAttemptsMap.set(rateKey, { count: newCount, lockUntil });
       return NextResponse.json({ error: 'Credenziali non valide' }, { status: 401 });
     }
 
@@ -34,12 +53,27 @@ export async function POST(request) {
     const isPasswordValid = await bcrypt.compare(passTrim, user.passwordHash);
 
     if (!isPasswordValid) {
-      return NextResponse.json({ error: 'Credenziali non valide. Verifica username e password.' }, { status: 401 });
+      const newCount = attemptData.count + 1;
+      const lockUntil = newCount >= 5 ? now + 15 * 60 * 1000 : 0;
+      failedAttemptsMap.set(rateKey, { count: newCount, lockUntil });
+
+      if (lockUntil > 0) {
+        return NextResponse.json({
+          error: `⛔ Troppi tentativi falliti (5/5). Per motivi di sicurezza l'accesso è bloccato per 15 minuti.`
+        }, { status: 429 });
+      }
+
+      return NextResponse.json({
+        error: `Credenziali non valide. Attenzione: tentativi rimasti ${5 - newCount}.`
+      }, { status: 401 });
     }
 
     if (!user.isActive) {
       return NextResponse.json({ error: 'Account disabilitato. Contatta l\'amministratore.' }, { status: 403 });
     }
+
+    // Reset failed attempts on successful authentication
+    failedAttemptsMap.delete(rateKey);
 
     // Auto-chiudi le sessioni stantie dello stesso utente prive di segnale da oltre 90 secondi
     try {
@@ -87,7 +121,6 @@ export async function POST(request) {
     try {
       if (prisma.userSession) {
         const userAgent = request.headers.get('user-agent') || 'Unknown';
-        const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
         const session = await prisma.userSession.create({
           data: {
             userId: user.id,
