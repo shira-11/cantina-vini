@@ -26,7 +26,8 @@ const HEADER_BUTTON_OPTIONS = [
   { id: 'print_pdf', label: '📄 Stampa Giacenze Dettagliato (PDF Rosso)' },
   { id: 'export_excel', label: '📊 Esporta Giacenze in Excel (Verde)' },
   { id: 'history_log', label: '🕒 Storico e Cronologia Movimenti (Blu)' },
-  { id: 'inventory', label: '☑️ Inventario Fisico (Conteggio e Rettifica)' }
+  { id: 'inventory', label: '☑️ Inventario Fisico (Conteggio e Rettifica)' },
+  { id: 'qr_scanner', label: '📱 Scanner QR Code (Fotocamera & Codice a Barre)' }
 ];
 
 export default function AdminSettingsPage() {

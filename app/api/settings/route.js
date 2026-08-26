@@ -35,7 +35,7 @@ export async function GET() {
 
     let allowedButtons = [
       'print_scheda', 'print_nazioni', 'print_pdf',
-      'export_excel', 'history_log', 'inventory'
+      'export_excel', 'history_log', 'inventory', 'qr_scanner'
     ];
 
     if (buttonsSetting && buttonsSetting.value) {

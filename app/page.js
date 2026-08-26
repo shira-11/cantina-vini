@@ -839,6 +839,7 @@ export default function Home() {
         filters={filters}
         setFilters={setFilters}
         canViewFilter={canViewFilter}
+        canViewButton={canViewButton}
         onWineClick={handleWineClick}
         setForceDesktop={setForceDesktop}
         uniqueCountries={uniqueCountries}
@@ -1053,26 +1054,28 @@ export default function Home() {
                       {ocrLoading ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={(e) => { e.preventDefault(); setShowQRScanner(true); }}
-                    title="Scansiona QR Code / Codice a Barre da fotocamera"
-                    style={{
-                      flex: 1,
-                      padding: '0.625rem',
-                      border: '1px solid var(--border-color)',
-                      background: 'white',
-                      color: 'var(--primary-color)',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      borderRadius: '8px'
-                    }}
-                  >
-                    <QrCode size={18} />
-                  </button>
+                  {canViewButton('qr_scanner') && (
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={(e) => { e.preventDefault(); setShowQRScanner(true); }}
+                      title="Scansiona QR Code / Codice a Barre da fotocamera"
+                      style={{
+                        flex: 1,
+                        padding: '0.625rem',
+                        border: '1px solid var(--border-color)',
+                        background: 'white',
+                        color: 'var(--primary-color)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      <QrCode size={18} />
+                    </button>
+                  )}
                 </div>
               )}
             </div>

@@ -13,6 +13,7 @@ export const MobileCatalog = ({
   setFilters,
   onWineClick,
   canViewFilter,
+  canViewButton,
   setForceDesktop,
   uniqueCountries,
   uniqueRegions,
@@ -402,36 +403,38 @@ export const MobileCatalog = ({
             )}
           </div>
           {/* Pulsante dedicato QR Scanner per Smartphone */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (onOpenQRScanner) onOpenQRScanner();
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (onOpenQRScanner) onOpenQRScanner();
-            }}
-            title="Scansiona QR Code da Fotocamera"
-            style={{
-              marginLeft: '0.4rem',
-              background: '#e0e7ff',
-              color: '#4f46e5',
-              border: '1px solid #a5b4fc',
-              borderRadius: '10px',
-              padding: '0.75rem 0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              flexShrink: 0,
-              touchAction: 'manipulation'
-            }}
-          >
-            <QrCode size={20} />
-          </button>
+          {(!canViewButton || canViewButton('qr_scanner')) && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onOpenQRScanner) onOpenQRScanner();
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onOpenQRScanner) onOpenQRScanner();
+              }}
+              title="Scansiona QR Code da Fotocamera"
+              style={{
+                marginLeft: '0.4rem',
+                background: '#e0e7ff',
+                color: '#4f46e5',
+                border: '1px solid #a5b4fc',
+                borderRadius: '10px',
+                padding: '0.75rem 0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0,
+                touchAction: 'manipulation'
+              }}
+            >
+              <QrCode size={20} />
+            </button>
+          )}
           {(() => {
             const activeFiltersCount = Object.values(filters).filter(Boolean).length;
             return (
