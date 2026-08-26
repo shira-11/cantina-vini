@@ -157,21 +157,6 @@ export async function PUT(request, { params }) {
       changedFieldNames.push('foto retro');
     }
 
-    if ((hasTextualChanges || hasPhotoChanges) && allLocations.length > 0) {
-      let modNotes = `Modificati: ${changedFieldNames.join(', ')}`;
-      if (modNotes.length > 150) modNotes = 'Dettagli e foto della scheda aggiornati';
-
-      newMovementsToCreate.push({
-        date: new Date(),
-        movementType: 'Modifica',
-        quantity: 0,
-        reason: 'Modifica della scheda',
-        locationId: allLocations[0].id,
-        notes: modNotes,
-        user: currentUser || null
-      });
-    }
-
     // We update the basic info here
     const updatedWine = await prisma.wine.update({
       where: { id: wineId },
