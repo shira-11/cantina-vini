@@ -406,21 +406,28 @@ export const MobileCatalog = ({
             type="button"
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
+              if (onOpenQRScanner) onOpenQRScanner();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (onOpenQRScanner) onOpenQRScanner();
             }}
             title="Scansiona QR Code da Fotocamera"
             style={{
               marginLeft: '0.4rem',
-              background: 'white',
+              background: '#e0e7ff',
               color: '#4f46e5',
-              border: '1px solid #cbd5e1',
+              border: '1px solid #a5b4fc',
               borderRadius: '10px',
               padding: '0.75rem 0.85rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              flexShrink: 0
+              flexShrink: 0,
+              touchAction: 'manipulation'
             }}
           >
             <QrCode size={20} />
