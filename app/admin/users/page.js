@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Shield, Plus, UserPlus, Edit2, Trash2, ArrowLeft, Check, X, Lock, Unlock, Clock } from 'lucide-react';
+import { Users, Shield, Plus, UserPlus, Edit2, Trash2, ArrowLeft, Check, X, Lock, Unlock, Clock, Eye, EyeOff } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -10,6 +10,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     username: '',
@@ -45,6 +46,7 @@ export default function AdminUsersPage() {
   }, []);
 
   const handleOpenModal = (user = null) => {
+    setShowPassword(false);
     if (user) {
       setEditingUser(user);
       setFormData({
@@ -269,13 +271,34 @@ export default function AdminUsersPage() {
 
               <div className="form-group">
                 <label style={{ fontWeight: '600' }}>{editingUser ? 'Nuova Password (lascia vuoto per non cambiare)' : 'Password'}</label>
-                <input 
-                  type="password" 
-                  value={formData.password} 
-                  onChange={e => setFormData({...formData, password: e.target.value})} 
-                  required={!editingUser}
-                  style={{ width: '100%', padding: '0.65rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }}
-                />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    value={formData.password} 
+                    onChange={e => setFormData({...formData, password: e.target.value})} 
+                    required={!editingUser}
+                    style={{ width: '100%', padding: '0.65rem 2.5rem 0.65rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontSize: '1rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '0.5rem',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0.25rem'
+                    }}
+                    title={showPassword ? "Nascondi Password" : "Mostra Password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group">
