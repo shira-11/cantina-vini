@@ -11,38 +11,38 @@ export async function DELETE(request, { params }) {
     const { id } = await params;
     const movementId = parseInt(id);
 
-    const currentUser = request.headers.get('x-user-username');
+    if (!isNaN(movementId)) {
+      const movement = await prisma.movement.findUnique({ where: { id: movementId } });
+      if (movement) {
+        if (movement.movementType === 'Uscita') {
+          const pairedMovements = await prisma.movement.findMany({
+            where: {
+              wineId: movement.wineId,
+              movementType: 'Ingresso',
+              reason: { startsWith: 'Trasf. da' }
+            }
+          });
+          
+          let paired = null;
+          let minDiff = Infinity;
+          const oldDateTime = new Date(movement.date).getTime();
+          for (const m of pairedMovements) {
+            const diff = Math.abs(new Date(m.date).getTime() - oldDateTime);
+            if (diff < minDiff) {
+              minDiff = diff;
+              paired = m;
+            }
+          }
+          
+          if (paired) {
+            await prisma.movement.delete({ where: { id: paired.id } }).catch(() => {});
+          }
+        }
 
-    // Trova il movimento per vedere se ha un Ingresso associato ed effettuare il tracciamento
-    const movement = await prisma.movement.findUnique({ where: { id: movementId } });
-    if (movement && movement.movementType === 'Uscita') {
-       const pairedMovements = await prisma.movement.findMany({
-         where: {
-           wineId: movement.wineId,
-           movementType: 'Ingresso',
-           reason: { startsWith: 'Trasf. da' }
-         }
-       });
-       
-       let paired = null;
-       let minDiff = Infinity;
-       const oldDateTime = new Date(movement.date).getTime();
-       for (const m of pairedMovements) {
-         const diff = Math.abs(new Date(m.date).getTime() - oldDateTime);
-         if (diff < minDiff) {
-           minDiff = diff;
-           paired = m;
-         }
-       }
-       
-       if (paired) {
-         await prisma.movement.delete({ where: { id: paired.id } });
-       }
+        await prisma.movement.delete({ where: { id: movementId } }).catch(() => {});
+      }
     }
 
-    await prisma.movement.delete({
-      where: { id: movementId }
-    });
     syncEventEmitter.emit('db_update');
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -60,62 +60,85 @@ export async function PUT(request, { params }) {
     const { id } = await params;
     const movementId = parseInt(id);
     const body = await request.json();
-    
-    const updatedMovement = await prisma.movement.update({
-      where: { id: movementId },
-      data: {
-        date: new Date(body.date),
-        movementType: body.movementType,
-        quantity: parseInt(body.quantity),
-        bottleType: body.bottleType,
-        reason: body.reason,
-        vendor: body.vendor,
-        price: body.price ? parseFloat(body.price) : null,
-        tempPrice: body.tempPrice ? parseFloat(body.tempPrice) : null,
-        notes: body.notes || '',
-        location: { connect: { id: parseInt(body.locationId) } }
-      }
-    });
 
-    if (oldMovement && oldMovement.movementType === 'Uscita') {
-       const pairedMovements = await prisma.movement.findMany({
-         where: {
-           wineId: oldMovement.wineId,
-           movementType: 'Ingresso',
-           reason: { startsWith: 'Trasf. da' }
-         }
-       });
-       
-       let paired = null;
-       let minDiff = Infinity;
-       const oldDateTime = new Date(oldMovement.date).getTime();
-       for (const m of pairedMovements) {
-         const diff = Math.abs(new Date(m.date).getTime() - oldDateTime);
-         if (diff < minDiff) {
-           minDiff = diff;
-           paired = m;
-         }
-       }
-       
-       if (paired) {
-         await prisma.movement.update({
-           where: { id: paired.id },
-           data: {
-             date: new Date(body.date),
-             quantity: parseInt(body.quantity),
-             bottleType: body.bottleType,
-             price: body.price ? parseFloat(body.price) : null,
-             tempPrice: body.tempPrice ? parseFloat(body.tempPrice) : null,
-             notes: body.notes || '',
-           }
-         });
-       }
+    const oldMovement = !isNaN(movementId) ? await prisma.movement.findUnique({ where: { id: movementId } }) : null;
+
+    let resultMovement;
+
+    if (oldMovement) {
+      resultMovement = await prisma.movement.update({
+        where: { id: movementId },
+        data: {
+          date: body.date ? new Date(body.date) : new Date(),
+          movementType: body.movementType || oldMovement.movementType,
+          quantity: body.quantity !== undefined ? parseInt(body.quantity) : oldMovement.quantity,
+          bottleType: body.bottleType ?? oldMovement.bottleType,
+          reason: body.reason ?? oldMovement.reason,
+          vendor: body.vendor ?? oldMovement.vendor,
+          price: body.price ? parseFloat(body.price) : null,
+          tempPrice: body.tempPrice ? parseFloat(body.tempPrice) : null,
+          notes: body.notes ?? oldMovement.notes,
+          location: body.locationId ? { connect: { id: parseInt(body.locationId) } } : undefined
+        }
+      });
+
+      if (oldMovement.movementType === 'Uscita') {
+        const pairedMovements = await prisma.movement.findMany({
+          where: {
+            wineId: oldMovement.wineId,
+            movementType: 'Ingresso',
+            reason: { startsWith: 'Trasf. da' }
+          }
+        });
+        
+        let paired = null;
+        let minDiff = Infinity;
+        const oldDateTime = new Date(oldMovement.date).getTime();
+        for (const m of pairedMovements) {
+          const diff = Math.abs(new Date(m.date).getTime() - oldDateTime);
+          if (diff < minDiff) {
+            minDiff = diff;
+            paired = m;
+          }
+        }
+        
+        if (paired) {
+          await prisma.movement.update({
+            where: { id: paired.id },
+            data: {
+              date: body.date ? new Date(body.date) : new Date(),
+              quantity: body.quantity !== undefined ? parseInt(body.quantity) : paired.quantity,
+              bottleType: body.bottleType ?? paired.bottleType,
+              price: body.price ? parseFloat(body.price) : null,
+              tempPrice: body.tempPrice ? parseFloat(body.tempPrice) : null,
+              notes: body.notes ?? paired.notes
+            }
+          }).catch(() => {});
+        }
+      }
+    } else {
+      // Upsert/Create fallback if ID is temp or record not found
+      resultMovement = await prisma.movement.create({
+        data: {
+          date: body.date ? new Date(body.date) : new Date(),
+          movementType: body.movementType || 'Ingresso',
+          quantity: parseInt(body.quantity) || 0,
+          bottleType: body.bottleType || 'Normale 0.75',
+          reason: body.reason || '',
+          vendor: body.vendor || '',
+          price: body.price ? parseFloat(body.price) : null,
+          tempPrice: body.tempPrice ? parseFloat(body.tempPrice) : null,
+          notes: body.notes || '',
+          locationId: parseInt(body.locationId),
+          wineId: parseInt(body.wineId)
+        }
+      });
     }
-    
+
     syncEventEmitter.emit('db_update');
-    return NextResponse.json(updatedMovement);
+    return NextResponse.json(resultMovement);
   } catch (error) {
     console.error("Database Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to update movement", stack: error.stack }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to update movement" }, { status: 500 });
   }
 }

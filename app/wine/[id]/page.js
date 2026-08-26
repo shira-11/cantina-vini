@@ -1498,7 +1498,7 @@ export default function WineDetail({ params }) {
                                 const res = await fetch(`/api/movements/${editingMovementId}`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ ...newMovement, locationId: parseInt(newMovement.locationId) })
+                                  body: JSON.stringify({ ...newMovement, locationId: parseInt(newMovement.locationId), wineId: wine.id })
                                 });
                                 if (res.ok) {
                                   customAlert('\n📦 Movimentazione aggiornata con successo!\n');
