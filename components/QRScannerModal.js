@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Camera, AlertCircle, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { X, Camera, AlertCircle, Image as ImageIcon, Loader2, RefreshCw } from 'lucide-react';
 
 export default function QRScannerModal({ onClose, onScanSuccess }) {
   const router = useRouter();
@@ -51,70 +51,87 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
     }
   };
 
-  useEffect(() => {
-    let isMounted = true;
-    let scannerInstance = null;
+  const startScannerStream = async () => {
+    setErrorMsg('');
+    try {
+      const { Html5Qrcode, Html5QrcodeScannerState } = await import('html5-qrcode');
 
-    const startScanner = async () => {
-      try {
-        const { Html5Qrcode, Html5QrcodeScannerState } = await import('html5-qrcode');
-        if (!isMounted) return;
-
-        const scanner = new Html5Qrcode("qr-reader-container");
-        scannerInstance = scanner;
-        scannerRef.current = scanner;
-
-        const config = { fps: 10, qrbox: { width: 240, height: 240 } };
-
-        const onScanSuccessCallback = async (decodedText) => {
-          if (!isMounted) return;
-          try {
-            if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
-              await scanner.stop();
-            }
-          } catch (e) {
-            console.warn("Scanner stop error:", e);
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+            await scannerRef.current.stop();
           }
-          handleDecodedCode(decodedText);
-        };
+        } catch (e) {}
+      }
 
-        // Try environment camera first for mobile devices, with fallback to any camera
+      const scanner = new Html5Qrcode("qr-reader-container");
+      scannerRef.current = scanner;
+
+      const config = { fps: 10, qrbox: { width: 240, height: 240 } };
+
+      const onScanSuccessCallback = async (decodedText) => {
+        try {
+          if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+            await scanner.stop();
+          }
+        } catch (e) {
+          console.warn("Scanner stop error:", e);
+        }
+        handleDecodedCode(decodedText);
+      };
+
+      // Try camera device enumeration (best for iOS Safari and Android Chrome)
+      let cameraStarted = false;
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+          const backCamera = cameras.find(c => 
+            c.label.toLowerCase().includes('back') || 
+            c.label.toLowerCase().includes('posteriore') || 
+            c.label.toLowerCase().includes('rear') ||
+            c.label.toLowerCase().includes('environment')
+          ) || cameras[cameras.length - 1];
+
+          await scanner.start(backCamera.id, config, onScanSuccessCallback, () => {});
+          cameraStarted = true;
+        }
+      } catch (enumErr) {
+        console.warn("Camera enumeration failed:", enumErr);
+      }
+
+      if (!cameraStarted) {
         try {
           await scanner.start({ facingMode: "environment" }, config, onScanSuccessCallback, () => {});
+          cameraStarted = true;
         } catch (camErr) {
           console.warn("Environment camera failed, trying default camera:", camErr);
           await scanner.start({ facingMode: "user" }, config, onScanSuccessCallback, () => {});
+          cameraStarted = true;
         }
-
-        if (!isMounted) {
-          try {
-            if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
-              await scanner.stop();
-            }
-          } catch (e) {}
-        } else {
-          setScanning(true);
-        }
-      } catch (err) {
-        if (!isMounted) return;
-        console.warn("Camera stream error (HTTP fallback):", err);
-        setErrorMsg("Fotocamera in tempo reale non disponibile (o permessi non concessi). Usa il pulsante sottostante per scattare una foto direttamente con la fotocamera del tuo telefono.");
       }
-    };
 
-    startScanner();
+      setScanning(true);
+    } catch (err) {
+      console.warn("Camera stream error:", err);
+      setErrorMsg("Fotocamera in tempo reale non accessibile. Usa il pulsante blu sottostante per scattare una foto direttamente con la fotocamera del tuo iPhone.");
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    startScannerStream();
 
     return () => {
       isMounted = false;
-      if (scannerInstance) {
+      if (scannerRef.current) {
         try {
+          const scannerInstance = scannerRef.current;
           if (typeof scannerInstance.getState === 'function') {
             const state = scannerInstance.getState();
             if (state === 2 || state === 3) {
               scannerInstance.stop().catch(() => {});
             }
-          } else {
-            scannerInstance.stop().catch(() => {});
           }
         } catch (e) {}
       }
@@ -160,8 +177,9 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(15, 23, 42, 0.8)',
-      backdropFilter: 'blur(6px)',
+      backgroundColor: 'rgba(15, 23, 42, 0.85)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -206,7 +224,7 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
           </div>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: '700' }}>Scansiona QR / Codice a Barre</h3>
-            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Inquadra il codice o scatta una foto con il telefono</span>
+            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Inquadra il codice o scatta una foto dal telefono</span>
           </div>
         </div>
 
@@ -259,30 +277,52 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
             style={{
               width: '100%',
-              padding: '0.75rem 1rem',
+              padding: '0.85rem 1rem',
               background: '#4f46e5',
               color: 'white',
               border: 'none',
               borderRadius: '12px',
               fontWeight: '700',
               cursor: fileLoading ? 'wait' : 'pointer',
-              fontSize: '0.925rem',
+              fontSize: '0.95rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              boxShadow: '0 2px 4px rgba(79, 70, 229, 0.3)'
+              boxShadow: '0 4px 6px -1px rgba(79, 70, 229, 0.3)'
             }}
           >
             {fileLoading ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> Analisi foto in corso...
+                <Loader2 size={18} className="animate-spin" /> Analisi codice in corso...
               </>
             ) : (
               <>
-                <Camera size={18} /> Scatta Foto con la Fotocamera
+                <Camera size={20} /> 📸 Scatta Foto al QR con la Fotocamera
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={startScannerStream}
+            style={{
+              width: '100%',
+              padding: '0.65rem 1rem',
+              background: '#f8fafc',
+              border: '1px solid #cbd5e1',
+              borderRadius: '10px',
+              color: '#334155',
+              fontWeight: '600',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            <RefreshCw size={16} /> Riavvia Fotocamera Live
           </button>
 
           <button
@@ -293,13 +333,13 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
               background: '#f1f5f9',
               border: '1px solid #cbd5e1',
               borderRadius: '10px',
-              color: '#334155',
+              color: '#64748b',
               fontWeight: '600',
               cursor: 'pointer',
-              fontSize: '0.9rem'
+              fontSize: '0.875rem'
             }}
           >
-            Annulla
+            Chiudi
           </button>
         </div>
 
@@ -307,4 +347,3 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
     </div>
   );
 }
-
