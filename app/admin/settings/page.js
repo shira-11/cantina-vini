@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, ArrowLeft, Check, X, Save, Shield, Eye, Search, Image as ImageIcon, Clock, Lock, Sliders, Users, Building2, Plus, Edit2, Trash2, RotateCcw } from 'lucide-react';
+import { Settings, ArrowLeft, Check, X, Save, Shield, Eye, Search, Image as ImageIcon, Clock, Lock, Sliders, Users, Building2, Plus, Edit2, Trash2, RotateCcw, FileText, List, FileSpreadsheet, History, CheckSquare, QrCode } from 'lucide-react';
 
 const FILTER_OPTIONS = [
   { id: 'country', label: 'Nazione' },
@@ -21,13 +21,13 @@ const FILTER_OPTIONS = [
 ];
 
 const HEADER_BUTTON_OPTIONS = [
-  { id: 'print_scheda', label: '📄 Stampa Scheda Vino (Copertine)' },
-  { id: 'print_nazioni', label: '📋 Elenco Giacenze Vini per Nazione' },
-  { id: 'print_pdf', label: '📄 Stampa Giacenze Dettagliato (PDF Rosso)' },
-  { id: 'export_excel', label: '📊 Esporta Giacenze in Excel (Verde)' },
-  { id: 'history_log', label: '🕒 Storico e Cronologia Movimenti (Blu)' },
-  { id: 'inventory', label: '☑️ Inventario Fisico (Conteggio e Rettifica)' },
-  { id: 'qr_scanner', label: '📱 Scanner QR Code (Fotocamera & Codice a Barre)' }
+  { id: 'print_scheda', label: 'Stampa Scheda Vino (Copertine)', icon: FileText, color: '#475569' },
+  { id: 'print_nazioni', label: 'Elenco Giacenze Vini per Nazione', icon: List, color: '#475569' },
+  { id: 'print_pdf', label: 'Stampa Giacenze Dettagliato (PDF Rosso)', icon: FileText, color: '#f43f5e' },
+  { id: 'export_excel', label: 'Esporta Giacenze in Excel (Verde)', icon: FileSpreadsheet, color: '#16a34a' },
+  { id: 'history_log', label: 'Storico e Cronologia Movimenti (Blu)', icon: History, color: '#3b82f6' },
+  { id: 'inventory', label: 'Inventario Fisico (Conteggio e Rettifica)', icon: CheckSquare, color: '#10b981' },
+  { id: 'qr_scanner', label: 'Scanner QR Code (Fotocamera & Codice a Barre)', icon: QrCode, color: '#6366f1' }
 ];
 
 export default function AdminSettingsPage() {
@@ -780,32 +780,38 @@ export default function AdminSettingsPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                {HEADER_BUTTON_OPTIONS.map(btn => (
-                  <label
-                    key={btn.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.85rem',
-                      padding: '0.75rem 0.9rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      background: allowedButtons.includes(btn.id) ? '#f5f3ff' : '#f8fafc',
-                      border: `1px solid ${allowedButtons.includes(btn.id) ? '#ddd6fe' : '#e2e8f0'}`,
-                      transition: 'all 0.15s'
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={allowedButtons.includes(btn.id)}
-                      onChange={() => handleToggleBtn(btn.id)}
-                      style={{ width: '1.15rem', height: '1.15rem', cursor: 'pointer', accentColor: '#6366f1' }}
-                    />
-                    <span style={{ fontSize: '0.925rem', color: allowedButtons.includes(btn.id) ? '#5b21b6' : '#334155', fontWeight: allowedButtons.includes(btn.id) ? '600' : '400' }}>
-                      {btn.label}
-                    </span>
-                  </label>
-                ))}
+                {HEADER_BUTTON_OPTIONS.map(btn => {
+                  const IconComponent = btn.icon;
+                  return (
+                    <label
+                      key={btn.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.85rem',
+                        padding: '0.75rem 0.9rem',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        background: allowedButtons.includes(btn.id) ? '#f5f3ff' : '#f8fafc',
+                        border: `1px solid ${allowedButtons.includes(btn.id) ? '#ddd6fe' : '#e2e8f0'}`,
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={allowedButtons.includes(btn.id)}
+                        onChange={() => handleToggleBtn(btn.id)}
+                        style={{ width: '1.15rem', height: '1.15rem', cursor: 'pointer', accentColor: '#6366f1' }}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        {IconComponent && <IconComponent size={20} color={btn.color} />}
+                        <span style={{ fontSize: '0.925rem', color: allowedButtons.includes(btn.id) ? '#5b21b6' : '#334155', fontWeight: allowedButtons.includes(btn.id) ? '600' : '400' }}>
+                          {btn.label}
+                        </span>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
