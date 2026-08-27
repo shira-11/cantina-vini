@@ -531,8 +531,8 @@ export default function WineDetail({ params }) {
       const ocrData = await ocrRes.json();
       if (ocrRes.ok && ocrData.fields) {
         const f = ocrData.fields;
-        const pCellar = f.producerCellar || f.producer || '';
-        const pProd = f.producer || f.producerCellar || pCellar;
+        const pCellar = f.producerCellar || '';
+        const pProd = f.producer || '';
         setWine(prev => ({
           ...prev,
           name: f.name || prev.name,
@@ -641,8 +641,8 @@ export default function WineDetail({ params }) {
             const ocrData = await ocrRes.json();
             if (ocrRes.ok && ocrData.fields) {
               const f = ocrData.fields;
-              const pCellar = f.producerCellar || f.producer || '';
-              const pProd = f.producer || f.producerCellar || pCellar;
+              const pCellar = f.producerCellar || '';
+              const pProd = f.producer || '';
               setWine(prev => ({
                 ...prev,
                 name: prev.name ? prev.name : (f.name || prev.name),
@@ -1759,8 +1759,8 @@ export default function WineDetail({ params }) {
                               if (res.ok) {
                                 const existingData = await res.json();
                                 if (existingData) {
-                                  const pCellar = existingData.producerCellar || existingData.producer || '';
-                                  const pProd = existingData.producer || existingData.producerCellar || pCellar;
+                                  const pCellar = existingData.producerCellar || '';
+                                  const pProd = existingData.producer || '';
                                   setWine(prev => ({
                                     ...prev,
                                     photo: prev.photo || existingData.photo || '',
@@ -1852,14 +1852,7 @@ export default function WineDetail({ params }) {
                           list="producer-list"
                           placeholder="Es. Marchesi di Barolo"
                           value={wine.producerCellar || ''}
-                          onChange={e => {
-                            const val = e.target.value;
-                            setWine(prev => ({
-                              ...prev,
-                              producerCellar: val,
-                              producer: (!prev.producer || prev.producer === prev.producerCellar) ? val : prev.producer
-                            }));
-                          }}
+                          onChange={e => setWine({ ...wine, producerCellar: e.target.value })}
                           style={{ flex: 1 }}
                         />
                         {currentUser?.role !== 'viewer' && (
@@ -1878,14 +1871,7 @@ export default function WineDetail({ params }) {
                           list="producer-name-list"
                           placeholder="Es. Gaja"
                           value={wine.producer || ''}
-                          onChange={e => {
-                            const val = e.target.value;
-                            setWine(prev => ({
-                              ...prev,
-                              producer: val,
-                              producerCellar: (!prev.producerCellar || prev.producerCellar === prev.producer) ? val : prev.producerCellar
-                            }));
-                          }}
+                          onChange={e => setWine({ ...wine, producer: e.target.value })}
                           style={{ flex: 1 }}
                         />
                         {currentUser?.role !== 'viewer' && (
