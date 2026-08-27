@@ -40,7 +40,7 @@ export async function GET(request) {
       }
     }
 
-    if (username && username.toLowerCase() === 'shirantha') {
+    if (username && (username.toLowerCase() === 'shirantha' || username.toLowerCase() === 'adriano')) {
       role = 'admin';
     }
 

@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 export async function POST(request) {
   try {
     const { username, newPassword } = await request.json();
-    const targetUsername = username || 'Shirantha';
+    const targetUsername = username || 'Adriano';
     const passToSet = newPassword || 'shira123456';
 
     const salt = await bcrypt.genSalt(10);

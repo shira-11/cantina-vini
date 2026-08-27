@@ -1763,7 +1763,7 @@ export default function Home() {
                     <button
                       onClick={() => router.push('/login')}
                       style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#3b82f6', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}
-                      title="Effettua il Login con nome utente Shirantha"
+                      title="Effettua il Login con nome utente Adriano"
                     >
                       <User size={16} /> Accedi (Login)
                     </button>

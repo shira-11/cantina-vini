@@ -47,8 +47,8 @@ export async function proxy(request) {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     
     const username = payload.username || '';
-    const isShirantha = username.toLowerCase() === 'shirantha';
-    const effectiveRole = isShirantha ? 'admin' : (payload.role || 'viewer');
+    const isAdminUser = username.toLowerCase() === 'shirantha' || username.toLowerCase() === 'adriano';
+    const effectiveRole = (isAdminUser || payload.role === 'admin') ? 'admin' : (payload.role || 'viewer');
 
     // Aggiungi username e ruolo agli header per poterli leggere nelle API successive
     const requestHeaders = new Headers(request.headers);

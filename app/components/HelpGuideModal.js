@@ -246,7 +246,7 @@ export default function HelpGuideModal({ onClose }) {
                 <div>
                   <strong style={{ color: '#1e293b' }}>Accedi (Login) / Esci (LogOut):</strong>
                   <span style={{ fontSize: '0.9rem', color: '#475569', display: 'block', marginTop: '0.15rem' }}>
-                    Permette all'utente amministratore (`Shirantha`) di autenticarsi per sbloccare le funzioni di modifica, gestione utenti e configurazione.
+                    Permette all'utente amministratore (`Adriano`) di autenticarsi per sbloccare le funzioni di modifica, gestione utenti e configurazione.
                   </span>
                 </div>
               </div>

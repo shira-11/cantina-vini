@@ -180,7 +180,7 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input
               type="text"
-              placeholder="Filtra per vino, utente (es. Shirantha), cantina o nota..."
+              placeholder="Filtra per vino, utente (es. Adriano), cantina o nota..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{

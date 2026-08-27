@@ -19,11 +19,11 @@ export default function PasswordResetPage() {
       const res = await fetch('/api/auth/force-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'Shirantha', newPassword })
+        body: JSON.stringify({ username: 'Adriano', newPassword })
       });
 
       if (res.ok) {
-        setStatus({ type: 'success', text: `Password dell'utente Shirantha impostata con successo a "${newPassword}"!` });
+        setStatus({ type: 'success', text: `Password dell'utente Adriano impostata con successo a "${newPassword}"!` });
       } else {
         const data = await res.json();
         setStatus({ type: 'error', text: data.error || 'Errore durante il ripristino.' });
@@ -51,7 +51,7 @@ export default function PasswordResetPage() {
           </div>
           <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Ripristino Password Admin</h2>
           <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
-            Imposta una nuova password per l'amministratore <strong>Shirantha</strong>
+            Imposta una nuova password per l'amministratore <strong>Adriano</strong>
           </p>
         </div>
 
@@ -63,7 +63,7 @@ export default function PasswordResetPage() {
 
         <form onSubmit={handleReset} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#334155', marginBottom: '0.35rem' }}>Nuova Password per Shirantha</label>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#334155', marginBottom: '0.35rem' }}>Nuova Password per Adriano</label>
             <input
               type="text"
               value={newPassword}
