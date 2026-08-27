@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Trash, Image as ImageIcon, Edit2, List, FileText, ArrowRightLeft, Camera, Wine, Printer, RotateCw, Crop, QrCode, Plus, X, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Trash, Image as ImageIcon, Edit2, List, FileText, ArrowRightLeft, Camera, Wine, Printer, RotateCw, Crop, QrCode, Plus, X, Sparkles, Search } from 'lucide-react';
 import { use } from 'react';
 import PhotoCropModal from '../../components/PhotoCropModal';
 import QRCodeModal from '@/components/QRCodeModal';
@@ -110,6 +110,7 @@ export default function WineDetail({ params }) {
   });
 
   const [listModal, setListModal] = useState({ isOpen: false, field: '', label: '', options: [] });
+  const [listSearchQuery, setListSearchQuery] = useState('');
   const [showArchive, setShowArchive] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -163,6 +164,7 @@ export default function WineDetail({ params }) {
 
   const openListModal = (field, label, options) => {
     if (currentUser?.role === 'viewer') return;
+    setListSearchQuery('');
     setListModal({ isOpen: true, field, label, options });
   };
 
@@ -2277,129 +2279,181 @@ export default function WineDetail({ params }) {
       {/* MODAL GESTIONE ELENCHI */}
       {listModal.isOpen && (
         <div className="modal-overlay" onClick={() => setListModal({ isOpen: false, field: '', label: '', options: [] })}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', width: '90%' }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', width: '90%', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ margin: 0 }}>Gestisci {listModal.label}</h2>
-              <button type="button" className="btn" onClick={(e) => { e.preventDefault(); setListModal({ isOpen: false, field: '', label: '', options: [] }); }} style={{ border: 'none', background: 'transparent', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Gestisci {listModal.label}</h2>
+              <button type="button" className="btn" onClick={(e) => { e.preventDefault(); setListModal({ isOpen: false, field: '', label: '', options: [] }); }} style={{ border: 'none', background: 'transparent', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}>&times;</button>
             </div>
 
-            <div style={{ maxHeight: '60vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
-              {(listModal.options || []).length === 0 ? (
-                <div style={{ color: '#64748b', textAlign: 'center', padding: '1rem' }}>Nessun elemento presente in elenco.</div>
-              ) : (
-                (listModal.options || []).map(opt => (
-                  <div key={opt} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: '#f8fafc', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                    <span style={{ fontWeight: '500' }}>{opt}</span>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        className="btn"
-                        title="Seleziona per questo vino"
-                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem', background: 'white', border: '1px solid var(--border-color)' }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (listModal.field === 'grapeVarieties') {
-                            const newGrapes = [...(wine.grapeVarieties || []), { name: opt, percentage: '' }];
-                            setWine({ ...wine, grapeVarieties: newGrapes });
-                          } else if (['bottleType', 'reason', 'vendor'].includes(listModal.field)) {
-                            setNewMovement({ ...newMovement, [listModal.field]: opt });
-                          } else {
-                            setWine({ ...wine, [listModal.field]: opt });
-                          }
-                          setListModal({ isOpen: false, field: '', label: '', options: [] });
-                        }}
-                      >
-                        Seleziona
-                      </button>
-                      <button
-                        className="btn"
-                        title="Rinomina globalmente"
-                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem', background: 'white', border: '1px solid var(--border-color)' }}
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          const newVal = window.prompt(`Rinomina "${opt}" in tutti i vini:`, opt);
-                          if (newVal !== null && newVal.trim() !== '' && newVal !== opt) {
-                            try {
-                              let res;
-                              if (listModal.field === '_initialLocationName') {
-                                const locToRename = locations.find(l => l.name === opt);
-                                if (!locToRename) return;
-                                res = await fetch(`/api/locations/${locToRename.id}`, {
-                                  method: 'PUT',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ name: newVal })
-                                });
-                                if (res.ok) {
-                                  const updated = await res.json();
-                                  setLocations(prev => prev.map(l => l.id === updated.id ? updated : l));
-                                  if (wine._initialLocationName === opt) {
-                                    setWine({ ...wine, _initialLocationName: newVal });
-                                  }
-                                }
-                              } else {
-                                res = await fetch('/api/wines/metadata', {
-                                  method: 'PUT',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ field: listModal.field, oldVal: opt, newVal })
-                                });
-                              }
-                              if (res && res.ok) {
-                                customAlert(`\n✅ Aggiornato con successo!\n`);
-                                fetchMetadata();
-                                setListModal({ isOpen: false, field: '', label: '', options: [] });
-                              } else {
-                                customAlert('Errore durante la modifica globale.');
-                              }
-                            } catch (e) {
-                              customAlert('Errore di rete.');
-                            }
-                          }
-                        }}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="btn btn-danger"
-                        title="Elimina globalmente"
-                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }}
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          if (currentUser?.role === 'viewer') return;
-                          if (!verifyDeletionPin()) return;
-                          if (listModal.field === '_initialLocationName') {
-                            const locToDelete = locations.find(l => l.name === opt);
-                            if (locToDelete) {
-                              setLocationMigration({ isOpen: true, locationToDeleteName: opt, locationToDeleteId: locToDelete.id, migrateToId: '' });
-                              setListModal({ isOpen: false, field: '', label: '', options: [] });
-                            }
-                            return;
-                          }
-                          if (window.confirm(`Sei sicuro di voler ELIMINARE "${opt}" da tutti i vini?`)) {
-                            try {
-                              const res = await fetch('/api/wines/metadata', {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ field: listModal.field, oldVal: opt, newVal: '' })
-                              });
-                              if (res.ok) {
-                                customAlert(`\n❌ Elemento eliminato con successo!\n`);
-                                fetchMetadata();
-                                setListModal({ isOpen: false, field: '', label: '', options: [] });
-                              } else {
-                                customAlert('Errore durante l\'eliminazione globale.');
-                              }
-                            } catch (e) {
-                              customAlert('Errore di rete.');
-                            }
-                          }
-                        }}
-                      >
-                        <Trash size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))
+            {/* Barra di ricerca per il popup */}
+            <div style={{ position: 'relative', marginBottom: '1rem' }}>
+              <Search size={18} color="#64748b" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                placeholder={`Cerca in ${listModal.label}...`}
+                value={listSearchQuery}
+                onChange={(e) => setListSearchQuery(e.target.value)}
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '0.6rem 2.2rem 0.6rem 2.4rem',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {listSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setListSearchQuery('')}
+                  style={{
+                    position: 'absolute',
+                    right: '0.6rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '1.1rem',
+                    padding: 0
+                  }}
+                >
+                  &times;
+                </button>
               )}
             </div>
+
+            {(() => {
+              const allOpts = listModal.options || [];
+              const filteredOpts = allOpts.filter(opt =>
+                opt && opt.toString().toLowerCase().includes(listSearchQuery.toLowerCase().trim())
+              );
+
+              return (
+                <div style={{ maxHeight: '55vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                  {filteredOpts.length === 0 ? (
+                    <div style={{ color: '#64748b', textAlign: 'center', padding: '1.5rem 1rem', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                      {listSearchQuery ? `Nessun risultato per "${listSearchQuery}"` : 'Nessun elemento presente in elenco.'}
+                    </div>
+                  ) : (
+                    filteredOpts.map(opt => (
+                      <div key={opt} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: '#f8fafc', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                        <span style={{ fontWeight: '500', color: '#1e293b', wordBreak: 'break-word', flex: 1, marginRight: '0.5rem' }}>{opt}</span>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                          <button
+                            className="btn"
+                            title="Seleziona per questo vino"
+                            style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', background: '#e0e7ff', color: '#4338ca', border: '1px solid #c7d2fe', fontWeight: '600' }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (listModal.field === 'grapeVarieties') {
+                                const newGrapes = [...(wine.grapeVarieties || []), { name: opt, percentage: '' }];
+                                setWine({ ...wine, grapeVarieties: newGrapes });
+                              } else if (['bottleType', 'reason', 'vendor'].includes(listModal.field)) {
+                                setNewMovement({ ...newMovement, [listModal.field]: opt });
+                              } else {
+                                setWine({ ...wine, [listModal.field]: opt });
+                              }
+                              setListModal({ isOpen: false, field: '', label: '', options: [] });
+                            }}
+                          >
+                            Seleziona
+                          </button>
+                          <button
+                            className="btn"
+                            title="Rinomina globalmente"
+                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.8rem', background: 'white', border: '1px solid var(--border-color)' }}
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              const newVal = window.prompt(`Rinomina "${opt}" in tutti i vini:`, opt);
+                              if (newVal !== null && newVal.trim() !== '' && newVal !== opt) {
+                                try {
+                                  let res;
+                                  if (listModal.field === '_initialLocationName') {
+                                    const locToRename = locations.find(l => l.name === opt);
+                                    if (!locToRename) return;
+                                    res = await fetch(`/api/locations/${locToRename.id}`, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ name: newVal })
+                                    });
+                                    if (res.ok) {
+                                      const updated = await res.json();
+                                      setLocations(prev => prev.map(l => l.id === updated.id ? updated : l));
+                                      if (wine._initialLocationName === opt) {
+                                        setWine({ ...wine, _initialLocationName: newVal });
+                                      }
+                                    }
+                                  } else {
+                                    res = await fetch('/api/wines/metadata', {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ field: listModal.field, oldVal: opt, newVal })
+                                    });
+                                  }
+                                  if (res && res.ok) {
+                                    customAlert(`\n✅ Aggiornato con successo!\n`);
+                                    fetchMetadata();
+                                    setListModal({ isOpen: false, field: '', label: '', options: [] });
+                                  } else {
+                                    customAlert('Errore durante la modifica globale.');
+                                  }
+                                } catch (e) {
+                                  customAlert('Errore di rete.');
+                                }
+                              }
+                            }}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn btn-danger"
+                            title="Elimina globalmente"
+                            style={{ padding: '0.25rem 0.55rem', fontSize: '0.8rem' }}
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              if (currentUser?.role === 'viewer') return;
+                              if (!verifyDeletionPin()) return;
+                              if (listModal.field === '_initialLocationName') {
+                                const locToDelete = locations.find(l => l.name === opt);
+                                if (locToDelete) {
+                                  setLocationMigration({ isOpen: true, locationToDeleteName: opt, locationToDeleteId: locToDelete.id, migrateToId: '' });
+                                  setListModal({ isOpen: false, field: '', label: '', options: [] });
+                                }
+                                return;
+                              }
+                              if (window.confirm(`Sei sicuro di voler ELIMINARE "${opt}" da tutti i vini?`)) {
+                                try {
+                                  const res = await fetch('/api/wines/metadata', {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ field: listModal.field, oldVal: opt, newVal: '' })
+                                  });
+                                  if (res.ok) {
+                                    customAlert(`\n❌ Elemento eliminato con successo!\n`);
+                                    fetchMetadata();
+                                    setListModal({ isOpen: false, field: '', label: '', options: [] });
+                                  } else {
+                                    customAlert('Errore durante l\'eliminazione globale.');
+                                  }
+                                } catch (e) {
+                                  customAlert('Errore di rete.');
+                                }
+                              }
+                            }}
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              );
+            })()}
 
             <button
               className="btn btn-primary"
