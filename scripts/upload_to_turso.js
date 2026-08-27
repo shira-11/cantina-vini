@@ -96,6 +96,7 @@ async function migrateAndUpload() {
       autoLogoutEnabled BOOLEAN NOT NULL DEFAULT 1,
       autoLogoutMinutes INTEGER NOT NULL DEFAULT 30,
       maxDevices INTEGER NOT NULL DEFAULT 2,
+      allowedLocations TEXT DEFAULT 'ALL',
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -103,6 +104,10 @@ async function migrateAndUpload() {
 
   try {
     await tursoClient.execute(`ALTER TABLE User ADD COLUMN maxDevices INTEGER DEFAULT 2;`);
+  } catch (e) {}
+
+  try {
+    await tursoClient.execute(`ALTER TABLE User ADD COLUMN allowedLocations TEXT DEFAULT 'ALL';`);
   } catch (e) {}
 
   await tursoClient.execute(`

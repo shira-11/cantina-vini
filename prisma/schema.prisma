@@ -99,6 +99,7 @@ model User {
   autoLogoutEnabled Boolean       @default(true)
   autoLogoutMinutes Int           @default(30)
   maxDevices        Int           @default(2)
+  allowedLocations  String?       @default("ALL")
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

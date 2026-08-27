@@ -14,6 +14,9 @@ export async function PUT(request, { params }) {
     if (data.autoLogoutEnabled !== undefined) updateData.autoLogoutEnabled = data.autoLogoutEnabled;
     if (data.autoLogoutMinutes !== undefined) updateData.autoLogoutMinutes = Number(data.autoLogoutMinutes);
     if (data.maxDevices !== undefined) updateData.maxDevices = Number(data.maxDevices);
+    if (data.allowedLocations !== undefined) {
+      updateData.allowedLocations = typeof data.allowedLocations === 'string' ? data.allowedLocations : JSON.stringify(data.allowedLocations);
+    }
     
     if (data.password) {
       const salt = await bcrypt.genSalt(10);
@@ -42,6 +45,7 @@ export async function PUT(request, { params }) {
       delete updateData.autoLogoutEnabled;
       delete updateData.autoLogoutMinutes;
       delete updateData.maxDevices;
+      delete updateData.allowedLocations;
       updatedUser = await prisma.user.update({
         where: { id: userId },
         data: updateData
@@ -55,7 +59,8 @@ export async function PUT(request, { params }) {
       isActive: updatedUser.isActive,
       autoLogoutEnabled: updatedUser.autoLogoutEnabled ?? true,
       autoLogoutMinutes: updatedUser.autoLogoutMinutes ?? 30,
-      maxDevices: updatedUser.maxDevices ?? 2
+      maxDevices: updatedUser.maxDevices ?? 2,
+      allowedLocations: updatedUser.allowedLocations ?? "ALL"
     });
   } catch (error) {
     console.error("PUT user error:", error);

@@ -19,11 +19,13 @@ export async function GET(request) {
     let autoLogoutEnabled = true;
     let autoLogoutMinutes = 30;
 
+    let allowedLocations = "ALL";
+
     let dbUser = null;
     try {
       dbUser = await prisma.user.findFirst({
         where: payload.userId ? { id: Number(payload.userId) } : { username: payload.username },
-        select: { username: true, role: true, isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: true }
+        select: { username: true, role: true, isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: true, allowedLocations: true }
       });
     } catch (dbErr) {
       console.error('Error finding user in auth/me:', dbErr);
@@ -37,6 +39,9 @@ export async function GET(request) {
       }
       if (dbUser.autoLogoutMinutes !== undefined && dbUser.autoLogoutMinutes !== null) {
         autoLogoutMinutes = dbUser.autoLogoutMinutes;
+      }
+      if (dbUser.allowedLocations !== undefined && dbUser.allowedLocations !== null) {
+        allowedLocations = dbUser.allowedLocations;
       }
     }
 
@@ -87,6 +92,7 @@ export async function GET(request) {
       user: {
         username,
         role,
+        allowedLocations,
         autoLogoutEnabled,
         autoLogoutMinutes
       }

@@ -818,10 +818,37 @@ export default function Home() {
     return null;
   }
 
+  const userAllowedLocations = (() => {
+    if (!currentUser || currentUser.role === 'admin' || !currentUser.allowedLocations || currentUser.allowedLocations === 'ALL') {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(currentUser.allowedLocations);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch(e) {}
+    return null;
+  })();
+
+  const availableLocations = userAllowedLocations 
+    ? uniqueLocations.filter(loc => userAllowedLocations.includes(loc))
+    : uniqueLocations;
+
   const handleWineClick = (wineId) => {
     if (currentUser?.role === 'viewer' && !visitorAllowWineDetails) {
       return;
     }
+
+    if (userAllowedLocations) {
+      const targetWine = wines.find(w => w.id === wineId);
+      if (targetWine) {
+        const hasAllowedStock = targetWine.movements?.some(m => m.location?.name && userAllowedLocations.includes(m.location.name));
+        if (!hasAllowedStock) {
+          customAlert("⚠️ Non disponi delle autorizzazioni per accedere alla cantina fisica di questo vino.");
+          return;
+        }
+      }
+    }
+
     sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
     router.push(`/wine/${wineId}`);
   };
@@ -1188,7 +1215,7 @@ export default function Home() {
                 style={filters.location ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
               >
                 <option value="">Tutte</option>
-                {uniqueLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                {availableLocations.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
             </div>
           )}

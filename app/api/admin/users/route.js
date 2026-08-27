@@ -15,6 +15,7 @@ export async function GET(request) {
           autoLogoutEnabled: true,
           autoLogoutMinutes: true,
           maxDevices: true,
+          allowedLocations: true,
           createdAt: true,
           updatedAt: true
         },
@@ -68,6 +69,7 @@ export async function GET(request) {
         autoLogoutEnabled: u.autoLogoutEnabled ?? true,
         autoLogoutMinutes: u.autoLogoutMinutes ?? 30,
         maxDevices: u.maxDevices ?? 2,
+        allowedLocations: u.allowedLocations ?? "ALL",
         activeDevicesCount: activeCount,
         createdAt: u.createdAt,
         updatedAt: u.updatedAt
@@ -84,7 +86,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const data = await request.json();
-    const { username, password, role, isActive, autoLogoutEnabled, autoLogoutMinutes, maxDevices } = data;
+    const { username, password, role, isActive, autoLogoutEnabled, autoLogoutMinutes, maxDevices, allowedLocations } = data;
 
     const trimmedUsername = username ? username.trim() : '';
 
@@ -106,7 +108,8 @@ export async function POST(request) {
       passwordHash,
       role: role || 'viewer',
       isActive: isActive !== undefined ? isActive : true,
-      maxDevices: maxDevices !== undefined ? Number(maxDevices) : 2
+      maxDevices: maxDevices !== undefined ? Number(maxDevices) : 2,
+      allowedLocations: typeof allowedLocations === 'string' ? allowedLocations : (Array.isArray(allowedLocations) ? JSON.stringify(allowedLocations) : "ALL")
     };
 
     if (autoLogoutEnabled !== undefined) userData.autoLogoutEnabled = autoLogoutEnabled;
@@ -134,7 +137,8 @@ export async function POST(request) {
       isActive: newUser.isActive,
       autoLogoutEnabled: newUser.autoLogoutEnabled ?? true,
       autoLogoutMinutes: newUser.autoLogoutMinutes ?? 30,
-      maxDevices: newUser.maxDevices ?? 2
+      maxDevices: newUser.maxDevices ?? 2,
+      allowedLocations: newUser.allowedLocations ?? "ALL"
     }, { status: 201 });
   } catch (error) {
     console.error("POST user error:", error);

@@ -7,6 +7,7 @@ import { Users, Shield, Plus, UserPlus, Edit2, Trash2, ArrowLeft, Check, X, Lock
 export default function AdminUsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -18,7 +19,10 @@ export default function AdminUsersPage() {
     role: 'viewer',
     isActive: true,
     autoLogoutEnabled: true,
-    autoLogoutMinutes: 30
+    autoLogoutMinutes: 30,
+    maxDevices: 2,
+    allowedLocationsType: 'ALL',
+    allowedLocationsList: []
   });
 
   const [deletionPin, setDeletionPin] = useState('1234');
@@ -42,11 +46,26 @@ export default function AdminUsersPage() {
     fetch('/api/settings').then(r => r.json()).then(data => {
       if (data.deletionPin) setDeletionPin(data.deletionPin);
     }).catch(console.error);
+    fetch('/api/locations').then(r => r.json()).then(data => {
+      setLocations(Array.isArray(data) ? data : []);
+    }).catch(console.error);
     fetchUsers();
   }, []);
 
   const handleOpenModal = (user = null) => {
     setShowPassword(false);
+    let locType = 'ALL';
+    let locList = [];
+    if (user && user.allowedLocations && user.allowedLocations !== 'ALL') {
+      try {
+        const parsed = JSON.parse(user.allowedLocations);
+        if (Array.isArray(parsed)) {
+          locType = 'SPECIFIC';
+          locList = parsed;
+        }
+      } catch (e) {}
+    }
+
     if (user) {
       setEditingUser(user);
       setFormData({
@@ -56,11 +75,23 @@ export default function AdminUsersPage() {
         isActive: user.isActive,
         autoLogoutEnabled: user.autoLogoutEnabled !== false,
         autoLogoutMinutes: user.autoLogoutMinutes || 30,
-        maxDevices: user.maxDevices ?? 2
+        maxDevices: user.maxDevices ?? 2,
+        allowedLocationsType: locType,
+        allowedLocationsList: locList
       });
     } else {
       setEditingUser(null);
-      setFormData({ username: '', password: '', role: 'viewer', isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: 30, maxDevices: 2 });
+      setFormData({ 
+        username: '', 
+        password: '', 
+        role: 'viewer', 
+        isActive: true, 
+        autoLogoutEnabled: true, 
+        autoLogoutMinutes: 30, 
+        maxDevices: 2,
+        allowedLocationsType: 'ALL',
+        allowedLocationsList: []
+      });
     }
     setIsModalOpen(true);
   };
@@ -71,7 +102,15 @@ export default function AdminUsersPage() {
       const url = editingUser ? `/api/admin/users/${editingUser.id}` : '/api/admin/users';
       const method = editingUser ? 'PUT' : 'POST';
       
-      const payload = { ...formData };
+      const payload = { 
+        ...formData,
+        allowedLocations: formData.allowedLocationsType === 'ALL'
+          ? 'ALL'
+          : JSON.stringify(formData.allowedLocationsList)
+      };
+      delete payload.allowedLocationsType;
+      delete payload.allowedLocationsList;
+
       if (editingUser && !payload.password) {
         delete payload.password; // Non inviare la password se è vuota in modifica
       }
@@ -177,6 +216,7 @@ export default function AdminUsersPage() {
                 <th style={{ padding: '1rem' }}>Username</th>
                 <th>Ruolo</th>
                 <th style={{ textAlign: 'center' }}>Stato Account</th>
+                <th style={{ textAlign: 'center' }}>Accesso Cantine</th>
                 <th style={{ textAlign: 'center' }}>Auto-Logout</th>
                 <th style={{ textAlign: 'center' }}>Dispositivi Collegati</th>
                 <th style={{ textAlign: 'right', padding: '1rem' }}>Azioni</th>
@@ -205,6 +245,32 @@ export default function AdminUsersPage() {
                         <Lock size={16} /> Bloccato
                       </span>
                     )}
+                  </td>
+                  <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>
+                    {(() => {
+                      if (!user.allowedLocations || user.allowedLocations === 'ALL') {
+                        return (
+                          <span style={{ color: '#059669', backgroundColor: '#d1fae5', padding: '0.2rem 0.6rem', borderRadius: '12px', fontWeight: 'bold' }}>
+                            🏰 Tutte le Cantine
+                          </span>
+                        );
+                      }
+                      try {
+                        const list = JSON.parse(user.allowedLocations);
+                        if (Array.isArray(list) && list.length > 0) {
+                          return (
+                            <span title={list.join(', ')} style={{ color: '#4338ca', backgroundColor: '#e0e7ff', padding: '0.2rem 0.6rem', borderRadius: '12px', fontWeight: 'bold', cursor: 'help' }}>
+                              🏰 {list.length} {list.length === 1 ? 'Cantina' : 'Cantine'}
+                            </span>
+                          );
+                        }
+                      } catch(e) {}
+                      return (
+                        <span style={{ color: '#059669', backgroundColor: '#d1fae5', padding: '0.2rem 0.6rem', borderRadius: '12px', fontWeight: 'bold' }}>
+                          🏰 Tutte le Cantine
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td style={{ textAlign: 'center', fontSize: '0.85rem', color: '#475569' }}>
                     {user.autoLogoutEnabled !== false ? (
@@ -312,6 +378,65 @@ export default function AdminUsersPage() {
                   <option value="editor">Operatore (Aggiunge/Modifica Vini)</option>
                   <option value="viewer">Visitatore (Solo Lettura, nessuna modifica)</option>
                 </select>
+              </div>
+
+              {/* AUTORIZZAZIONE CANTINE FISICHE */}
+              <div style={{ background: '#f0f9ff', padding: '0.85rem', borderRadius: '10px', border: '1px solid #bae6fd' }}>
+                <label style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#0369a1', fontSize: '0.95rem' }}>
+                  🏰 Accesso Cantine Fisiche Autorizzate
+                </label>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0.2rem 0 0.65rem 0' }}>
+                  Seleziona quali cantine fisiche questo utente può aprire, consultare e modificare.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: '#0c4a6e', fontWeight: formData.allowedLocationsType === 'ALL' ? 'bold' : 'normal' }}>
+                    <input
+                      type="radio"
+                      name="allowedLocType"
+                      checked={formData.allowedLocationsType === 'ALL'}
+                      onChange={() => setFormData({ ...formData, allowedLocationsType: 'ALL' })}
+                    />
+                    🌐 Tutte le Cantine Fisiche (Accesso Completo)
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: '#0c4a6e', fontWeight: formData.allowedLocationsType === 'SPECIFIC' ? 'bold' : 'normal' }}>
+                    <input
+                      type="radio"
+                      name="allowedLocType"
+                      checked={formData.allowedLocationsType === 'SPECIFIC'}
+                      onChange={() => setFormData({
+                        ...formData,
+                        allowedLocationsType: 'SPECIFIC',
+                        allowedLocationsList: formData.allowedLocationsList.length > 0 ? formData.allowedLocationsList : locations.map(l => l.name)
+                      })}
+                    />
+                    🎯 Seleziona Cantine Specifiche...
+                  </label>
+
+                  {formData.allowedLocationsType === 'SPECIFIC' && (
+                    <div style={{ marginTop: '0.35rem', paddingLeft: '1.4rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.4rem' }}>
+                      {locations.map(loc => {
+                        const isChecked = formData.allowedLocationsList.includes(loc.name);
+                        return (
+                          <label key={loc.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer', color: isChecked ? '#0284c7' : '#475569', fontWeight: isChecked ? '600' : '400' }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const newList = e.target.checked
+                                  ? [...formData.allowedLocationsList, loc.name]
+                                  : formData.allowedLocationsList.filter(n => n !== loc.name);
+                                setFormData({ ...formData, allowedLocationsList: newList });
+                              }}
+                            />
+                            {loc.name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* AUTORIZZAZIONE DISPOSITIVI SIMULTANEI */}
