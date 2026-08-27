@@ -9,7 +9,14 @@ import {
 
 export default function HelpGuideModal({ onClose }) {
   const handlePrint = () => {
-    window.print();
+    try {
+      const newWin = window.open('/print/guida', '_blank');
+      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+        window.location.href = '/print/guida';
+      }
+    } catch (e) {
+      window.print();
+    }
   };
 
   return (
