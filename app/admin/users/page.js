@@ -330,9 +330,17 @@ export default function AdminUsersPage() {
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="modal-header">
-              <h3 style={{ margin: 0 }}>{editingUser ? 'Modifica Utente' : 'Nuovo Utente'}</h3>
-              <button className="btn-close" onClick={() => setIsModalOpen(false)}><X size={20}/></button>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>{editingUser ? 'Modifica Utente' : 'Nuovo Utente'}</h3>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={() => setIsModalOpen(false)} 
+                title="Chiudi" 
+                style={{ marginLeft: 'auto', background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}
+              >
+                <X size={18}/>
+              </button>
             </div>
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.75rem' }}>
               <div className="form-group">

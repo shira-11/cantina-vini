@@ -827,3 +827,30 @@ body {
     display: block;
   }
 }
+
+.modal-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin-bottom: 1rem !important;
+}
+
+.btn-close, .modal-close-btn {
+  margin-left: auto !important;
+  background: #f1f5f9 !important;
+  border: none !important;
+  cursor: pointer !important;
+  width: 34px !important;
+  height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  color: #64748b !important;
+}
+
+.btn-close:hover, .modal-close-btn:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
