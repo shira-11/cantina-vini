@@ -87,11 +87,29 @@ export default function InventoryPage() {
   const [items, setItems] = useState([]);
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
 
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const userAllowedLocations = (() => {
+    if (!currentUser || currentUser.role === 'admin' || !currentUser.allowedLocations || currentUser.allowedLocations === 'ALL') {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(currentUser.allowedLocations);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch(e) {}
+    return null;
+  })();
+
+  const availableLocations = userAllowedLocations
+    ? locations.filter(l => userAllowedLocations.includes(l.name))
+    : locations;
+
   useEffect(() => {
     fetch('/api/auth/me')
       .then(r => r.json())
       .then(data => {
         if (data.user) {
+          setCurrentUser(data.user);
           if (data.user.role !== 'admin' && data.user.canAccessInventory === false) {
             alert('Accesso negato: non disponi delle autorizzazioni per accedere alla funzione Inventario Fisico.');
             router.push('/');
@@ -352,6 +370,7 @@ export default function InventoryPage() {
 
     // Location filter
     if (selectedLocFilter && loc.name !== selectedLocFilter) return false;
+    if (userAllowedLocations && loc.name && !userAllowedLocations.includes(loc.name)) return false;
 
     // Tab filter
     if (selectedTab === 'pending' && item.isChecked) return false;
@@ -381,6 +400,18 @@ export default function InventoryPage() {
     groupedItems.get(name).push(item);
   }
 
+  const handleOpenNewModal = () => {
+    if (userAllowedLocations && availableLocations.length > 0) {
+      const firstLoc = availableLocations[0];
+      setNewLocId(String(firstLoc.id));
+      setNewTitle(`Inventario ${newYear} - ${firstLoc.name}`);
+    } else {
+      setNewLocId('');
+      setNewTitle(`Inventario ${newYear}`);
+    }
+    setShowNewModal(true);
+  };
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'Arial, sans-serif' }}>
       {/* Top Header Bar */}
@@ -389,7 +420,7 @@ export default function InventoryPage() {
         color: 'white',
         padding: '16px 24px',
         display: 'flex',
-        justify: 'space-between',
+        justifyContent: 'space-between',
         alignItems: 'center',
         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         position: 'sticky',
@@ -407,7 +438,7 @@ export default function InventoryPage() {
 
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
-            onClick={() => setShowNewModal(true)}
+            onClick={handleOpenNewModal}
             style={{
               padding: '8px 16px',
               backgroundColor: '#10b981',
@@ -460,7 +491,7 @@ export default function InventoryPage() {
                   Non hai ancora avviato nessuna sessione di conteggio fisico per le tue cantine.
                 </p>
                 <button
-                  onClick={() => setShowNewModal(true)}
+                  onClick={handleOpenNewModal}
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#3b82f6',
@@ -799,7 +830,7 @@ export default function InventoryPage() {
                   }}
                 >
                   <option value="">Tutte le Cantine / Posizioni</option>
-                  {locations.map(l => (
+                  {availableLocations.map(l => (
                     <option key={l.id} value={l.name}>{l.name}</option>
                   ))}
                 </select>
@@ -1176,8 +1207,8 @@ export default function InventoryPage() {
                   }}
                   style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '2px solid #6366f1', fontSize: '14px', boxSizing: 'border-box', background: '#f8fafc', fontWeight: 'bold', color: '#312e81' }}
                 >
-                  <option value="">🏢 Tutte le Cantine (Generale)</option>
-                  {locations.map(l => (
+                  {!userAllowedLocations && <option value="">🏢 Tutte le Cantine (Generale)</option>}
+                  {availableLocations.map(l => (
                     <option key={l.id} value={l.id}>📍 {l.name}</option>
                   ))}
                 </select>
