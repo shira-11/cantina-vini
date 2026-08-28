@@ -838,17 +838,6 @@ export default function Home() {
       return;
     }
 
-    if (userAllowedLocations) {
-      const targetWine = wines.find(w => w.id === wineId);
-      if (targetWine) {
-        const hasAllowedStock = targetWine.movements?.some(m => m.location?.name && userAllowedLocations.includes(m.location.name));
-        if (!hasAllowedStock) {
-          customAlert("⚠️ Non disponi delle autorizzazioni per accedere alla cantina fisica di questo vino.");
-          return;
-        }
-      }
-    }
-
     sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
     router.push(`/wine/${wineId}`);
   };

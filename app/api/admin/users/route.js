@@ -31,6 +31,7 @@ export async function GET(request) {
           username: true,
           role: true,
           isActive: true,
+          allowedLocations: true,
           createdAt: true,
           updatedAt: true
         },

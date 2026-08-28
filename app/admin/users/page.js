@@ -58,12 +58,24 @@ export default function AdminUsersPage() {
     let locList = [];
     if (user && user.allowedLocations && user.allowedLocations !== 'ALL') {
       try {
-        const parsed = JSON.parse(user.allowedLocations);
-        if (Array.isArray(parsed)) {
+        const val = user.allowedLocations;
+        const parsed = typeof val === 'string' && (val.startsWith('[') || val.startsWith('{'))
+          ? JSON.parse(val)
+          : (Array.isArray(val) ? val : [val]);
+        
+        if (Array.isArray(parsed) && parsed.length > 0) {
           locType = 'SPECIFIC';
           locList = parsed;
+        } else if (typeof val === 'string' && val.trim().length > 0 && val !== 'ALL') {
+          locType = 'SPECIFIC';
+          locList = [val];
         }
-      } catch (e) {}
+      } catch (e) {
+        if (typeof user.allowedLocations === 'string' && user.allowedLocations.trim().length > 0) {
+          locType = 'SPECIFIC';
+          locList = [user.allowedLocations];
+        }
+      }
     }
 
     if (user) {

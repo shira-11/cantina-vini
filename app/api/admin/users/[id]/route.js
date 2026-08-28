@@ -41,14 +41,19 @@ export async function PUT(request, { params }) {
         data: updateData
       });
     } catch (upErr) {
-      console.warn("Retrying user update without extra fields:", upErr);
-      delete updateData.autoLogoutEnabled;
-      delete updateData.autoLogoutMinutes;
-      delete updateData.maxDevices;
-      delete updateData.allowedLocations;
+      console.warn("Retrying user update with essential fields:", upErr);
+      // Mantieni allowedLocations se presente
+      const safeData = {
+        role: updateData.role,
+        isActive: updateData.isActive,
+        passwordHash: updateData.passwordHash,
+        allowedLocations: updateData.allowedLocations
+      };
+      Object.keys(safeData).forEach(key => safeData[key] === undefined && delete safeData[key]);
+      
       updatedUser = await prisma.user.update({
         where: { id: userId },
-        data: updateData
+        data: safeData
       });
     }
 

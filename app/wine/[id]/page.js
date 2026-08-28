@@ -159,16 +159,6 @@ export default function WineDetail({ params }) {
     } catch(e) {}
     return null;
   })();
-
-  useEffect(() => {
-    if (wine && userAllowedLocations && unwrappedParams.id !== 'new') {
-      const hasAllowedStock = wine.movements?.some(m => m.location?.name && userAllowedLocations.includes(m.location.name));
-      if (!hasAllowedStock) {
-        alert("⚠️ Accesso riservato: non disponi delle autorizzazioni per accedere alla cantina fisica di questo vino.");
-        router.push('/');
-      }
-    }
-  }, [wine, currentUser, userAllowedLocations, unwrappedParams.id, router]);
   const [showFullForm, setShowFullForm] = useState(unwrappedParams.id === 'new');
   const [showAllMovements, setShowAllMovements] = useState(false);
   const [showExtraColumns, setShowExtraColumns] = useState(false);
