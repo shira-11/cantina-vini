@@ -767,22 +767,6 @@ export default function InventoryPage() {
                       </button>
                     </>
                   )}
-
-                  <button
-                    onClick={() => setActiveSession(null)}
-                    style={{
-                      padding: '8px 12px',
-                      backgroundColor: '#f1f5f9',
-                      color: '#475569',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      fontWeight: 'bold',
-                      fontSize: '13px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Torna al Registro
-                  </button>
                 </div>
               </div>
 
