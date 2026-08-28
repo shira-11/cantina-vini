@@ -230,29 +230,35 @@ export const MobileCatalog = ({
                 {currentUser.username}
               </span>
             )}
+            {currentUser?.role !== 'viewer' && (
+              <button
+                onClick={() => router.push('/wine/new')}
+                style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
+                title="Aggiungi Vino"
+              >
+                <Plus size={22} />
+              </button>
+            )}
+            {canViewButton && canViewButton('history_log') && (
+              <button
+                onClick={() => setIsGlobalLogOpen(true)}
+                style={{ background: 'none', border: 'none', color: '#3b82f6', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
+                title="Cronologia Movimenti"
+              >
+                <History size={22} />
+              </button>
+            )}
+            {canViewButton && canViewButton('inventory') && (
+              <button
+                onClick={() => router.push('/inventory')}
+                style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
+                title="Inventario Fisico"
+              >
+                <CheckSquare size={22} />
+              </button>
+            )}
             {currentUser?.role === 'admin' && (
               <>
-                <button
-                  onClick={() => router.push('/wine/new')}
-                  style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
-                  title="Aggiungi Vino"
-                >
-                  <Plus size={22} />
-                </button>
-                <button
-                  onClick={() => setIsGlobalLogOpen(true)}
-                  style={{ background: 'none', border: 'none', color: '#3b82f6', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
-                  title="Cronologia Movimenti"
-                >
-                  <History size={22} />
-                </button>
-                <button
-                  onClick={() => router.push('/inventory')}
-                  style={{ background: 'none', border: 'none', color: '#10b981', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.25rem' }}
-                  title="Inventario Fisico"
-                >
-                  <CheckSquare size={22} />
-                </button>
                 <button
                   onClick={() => router.push('/admin/users')}
                   style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--primary-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
