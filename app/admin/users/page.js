@@ -88,7 +88,7 @@ export default function AdminUsersPage() {
         autoLogoutEnabled: user.autoLogoutEnabled !== false,
         autoLogoutMinutes: user.autoLogoutMinutes || 30,
         maxDevices: user.maxDevices ?? 2,
-        canAccessInventory: user.canAccessInventory !== false,
+        canAccessInventory: (user.canAccessInventory === 0 || user.canAccessInventory === false || user.canAccessInventory === '0') ? false : true,
         allowedLocationsType: locType,
         allowedLocationsList: locList
       });

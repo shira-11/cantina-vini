@@ -43,12 +43,12 @@ export async function PUT(request, { params }) {
       });
     } catch (upErr) {
       console.warn("Retrying user update with essential fields:", upErr);
-      // Mantieni allowedLocations se presente
       const safeData = {
         role: updateData.role,
         isActive: updateData.isActive,
         passwordHash: updateData.passwordHash,
-        allowedLocations: updateData.allowedLocations
+        allowedLocations: updateData.allowedLocations,
+        canAccessInventory: updateData.canAccessInventory
       };
       Object.keys(safeData).forEach(key => safeData[key] === undefined && delete safeData[key]);
       
@@ -66,7 +66,8 @@ export async function PUT(request, { params }) {
       autoLogoutEnabled: updatedUser.autoLogoutEnabled ?? true,
       autoLogoutMinutes: updatedUser.autoLogoutMinutes ?? 30,
       maxDevices: updatedUser.maxDevices ?? 2,
-      allowedLocations: updatedUser.allowedLocations ?? "ALL"
+      allowedLocations: updatedUser.allowedLocations ?? "ALL",
+      canAccessInventory: (updatedUser.canAccessInventory === 0 || updatedUser.canAccessInventory === false || updatedUser.canAccessInventory === '0') ? false : true
     });
   } catch (error) {
     console.error("PUT user error:", error);
