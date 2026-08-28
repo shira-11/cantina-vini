@@ -35,11 +35,20 @@ export async function PUT(request, { params }) {
       }
     }
 
+    // Se canAccessInventory è definito, aggiornalo con raw SQL per evitare errori di client cachi
+    if (data.canAccessInventory !== undefined) {
+      const valInt = data.canAccessInventory ? 1 : 0;
+      await prisma.$executeRawUnsafe('UPDATE User SET canAccessInventory = ? WHERE id = ?', valInt, userId).catch(() => {});
+    }
+
     let updatedUser;
     try {
+      const prismaUpdateData = { ...updateData };
+      delete prismaUpdateData.canAccessInventory;
+
       updatedUser = await prisma.user.update({
         where: { id: userId },
-        data: updateData
+        data: prismaUpdateData
       });
     } catch (upErr) {
       console.warn("Retrying user update with essential fields:", upErr);
@@ -47,8 +56,7 @@ export async function PUT(request, { params }) {
         role: updateData.role,
         isActive: updateData.isActive,
         passwordHash: updateData.passwordHash,
-        allowedLocations: updateData.allowedLocations,
-        canAccessInventory: updateData.canAccessInventory
+        allowedLocations: updateData.allowedLocations
       };
       Object.keys(safeData).forEach(key => safeData[key] === undefined && delete safeData[key]);
       
@@ -57,6 +65,10 @@ export async function PUT(request, { params }) {
         data: safeData
       });
     }
+
+    const finalInv = data.canAccessInventory !== undefined 
+      ? Boolean(data.canAccessInventory) 
+      : ((updatedUser.canAccessInventory === 0 || updatedUser.canAccessInventory === false || updatedUser.canAccessInventory === '0') ? false : true);
 
     return NextResponse.json({
       id: updatedUser.id,
@@ -67,7 +79,7 @@ export async function PUT(request, { params }) {
       autoLogoutMinutes: updatedUser.autoLogoutMinutes ?? 30,
       maxDevices: updatedUser.maxDevices ?? 2,
       allowedLocations: updatedUser.allowedLocations ?? "ALL",
-      canAccessInventory: (updatedUser.canAccessInventory === 0 || updatedUser.canAccessInventory === false || updatedUser.canAccessInventory === '0') ? false : true
+      canAccessInventory: finalInv
     });
   } catch (error) {
     console.error("PUT user error:", error);

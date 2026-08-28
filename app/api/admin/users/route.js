@@ -25,20 +25,24 @@ export async function GET(request) {
         }
       });
     } catch (e) {
-      console.warn("Retrying GET users with core fields:", e);
-      users = await prisma.user.findMany({
-        select: {
-          id: true,
-          username: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      });
+      console.warn("Retrying GET users with raw query fallback:", e);
+      try {
+        users = await prisma.$queryRawUnsafe('SELECT id, username, role, isActive, autoLogoutEnabled, autoLogoutMinutes, maxDevices, allowedLocations, canAccessInventory, createdAt, updatedAt FROM User ORDER BY createdAt DESC');
+      } catch(rawErr) {
+        users = await prisma.user.findMany({
+          select: {
+            id: true,
+            username: true,
+            role: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        });
+      }
     }
 
     // Auto-cleanup stale sessions (over 90 seconds old without heartbeat)
@@ -71,6 +75,7 @@ export async function GET(request) {
         autoLogoutMinutes: u.autoLogoutMinutes ?? 30,
         maxDevices: u.maxDevices ?? 2,
         allowedLocations: u.allowedLocations ?? "ALL",
+        canAccessInventory: (u.canAccessInventory === 0 || u.canAccessInventory === false || u.canAccessInventory === '0') ? false : true,
         activeDevicesCount: activeCount,
         createdAt: u.createdAt,
         updatedAt: u.updatedAt
