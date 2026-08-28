@@ -20,12 +20,13 @@ export async function GET(request) {
     let autoLogoutMinutes = 30;
 
     let allowedLocations = "ALL";
+    let canAccessInventory = true;
 
     let dbUser = null;
     try {
       dbUser = await prisma.user.findFirst({
         where: payload.userId ? { id: Number(payload.userId) } : { username: payload.username },
-        select: { username: true, role: true, isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: true, allowedLocations: true }
+        select: { username: true, role: true, isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: true, allowedLocations: true, canAccessInventory: true }
       });
     } catch (dbErr) {
       try {
@@ -49,6 +50,9 @@ export async function GET(request) {
       }
       if (dbUser.allowedLocations !== undefined && dbUser.allowedLocations !== null) {
         allowedLocations = dbUser.allowedLocations;
+      }
+      if (dbUser.canAccessInventory !== undefined && dbUser.canAccessInventory !== null) {
+        canAccessInventory = dbUser.canAccessInventory;
       }
     }
 
@@ -100,6 +104,7 @@ export async function GET(request) {
         username,
         role,
         allowedLocations,
+        canAccessInventory,
         autoLogoutEnabled,
         autoLogoutMinutes
       }

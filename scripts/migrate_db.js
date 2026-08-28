@@ -38,6 +38,13 @@ if (fs.existsSync(dbPath)) {
     }
 
     try {
+      db.prepare("ALTER TABLE User ADD COLUMN canAccessInventory INTEGER DEFAULT 1").run();
+      console.log('Added canAccessInventory column');
+    } catch (e) {
+      console.log('canAccessInventory column exists or skipped');
+    }
+
+    try {
       db.prepare('UPDATE Wine SET isArchived = 0 WHERE isArchived IS NULL').run();
       console.log('Updated null isArchived values to 0');
     } catch (e) {

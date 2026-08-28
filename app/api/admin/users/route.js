@@ -16,6 +16,7 @@ export async function GET(request) {
           autoLogoutMinutes: true,
           maxDevices: true,
           allowedLocations: true,
+          canAccessInventory: true,
           createdAt: true,
           updatedAt: true
         },
@@ -86,7 +87,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const data = await request.json();
-    const { username, password, role, isActive, autoLogoutEnabled, autoLogoutMinutes, maxDevices, allowedLocations } = data;
+    const { username, password, role, isActive, autoLogoutEnabled, autoLogoutMinutes, maxDevices, allowedLocations, canAccessInventory } = data;
 
     const trimmedUsername = username ? username.trim() : '';
 
@@ -108,6 +109,7 @@ export async function POST(request) {
       passwordHash,
       role: role || 'viewer',
       isActive: isActive !== undefined ? isActive : true,
+      canAccessInventory: canAccessInventory !== undefined ? Boolean(canAccessInventory) : true,
       maxDevices: maxDevices !== undefined ? Number(maxDevices) : 2,
       allowedLocations: typeof allowedLocations === 'string' ? allowedLocations : (Array.isArray(allowedLocations) ? JSON.stringify(allowedLocations) : "ALL")
     };

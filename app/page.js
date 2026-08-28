@@ -140,6 +140,7 @@ export default function Home() {
 
   const canViewButton = (btnId) => {
     if (currentUser?.role === 'admin') return true;
+    if (btnId === 'inventory' && currentUser?.canAccessInventory === false) return false;
     return visitorAllowedButtons.includes(btnId);
   };
 

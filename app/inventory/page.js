@@ -88,6 +88,18 @@ export default function InventoryPage() {
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
 
   useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(data => {
+        if (data.user) {
+          if (data.user.role !== 'admin' && data.user.canAccessInventory === false) {
+            alert('Accesso negato: non disponi delle autorizzazioni per accedere alla funzione Inventario Fisico.');
+            router.push('/');
+            return;
+          }
+        }
+      })
+      .catch(console.error);
     fetchSessions();
     fetchLocations();
   }, []);

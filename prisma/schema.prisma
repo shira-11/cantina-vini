@@ -100,6 +100,7 @@ model User {
   autoLogoutMinutes Int           @default(30)
   maxDevices        Int           @default(2)
   allowedLocations  String?       @default("ALL")
+  canAccessInventory Boolean      @default(true)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

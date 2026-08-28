@@ -88,6 +88,7 @@ export default function AdminUsersPage() {
         autoLogoutEnabled: user.autoLogoutEnabled !== false,
         autoLogoutMinutes: user.autoLogoutMinutes || 30,
         maxDevices: user.maxDevices ?? 2,
+        canAccessInventory: user.canAccessInventory !== false,
         allowedLocationsType: locType,
         allowedLocationsList: locList
       });
@@ -101,6 +102,7 @@ export default function AdminUsersPage() {
         autoLogoutEnabled: true, 
         autoLogoutMinutes: 30, 
         maxDevices: 2,
+        canAccessInventory: true,
         allowedLocationsType: 'ALL',
         allowedLocationsList: []
       });
@@ -454,8 +456,22 @@ export default function AdminUsersPage() {
                           </label>
                         );
                       })}
-                    </div>
+                      </div>
                   )}
+
+                  <div style={{ marginTop: '0.85rem', paddingTop: '0.65rem', borderTop: '1px dashed #bae6fd' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: '#0369a1', fontWeight: 'bold' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.canAccessInventory}
+                        onChange={(e) => setFormData({ ...formData, canAccessInventory: e.target.checked })}
+                      />
+                      📋 Consenti Accesso a "Inventario Fisico" (Conteggio Bottiglie)
+                    </label>
+                    <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0.2rem 0 0 1.6rem' }}>
+                      Se attivato, l'utente potrà effettuare le sessioni di conteggio e spunta inventario.
+                    </p>
+                  </div>
                 </div>
               </div>
 

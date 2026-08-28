@@ -14,6 +14,7 @@ export async function PUT(request, { params }) {
     if (data.autoLogoutEnabled !== undefined) updateData.autoLogoutEnabled = data.autoLogoutEnabled;
     if (data.autoLogoutMinutes !== undefined) updateData.autoLogoutMinutes = Number(data.autoLogoutMinutes);
     if (data.maxDevices !== undefined) updateData.maxDevices = Number(data.maxDevices);
+    if (data.canAccessInventory !== undefined) updateData.canAccessInventory = Boolean(data.canAccessInventory);
     if (data.allowedLocations !== undefined) {
       updateData.allowedLocations = typeof data.allowedLocations === 'string' ? data.allowedLocations : JSON.stringify(data.allowedLocations);
     }
