@@ -28,7 +28,14 @@ export async function GET(request) {
         select: { username: true, role: true, isActive: true, autoLogoutEnabled: true, autoLogoutMinutes: true, allowedLocations: true }
       });
     } catch (dbErr) {
-      console.error('Error finding user in auth/me:', dbErr);
+      try {
+        dbUser = await prisma.user.findFirst({
+          where: payload.userId ? { id: Number(payload.userId) } : { username: payload.username },
+          select: { username: true, role: true, isActive: true }
+        });
+      } catch (e2) {
+        console.error('Error finding user in auth/me:', e2);
+      }
     }
 
     if (dbUser && dbUser.isActive) {
