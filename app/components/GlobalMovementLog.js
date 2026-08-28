@@ -8,11 +8,28 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'stock' | 'edits'
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [currentUser, setCurrentUser] = useState(null);
+
   useEffect(() => {
     if (isOpen) {
+      fetch('/api/auth/me')
+        .then(r => r.json())
+        .then(d => { if (d.user) setCurrentUser(d.user); })
+        .catch(console.error);
       fetchMovements();
     }
   }, [isOpen]);
+
+  const userAllowedLocations = (() => {
+    if (!currentUser || currentUser.role === 'admin' || !currentUser.allowedLocations || currentUser.allowedLocations === 'ALL') {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(currentUser.allowedLocations);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch(e) {}
+    return null;
+  })();
 
   const fetchMovements = async () => {
     setLoading(true);
@@ -70,6 +87,11 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
     // Filtro per Tab Sezione
     if (activeTab === 'stock' && isEditType(m.movementType)) return false;
     if (activeTab === 'edits' && !isEditType(m.movementType)) return false;
+
+    // Filtro per Cantine Fisiche autorizzate
+    if (userAllowedLocations && m.location?.name && !userAllowedLocations.includes(m.location.name)) {
+      return false;
+    }
 
     // Filtro per Barra di Ricerca interna
     if (searchQuery.trim() !== '') {

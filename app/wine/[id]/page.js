@@ -1215,28 +1215,35 @@ export default function WineDetail({ params }) {
                           </thead>
                           <tbody>
                             {Object.entries(stockSummary).map(([loc, qty]) => {
+                              const cleanLocName = loc.replace(/\s*\(.*?\)\s*/, '').trim();
+                              const isAllowed = !userAllowedLocations || userAllowedLocations.includes(cleanLocName);
                               return (
                                 <tr key={loc}>
                                   <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>{loc}</td>
                                   <td className={qty > 0 ? 'stock-positive' : 'stock-zero'} style={{ textAlign: 'center' }}>{qty} bt.</td>
                                   <td style={{ textAlign: 'center' }}>
-                                    <button
-                                      className="btn btn-primary"
-                                      style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                                      onClick={() => {
-                                        const bTypeMatch = loc.match(/\((.*?)\)/);
-                                        const bottleTypeToPrefill = bTypeMatch ? bTypeMatch[1] : '';
-                                        const cleanLocName = loc.replace(/\s*\(.*?\)\s*/, '').trim();
-                                        const cleanLocObj = locations.find(l => l.name === cleanLocName);
-                                        
-                                        if (cleanLocObj) {
-                                          setNewMovement({ ...newMovement, locationId: cleanLocObj.id.toString(), bottleType: bottleTypeToPrefill, movementType: '' });
-                                          setActiveTab('movimenti');
-                                        }
-                                      }}
-                                    >
-                                      Movimenta
-                                    </button>
+                                    {isAllowed ? (
+                                      <button
+                                        className="btn btn-primary"
+                                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
+                                        onClick={() => {
+                                          const bTypeMatch = loc.match(/\((.*?)\)/);
+                                          const bottleTypeToPrefill = bTypeMatch ? bTypeMatch[1] : '';
+                                          const cleanLocObj = locations.find(l => l.name === cleanLocName);
+                                          
+                                          if (cleanLocObj) {
+                                            setNewMovement({ ...newMovement, locationId: cleanLocObj.id.toString(), bottleType: bottleTypeToPrefill, movementType: '' });
+                                            setActiveTab('movimenti');
+                                          }
+                                        }}
+                                      >
+                                        Movimenta
+                                      </button>
+                                    ) : (
+                                      <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                                        🔒 Solo quantità (Non autorizzato)
+                                      </span>
+                                    )}
                                   </td>
                                 </tr>
                               );
@@ -1345,9 +1352,11 @@ export default function WineDetail({ params }) {
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                           <select style={{ flex: 1, minWidth: '200px', maxWidth: '300px' }} value={newMovement.locationId} onChange={e => setNewMovement({ ...newMovement, locationId: e.target.value })}>
                             <option value="">Seleziona cantina...</option>
-                            {locations.map(loc => (
-                              <option key={loc.id} value={loc.id}>{loc.name}</option>
-                            ))}
+                            {locations
+                              .filter(loc => !userAllowedLocations || userAllowedLocations.includes(loc.name))
+                              .map(loc => (
+                                <option key={loc.id} value={loc.id}>{loc.name}</option>
+                              ))}
                           </select>
                           <button className="btn" title="Gestisci Cantine" onClick={(e) => { e.preventDefault(); openListModal('_initialLocationName', 'Cantina', locations.map(l => l.name)); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
                         </div>
@@ -1611,7 +1620,11 @@ export default function WineDetail({ params }) {
                               const idNumB = typeof b.id === 'number' ? b.id : parseInt(String(b.id).replace(/\D/g, '')) || 0;
                               return idNumB - idNumA;
                             })
-                            .filter(m => !selectedLocationFilter || m.locationId?.toString() === selectedLocationFilter)
+                            .filter(m => {
+                              if (selectedLocationFilter && m.locationId?.toString() !== selectedLocationFilter) return false;
+                              if (userAllowedLocations && m.location?.name && !userAllowedLocations.includes(m.location.name)) return false;
+                              return true;
+                            })
                             .slice(0, showAllMovements ? undefined : 5)
                             .map(m => {
                               const isTransferOut = m.movementType === 'Uscita' && locations.some(l => {
