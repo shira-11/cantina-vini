@@ -657,6 +657,26 @@ export default function InventoryPage() {
 
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   <button
+                    onClick={() => setActiveSession(null)}
+                    style={{
+                      padding: '8px 14px',
+                      backgroundColor: '#f1f5f9',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      fontSize: '13px',
+                      color: '#334155',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                    title="Torna alla lista delle sessioni di inventario"
+                  >
+                    📂 Elenco Sessioni
+                  </button>
+
+                  <button
                     onClick={() => window.open(`/print/inventario?sessionId=${activeSession.id}`, '_blank')}
                     style={{
                       padding: '8px 14px',
