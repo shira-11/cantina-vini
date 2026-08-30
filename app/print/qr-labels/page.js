@@ -198,7 +198,7 @@ export default function PrintQRLabelsPage() {
       hiddenSheets.forEach(el => el.classList.remove('sheet-hidden-screen'));
 
       const opt = {
-        margin: [8, 8, 8, 8],
+        margin: [0, 0, 0, 0],
         filename: `Etichette_QR_Vini_${new Date().toISOString().slice(0, 10)}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false },
@@ -473,24 +473,30 @@ export default function PrintQRLabelsPage() {
                 style={{
                   width: '210mm',
                   maxWidth: '210mm',
+                  height: '297mm',
                   minHeight: '297mm',
                   margin: '0 auto',
                   background: 'white',
-                  padding: '8mm',
+                  padding: '10mm',
                   borderRadius: '8px',
                   boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.05)',
                   boxSizing: 'border-box',
-                  position: 'relative'
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justify: 'center',
+                  alignItems: 'center'
                 }}
               >
                 {/* Intestazione Foglio solo per Schermo */}
-                <div className="no-print" style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#94a3b8', marginBottom: '4mm', textTransform: 'uppercase', tracking: '0.05em', borderBottom: '1px dashed #e2e8f0', paddingBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                <div className="no-print" style={{ width: '100%', fontSize: '0.75rem', fontWeight: 'bold', color: '#94a3b8', marginBottom: '6mm', textTransform: 'uppercase', tracking: '0.05em', borderBottom: '1px dashed #e2e8f0', paddingBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
                   <span>Foglio A4 N° {pageNum} di {totalPages} (Formato 2 Colonne)</span>
                   <span>{sheetWines.length} Etichette</span>
                 </div>
 
                 {/* Grid 2 Colonne A4 */}
                 <div style={{
+                  width: '100%',
                   display: 'grid',
                   gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: pageSize <= 12 ? '4mm 6mm' : (pageSize <= 14 ? '3mm 5mm' : '2.5mm 4mm'),
@@ -579,30 +585,36 @@ export default function PrintQRLabelsPage() {
             background: white !important;
             padding: 0 !important;
             margin: 0 !important;
-            width: 100% !important;
+            width: 210mm !important;
+            height: 297mm !important;
           }
           .a4-sheets-wrapper {
             gap: 0 !important;
             display: block !important;
           }
           .sheet-hidden-screen {
-            display: block !important;
+            display: flex !important;
           }
           .a4-sheet {
             box-shadow: none !important;
-            padding: 0 !important;
+            padding: 10mm !important;
             margin: 0 auto !important;
-            width: 194mm !important;
-            max-width: 194mm !important;
-            height: 275mm !important;
-            max-height: 275mm !important;
-            min-height: 0 !important;
+            width: 210mm !important;
+            max-width: 210mm !important;
+            height: 297mm !important;
+            max-height: 297mm !important;
+            min-height: 297mm !important;
             overflow: hidden !important;
             border-radius: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
             page-break-after: always !important;
             break-after: page !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            box-sizing: border-box !important;
           }
           .a4-sheet:last-child {
             page-break-after: auto !important;
@@ -610,7 +622,7 @@ export default function PrintQRLabelsPage() {
           }
           @page {
             size: A4 portrait;
-            margin: 8mm 8mm 8mm 8mm;
+            margin: 0;
           }
         }
       `}</style>
