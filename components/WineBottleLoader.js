@@ -160,11 +160,111 @@ export default function WineBottleLoader({ message = 'Preparazione stampa in cor
           <rect x="54" y="2" width="32" height="9" rx="2" fill="#d97706" stroke="#92400e" strokeWidth="1.5" />
           {/* Glass reflection streak */}
           <path d="M 32 140 L 32 290" stroke="rgba(255, 255, 255, 0.6)" strokeWidth="3" strokeLinecap="round" />
-          {/* Label outline on bottle */}
-          <rect x="36" y="160" width="68" height="85" rx="4" fill="rgba(255,255,255,0.85)" stroke="#cbd5e1" strokeWidth="1.5" />
-          <line x1="48" y1="180" x2="92" y2="180" stroke="#881337" strokeWidth="2.5" strokeLinecap="round" />
-          <line x1="54" y1="195" x2="86" y2="195" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="44" y1="225" x2="96" y2="225" stroke="#cbd5e1" strokeWidth="1" />
+          {/* Elegant Wine Label (matching real bottle photo style) */}
+          <g transform="translate(32, 150)">
+            {/* Outer label background (Cream/Champagne) with soft drop shadow */}
+            <rect
+              x="0" y="0" width="76" height="96" rx="3"
+              fill="#faf7f2"
+              stroke="#b45309"
+              strokeWidth="1"
+            />
+
+            {/* Inner delicate double border frame */}
+            <rect
+              x="3" y="3" width="70" height="90" rx="2"
+              fill="none"
+              stroke="#92400e"
+              strokeWidth="0.75"
+            />
+            <rect
+              x="5" y="5" width="66" height="86" rx="1.5"
+              fill="none"
+              stroke="#78350f"
+              strokeWidth="0.4"
+            />
+
+            {/* Top: VENDEMMIA 2026 */}
+            <text
+              x="38" y="19"
+              fontFamily="Georgia, 'Times New Roman', serif"
+              fontSize="6"
+              fontWeight="bold"
+              fill="#881337"
+              textAnchor="middle"
+              letterSpacing="0.8"
+            >
+              VENDEMMIA
+            </text>
+            
+            <text
+              x="38" y="29"
+              fontFamily="Georgia, 'Times New Roman', serif"
+              fontSize="8"
+              fontWeight="bold"
+              fill="#78350f"
+              textAnchor="middle"
+              letterSpacing="1"
+            >
+              2026
+            </text>
+
+            {/* Decorative Divider Line */}
+            <line x1="18" y1="34" x2="58" y2="34" stroke="#b45309" strokeWidth="0.6" />
+            <circle cx="38" cy="34" r="1.2" fill="#881337" />
+
+            {/* Middle: CANTINA VINI */}
+            <text
+              x="38" y="47"
+              fontFamily="Georgia, 'Times New Roman', serif"
+              fontSize="8"
+              fontWeight="bold"
+              fill="#1e1b4b"
+              textAnchor="middle"
+              letterSpacing="1.2"
+            >
+              CANTINA
+            </text>
+            <text
+              x="38" y="57"
+              fontFamily="Georgia, 'Times New Roman', serif"
+              fontSize="7"
+              fontWeight="bold"
+              fill="#1e1b4b"
+              textAnchor="middle"
+              letterSpacing="1.5"
+            >
+              VINI
+            </text>
+
+            {/* Decorative Divider Line */}
+            <line x1="22" y1="63" x2="54" y2="63" stroke="#92400e" strokeWidth="0.5" />
+
+            {/* Bottom Variety: PINOT NERO */}
+            <text
+              x="38" y="74"
+              fontFamily="Georgia, 'Times New Roman', serif"
+              fontSize="6.5"
+              fontWeight="600"
+              fill="#881337"
+              textAnchor="middle"
+              letterSpacing="0.8"
+            >
+              PINOT NERO
+            </text>
+            
+            <text
+              x="38" y="84"
+              fontFamily="system-ui, sans-serif"
+              fontSize="4.5"
+              fontWeight="bold"
+              fill="#6b7280"
+              textAnchor="middle"
+              letterSpacing="0.5"
+            >
+              RISERVA
+            </text>
+          </g>
         </svg>
 
         {/* Masked liquid filling up */}
