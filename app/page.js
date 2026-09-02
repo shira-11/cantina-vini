@@ -852,31 +852,54 @@ export default function Home() {
 
   if (shouldShowMobileView && !forceDesktop) {
     return (
-      <MobileCatalog
-        wines={filteredWines}
-        loading={loading}
-        search={search}
-        setSearch={setSearch}
-        filters={filters}
-        setFilters={setFilters}
-        canViewFilter={canViewFilter}
-        canViewButton={canViewButton}
-        onWineClick={handleWineClick}
-        setForceDesktop={setForceDesktop}
-        uniqueCountries={uniqueCountries}
-        uniqueRegions={uniqueRegions}
-        uniqueProducerCellars={uniqueProducerCellars}
-        uniqueProducers={uniqueProducers}
-        uniqueClassifications={uniqueClassifications}
-        uniqueCategories={uniqueCategories}
-        uniqueLocations={uniqueLocations}
-        uniqueBottleTypes={uniqueBottleTypes}
-        currentUser={currentUser}
-        setIsGlobalLogOpen={setIsGlobalLogOpen}
-        winesArray={groupedWinesArray}
-        enableSearchAutocomplete={enableSearchAutocomplete}
-        onOpenQRScanner={() => setShowQRScanner(true)}
-      />
+      <>
+        <MobileCatalog
+          wines={filteredWines}
+          loading={loading}
+          search={search}
+          setSearch={setSearch}
+          filters={filters}
+          setFilters={setFilters}
+          canViewFilter={canViewFilter}
+          canViewButton={canViewButton}
+          onWineClick={handleWineClick}
+          setForceDesktop={setForceDesktop}
+          uniqueCountries={uniqueCountries}
+          uniqueRegions={uniqueRegions}
+          uniqueProducerCellars={uniqueProducerCellars}
+          uniqueProducers={uniqueProducers}
+          uniqueClassifications={uniqueClassifications}
+          uniqueCategories={uniqueCategories}
+          uniqueLocations={uniqueLocations}
+          uniqueBottleTypes={uniqueBottleTypes}
+          currentUser={currentUser}
+          setIsGlobalLogOpen={setIsGlobalLogOpen}
+          winesArray={groupedWinesArray}
+          enableSearchAutocomplete={enableSearchAutocomplete}
+          onOpenQRScanner={() => setShowQRScanner(true)}
+        />
+        <GlobalMovementLog isOpen={isGlobalLogOpen} onClose={() => setIsGlobalLogOpen(false)} />
+        {showQRScanner && (
+          <QRScannerModal
+            onClose={() => setShowQRScanner(false)}
+            onScanSuccess={(wineId) => {
+              const foundWine = wines.find(w => String(w.id) === String(wineId));
+              if (foundWine) {
+                setSearch(foundWine.name);
+              } else {
+                setSearch(String(wineId));
+              }
+              setShowQRScanner(false);
+            }}
+          />
+        )}
+        {qrWineModal && (
+          <QRCodeModal
+            wine={qrWineModal}
+            onClose={() => setQrWineModal(null)}
+          />
+        )}
+      </>
     );
   }
 
