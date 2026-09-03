@@ -269,7 +269,8 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
             alignItems: 'center',
             justify: 'center',
             userSelect: 'none',
-            position: 'relative'
+            position: 'relative',
+            overflow: 'hidden'
           }}>
             <div
               ref={containerRef}
@@ -336,25 +337,26 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
             <div style={{ marginTop: '0.4rem', color: '#94a3b8', fontSize: '0.75rem', textAlign: 'center' }}>
               🖐️ Trascina | Ingrandisci e ruota con i tasti sotto
             </div>
-          </div>
-
-          {/* Controls Panel */}
+                    {/* Controls Panel */}
           <div style={{
-            padding: isMobile ? '0.65rem 0.85rem' : '1rem 1.25rem',
+            padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.65rem',
-            background: '#ffffff'
+            gap: '0.75rem',
+            background: '#ffffff',
+            borderTop: '1px solid #e2e8f0',
+            position: 'relative',
+            zIndex: 10
           }}>
             {/* Zoom Slider */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <button
                 type="button"
                 onClick={() => handleZoomChange(zoom - 0.2)}
-                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.35rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.45rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                 title="Riduci zoom"
               >
-                <ZoomOut size={18} color="#475569" />
+                <ZoomOut size={18} color="#0f172a" />
               </button>
               <input
                 type="range"
@@ -363,58 +365,57 @@ export default function PhotoCropModal({ isOpen, photoUrl, type, wineName, vinta
                 step="0.05"
                 value={zoom}
                 onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
-                style={{ flex: 1, accentColor: '#8b5cf6', cursor: 'pointer' }}
+                style={{ flex: 1, accentColor: '#4f46e5', cursor: 'pointer' }}
               />
               <button
                 type="button"
                 onClick={() => handleZoomChange(zoom + 0.2)}
-                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.35rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.45rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                 title="Ingrandisci zoom"
               >
-                <ZoomIn size={18} color="#475569" />
+                <ZoomIn size={18} color="#0f172a" />
               </button>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, minWidth: '45px', textAlign: 'right', color: '#64748b' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 800, minWidth: '45px', textAlign: 'right', color: '#0f172a' }}>
                 {Math.round(zoom * 100)}%
               </span>
             </div>
 
             {/* Quick Preset Buttons */}
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button
                 type="button"
                 onClick={handleFitFull}
-                style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                style={{ background: '#e0f2fe', border: '1px solid #38bdf8', color: '#0369a1', borderRadius: '8px', padding: '0.5rem 0.8rem', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}
                 title="Mostra tutta la foto della bottiglia"
               >
-                <Maximize2 size={15} /> Foto Intera
+                <Maximize2 size={16} /> Foto Intera
               </button>
               <button
                 type="button"
                 onClick={handleRotateLeft}
-                style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#0f172a', borderRadius: '8px', padding: '0.5rem 0.8rem', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}
                 title="Ruota 90° a sinistra"
               >
-                <RotateCcw size={15} /> -90°
+                <RotateCcw size={16} /> -90°
               </button>
               <button
                 type="button"
                 onClick={handleRotateRight}
-                style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#0f172a', borderRadius: '8px', padding: '0.5rem 0.8rem', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}
                 title="Ruota 90° a destra"
               >
-                <RotateCw size={15} /> +90°
+                <RotateCw size={16} /> +90°
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                style={{ background: '#fef2f2', border: '1px solid #fecdd3', color: '#e11d48', borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                style={{ background: '#ffe4e6', border: '1px solid #fda4af', color: '#be123c', borderRadius: '8px', padding: '0.5rem 0.8rem', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}
                 title="Ripristina formato e posizione iniziale"
               >
-                <RefreshCw size={15} /> Reset
+                <RefreshCw size={16} /> Reset
               </button>
             </div>
-
-          </div>
+          </div>      </div>
 
         </div>
 
