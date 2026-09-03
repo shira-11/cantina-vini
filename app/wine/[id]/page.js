@@ -1791,11 +1791,16 @@ export default function WineDetail({ params }) {
                                     ...prev,
                                     photo: prev.photo || existingData.photo || '',
                                     photoBack: prev.photoBack || existingData.photoBack || '',
+                                    country: prev.country || existingData.country || 'Italia',
+                                    region: prev.region || existingData.region || '',
                                     producerCellar: prev.producerCellar || pCellar,
                                     producer: prev.producer || pProd,
-                                    region: prev.region || existingData.region || '',
-                                    category: prev.category || existingData.category || '',
                                     classification: prev.classification || existingData.classification || '',
+                                    category: prev.category || existingData.category || '',
+                                    type: prev.type || existingData.type || '',
+                                    alcoholContent: prev.alcoholContent || existingData.alcoholContent || '',
+                                    tempMin: prev.tempMin || existingData.tempMin || '',
+                                    tempMax: prev.tempMax || existingData.tempMax || '',
                                     grapeVarieties: (prev.grapeVarieties && prev.grapeVarieties.length > 0) ? prev.grapeVarieties : (existingData.grapeVarieties || [])
                                   }));
                                 }
