@@ -275,6 +275,23 @@ const WINE_KNOWLEDGE_BASE = [
     }
   },
   {
+    keywords: ['SPECOGNA', 'IDENTITÀ', 'IDENTITA', 'ROCCA BERNARDA'],
+    data: {
+      name: 'Identità',
+      country: 'Italia',
+      region: 'Friuli-Venezia Giulia',
+      classification: 'DOC',
+      category: 'Vino Bianco',
+      type: 'Secco',
+      alcoholContent: 13.5,
+      tempMin: 10,
+      tempMax: 12,
+      producerCellar: 'Specogna',
+      producer: 'Specogna',
+      grapeVarieties: [{ name: 'Friulano', percentage: 70 }, { name: 'Malvasia', percentage: 15 }, { name: 'Ribolla Gialla', percentage: 15 }]
+    }
+  },
+  {
     keywords: ['LUGANA'],
     data: {
       name: 'Lugana',

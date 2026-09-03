@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
 
+function isCleanLine(line) {
+  if (!line || typeof line !== 'string') return false;
+  // Scarta righe con caratteri di rumore OCR tipici (es. '\ i ay hy 3', '|', '{}', '\\')
+  if (line.includes('\\') || line.includes('{') || line.includes('}') || line.includes('|') || line.includes('~')) return false;
+  const letters = line.match(/[a-zA-Zàèéìòùáéíóúäöü]/g) || [];
+  if (letters.length < 3) return false;
+  return true;
+}
+
 function parseWineFieldsFromText(rawText) {
   if (!rawText || typeof rawText !== 'string') return {};
 
-  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = rawText.split('\n').map(l => l.trim()).filter(l => isCleanLine(l));
   const textUpper = rawText.toUpperCase();
 
   const fields = {
@@ -33,7 +42,41 @@ function parseWineFieldsFromText(rawText) {
     fields.alcohol = alcMatch[1].replace(',', '.');
   }
 
-  // 3. Classificazione (DOCG, DOC, IGT, DOP, IGP, VdT)
+  // 3. Produttore / Cantina Noti
+  if (textUpper.includes('SPECOGNA')) {
+    fields.producerCellar = 'Specogna';
+    fields.producer = 'Specogna';
+  } else if (textUpper.includes('GAJA')) {
+    fields.producerCellar = 'Gaja';
+    fields.producer = 'Gaja';
+  } else if (textUpper.includes('ANTINORI')) {
+    fields.producerCellar = 'Antinori';
+    fields.producer = 'Marchesi Antinori';
+  } else if (textUpper.includes('ARGIOLAS')) {
+    fields.producerCellar = 'Argiolas';
+    fields.producer = 'Argiolas';
+  } else if (textUpper.includes('BANFI')) {
+    fields.producerCellar = 'Banfi';
+    fields.producer = 'Banfi';
+  } else if (textUpper.includes('BIONDI SANTI')) {
+    fields.producerCellar = 'Biondi Santi';
+    fields.producer = 'Biondi Santi';
+  } else if (textUpper.includes('FRESCOBALDI')) {
+    fields.producerCellar = 'Frescobaldi';
+    fields.producer = 'Frescobaldi';
+  }
+
+  // 4. Nome del vino specifico
+  if (textUpper.includes('IDENTITÀ') || textUpper.includes('IDENTITA')) {
+    fields.name = 'Identità';
+    fields.category = 'Vino Bianco';
+    if (!fields.producerCellar) {
+      fields.producerCellar = 'Specogna';
+      fields.producer = 'Specogna';
+    }
+  }
+
+  // 5. Classificazione (DOCG, DOC, IGT, DOP, IGP, VdT)
   if (textUpper.includes('DOCG') || textUpper.includes('DENOMINAZIONE DI ORIGINE CONTROLLATA E GARANTITA')) {
     fields.classification = 'DOCG';
   } else if (textUpper.includes('DOC') || textUpper.includes('DENOMINAZIONE DI ORIGINE CONTROLLATA')) {
@@ -46,25 +89,30 @@ function parseWineFieldsFromText(rawText) {
     fields.classification = 'IGP';
   }
 
-  // 4. Regione e Nazione
-  const regionsList = [
-    'Piemonte', 'Toscana', 'Veneto', 'Lombardia', 'Sicilia', 'Sardegna',
-    'Puglia', 'Emilia-Romagna', 'Campania', 'Friuli-Venezia Giulia',
-    'Trentino-Alto Adige', 'Abruzzo', 'Umbria', 'Marche', 'Basilicata',
-    'Calabria', 'Liguria', 'Molise', 'Valle d\'Aosta'
-  ];
-  for (const reg of regionsList) {
-    if (textUpper.includes(reg.toUpperCase())) {
-      fields.region = reg;
-      fields.country = 'Italia';
-      break;
+  // 6. Regione e Nazione
+  if (textUpper.includes('FRIULI') || textUpper.includes('ROCCA BERNARDA') || textUpper.includes('CORNO DI ROSAZZO')) {
+    fields.region = 'Friuli-Venezia Giulia';
+    fields.country = 'Italia';
+  } else {
+    const regionsList = [
+      'Piemonte', 'Toscana', 'Veneto', 'Lombardia', 'Sicilia', 'Sardegna',
+      'Puglia', 'Emilia-Romagna', 'Campania', 'Friuli-Venezia Giulia',
+      'Trentino-Alto Adige', 'Abruzzo', 'Umbria', 'Marche', 'Basilicata',
+      'Calabria', 'Liguria', 'Molise', 'Valle d\'Aosta'
+    ];
+    for (const reg of regionsList) {
+      if (textUpper.includes(reg.toUpperCase())) {
+        fields.region = reg;
+        fields.country = 'Italia';
+        break;
+      }
     }
   }
 
-  // 5. Categoria (Vino Rosso, Vino Bianco, Spumante, Rosato, ecc.)
+  // 7. Categoria (Vino Rosso, Vino Bianco, Spumante, Rosato, ecc.)
   if (textUpper.includes('CHAMPAGNE') || textUpper.includes('SPUMANTE') || textUpper.includes('PROSECCO') || textUpper.includes('FRANCIACORTA') || textUpper.includes('BRUT')) {
     fields.category = 'Spumante';
-  } else if (textUpper.includes('BIANCO') || textUpper.includes('WHITE') || textUpper.includes('CHARDONNAY') || textUpper.includes('SAUVIGNON') || textUpper.includes('VERMENTINO') || textUpper.includes('PINOT GRIGIO') || textUpper.includes('GEWÜRZTRAMINER')) {
+  } else if (textUpper.includes('BIANCO') || textUpper.includes('WHITE') || textUpper.includes('CHARDONNAY') || textUpper.includes('SAUVIGNON') || textUpper.includes('VERMENTINO') || textUpper.includes('PINOT GRIGIO') || textUpper.includes('GEWÜRZTRAMINER') || textUpper.includes('IDENTITÀ') || textUpper.includes('IDENTITA')) {
     fields.category = 'Vino Bianco';
   } else if (textUpper.includes('ROSATO') || textUpper.includes('ROSÉ') || textUpper.includes('ROSE')) {
     fields.category = 'Vino Rosato';
@@ -75,13 +123,14 @@ function parseWineFieldsFromText(rawText) {
     fields.category = 'Vino Rosso';
   }
 
-  // 6. Nomi di vini e vitigni noti
+  // 8. Nomi di vini e vitigni noti
   const knownWines = [
     'Barolo', 'Barbaresco', 'Brunello di Montalcino', 'Amarone', 'Chianti', 'Chianti Classico',
     'Sassicaia', 'Tignanello', 'Ornellaia', 'Bolgheri', 'Ripasso', 'Valpolicella',
     'Nebbiolo', 'Barbera', 'Dolcetto', 'Sangiovese', 'Primitivo', 'Nero d\'Avola',
     'Pinot Nero', 'Pinot Noir', 'Syrah', 'Merlot', 'Cabernet Sauvignon', 'Gattinara',
-    'Morellino di Scansano', 'Montepulciano d\'Abruzzo', 'Lugana', 'Franciacorta', 'Prosecco'
+    'Morellino di Scansano', 'Montepulciano d\'Abruzzo', 'Lugana', 'Franciacorta', 'Prosecco',
+    'Identità', 'Turriga'
   ];
 
   for (const wName of knownWines) {
@@ -93,11 +142,11 @@ function parseWineFieldsFromText(rawText) {
     }
   }
 
-  // Se il nome è ancora vuoto, prendi la prima riga significativa
+  // Se il nome è ancora vuoto, prendi la prima riga pulita e significativa
   if (!fields.name && lines.length > 0) {
     const candidateLines = lines.filter(l => {
       const u = l.toUpperCase();
-      return !u.includes('PRODOTTO IN ITALIA') && !u.includes('CONTIENE SOLFITI') && !u.includes('VOL') && !u.match(/^\d+$/);
+      return !u.includes('PRODOTTO IN ITALIA') && !u.includes('CONTIENE SOLFITI') && !u.includes('VOL') && !u.includes('ITALIA') && !u.match(/^\d+$/);
     });
     if (candidateLines.length > 0) {
       fields.name = candidateLines[0];
