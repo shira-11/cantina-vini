@@ -293,6 +293,154 @@ const WINE_KNOWLEDGE_BASE = [
   }
 ];
 
+function extractFieldsFromOnlineText(query, rawText) {
+  if (!rawText) return null;
+
+  const textUpper = rawText.toUpperCase();
+  const fields = {
+    name: query,
+    country: 'Italia',
+    region: '',
+    classification: '',
+    category: 'Vino Rosso',
+    type: 'Secco',
+    alcoholContent: '',
+    tempMin: '',
+    tempMax: '',
+    producerCellar: '',
+    producer: '',
+    grapeVarieties: []
+  };
+
+  if (textUpper.includes('FRANCIA') || textUpper.includes('FRANCE') || textUpper.includes('BORDEAUX') || textUpper.includes('CHAMPAGNE') || textUpper.includes('BOURGOGNE')) {
+    fields.country = 'Francia';
+  } else if (textUpper.includes('SPAGNA') || textUpper.includes('RIOJA')) {
+    fields.country = 'Spagna';
+  } else if (textUpper.includes('GERMANIA') || textUpper.includes('MOSELLA')) {
+    fields.country = 'Germania';
+  }
+
+  const regionsList = [
+    'Piemonte', 'Toscana', 'Veneto', 'Lombardia', 'Sicilia', 'Sardegna',
+    'Puglia', 'Emilia-Romagna', 'Campania', 'Friuli-Venezia Giulia',
+    'Trentino-Alto Adige', 'Abruzzo', 'Umbria', 'Marche', 'Basilicata',
+    'Calabria', 'Liguria', 'Molise', 'Valle d\'Aosta'
+  ];
+  for (const reg of regionsList) {
+    if (textUpper.includes(reg.toUpperCase())) {
+      fields.region = reg;
+      break;
+    }
+  }
+
+  if (textUpper.includes('DOCG') || textUpper.includes('DENOMINAZIONE DI ORIGINE CONTROLLATA E GARANTITA')) {
+    fields.classification = 'DOCG';
+  } else if (textUpper.includes('DOC') || textUpper.includes('DENOMINAZIONE DI ORIGINE CONTROLLATA')) {
+    fields.classification = 'DOC';
+  } else if (textUpper.includes('IGT') || textUpper.includes('INDICAZIONE GEOGRAFICA TIPICA')) {
+    fields.classification = 'IGT';
+  } else if (textUpper.includes('AOC')) {
+    fields.classification = 'AOC';
+  } else if (textUpper.includes('DOP')) {
+    fields.classification = 'DOP';
+  } else if (textUpper.includes('IGP')) {
+    fields.classification = 'IGP';
+  }
+
+  if (textUpper.includes('CHAMPAGNE') || textUpper.includes('SPUMANTE') || textUpper.includes('PROSECCO') || textUpper.includes('FRANCIACORTA') || textUpper.includes('BRUT')) {
+    fields.category = 'Spumante';
+    fields.type = textUpper.includes('EXTRA DRY') ? 'Extra Dry' : 'Brut';
+    fields.tempMin = 6;
+    fields.tempMax = 8;
+  } else if (textUpper.includes('BIANCO') || textUpper.includes('WHITE') || textUpper.includes('CHARDONNAY') || textUpper.includes('SAUVIGNON') || textUpper.includes('VERMENTINO') || textUpper.includes('PINOT GRIGIO')) {
+    fields.category = 'Vino Bianco';
+    fields.tempMin = 10;
+    fields.tempMax = 12;
+  } else if (textUpper.includes('ROSATO') || textUpper.includes('ROSÉ')) {
+    fields.category = 'Vino Rosato';
+    fields.tempMin = 12;
+    fields.tempMax = 14;
+  } else if (textUpper.includes('DOLCE') || textUpper.includes('MOSCATO') || textUpper.includes('PASSITO')) {
+    fields.category = 'Vino Dolce / Passito';
+    fields.type = 'Dolce';
+    fields.tempMin = 12;
+    fields.tempMax = 14;
+  } else {
+    fields.category = 'Vino Rosso';
+    fields.tempMin = 16;
+    fields.tempMax = 18;
+  }
+
+  const alcMatch = rawText.match(/(\d{1,2}[\.,]?\d?)\s*%\s*(vol)?/i);
+  if (alcMatch) {
+    fields.alcoholContent = parseFloat(alcMatch[1].replace(',', '.'));
+  }
+
+  const knownGrapes = [
+    'Nebbiolo', 'Sangiovese', 'Corvina', 'Rondinella', 'Barbera', 'Dolcetto',
+    'Primitivo', 'Nero d\'Avola', 'Cannonau', 'Vermentino', 'Glera', 'Chardonnay',
+    'Pinot Nero', 'Pinot Noir', 'Pinot Grigio', 'Cabernet Sauvignon', 'Cabernet Franc',
+    'Merlot', 'Syrah', 'Sauvignon Blanc', 'Moscato', 'Montepulciano', 'Aglianico'
+  ];
+
+  for (const g of knownGrapes) {
+    if (textUpper.includes(g.toUpperCase())) {
+      fields.grapeVarieties.push({ name: g, percentage: null });
+    }
+  }
+
+  return fields;
+}
+
+async function searchInternetForWine(query) {
+  try {
+    let combinedText = '';
+
+    // Cerca su Wikipedia Italia
+    const wikiUrl = `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query + ' vino')}&format=json&origin=*`;
+    const wikiRes = await fetch(wikiUrl, { headers: { 'User-Agent': 'WineApp/1.0' } });
+    if (wikiRes.ok) {
+      const wikiData = await wikiRes.json();
+      const firstHit = wikiData?.query?.search?.[0];
+      if (firstHit && firstHit.title) {
+        const pageUrl = `https://it.wikipedia.org/w/api.php?action=query&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(firstHit.title)}&format=json&origin=*`;
+        const pageRes = await fetch(pageUrl, { headers: { 'User-Agent': 'WineApp/1.0' } });
+        if (pageRes.ok) {
+          const pageData = await pageRes.json();
+          const pages = pageData?.query?.pages;
+          if (pages) {
+            const pageObj = Object.values(pages)[0];
+            if (pageObj && pageObj.extract) {
+              combinedText += ' ' + pageObj.extract;
+            }
+          }
+        }
+      }
+    }
+
+    // Cerca su DuckDuckGo se testo breve
+    if (combinedText.length < 50) {
+      const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query + ' vino scheda produttore vitigno')}`;
+      const ddgRes = await fetch(ddgUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      if (ddgRes.ok) {
+        const html = await ddgRes.text();
+        const cleanText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+        combinedText += ' ' + cleanText;
+      }
+    }
+
+    if (!combinedText.trim()) return null;
+    return extractFieldsFromOnlineText(query, combinedText);
+  } catch (err) {
+    console.warn("Internet search error:", err);
+    return null;
+  }
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -322,13 +470,19 @@ export async function GET(request) {
       return NextResponse.json(wine);
     }
 
-    // 2. Se non presente in DB, cerca nel dizionario enciclopedico di conoscenza vini
+    // 2. Cerca nel dizionario di conoscenza vini
     const matchedKB = WINE_KNOWLEDGE_BASE.find(item => 
       item.keywords.some(kw => queryUpper.includes(kw))
     );
 
     if (matchedKB) {
       return NextResponse.json(matchedKB.data);
+    }
+
+    // 3. Ricerca automatica in tempo reale su INTERNET (Wikipedia & Web)
+    const onlineResult = await searchInternetForWine(name.trim());
+    if (onlineResult) {
+      return NextResponse.json(onlineResult);
     }
 
     return NextResponse.json(null);
