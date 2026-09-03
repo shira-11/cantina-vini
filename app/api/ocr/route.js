@@ -1,4 +1,73 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+async function analyzeWineLabelWithGemini(imageBuffer, mimeType = 'image/jpeg') {
+  try {
+    let apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+    // Cerca la chiave anche tra le impostazioni salvate nel database
+    if (!apiKey) {
+      const setting = await prisma.systemSettings.findFirst({
+        where: { key: 'gemini_api_key' }
+      });
+      if (setting && setting.value) {
+        apiKey = setting.value.trim();
+      }
+    }
+
+    if (!apiKey) return null;
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const imagePart = {
+      inlineData: {
+        data: imageBuffer.toString('base64'),
+        mimeType: mimeType
+      }
+    };
+
+    const prompt = `Sei un sommelier esperto ed un sistema OCR visivo di altissima precisione.
+Analizza attentamente l'immagine dell'etichetta di questa bottiglia di vino ed estrai le seguenti informazioni in formato JSON valido:
+
+{
+  "name": "Nome specifico del vino (es. Identità, Barolo Riserva, Sassicaia)",
+  "producerCellar": "Cantina Produttrice o Azienda Agricola (es. Specogna, Antinori)",
+  "producer": "Produttore / Enologo se presente",
+  "vintage": "Anno / Annata a 4 cifre (es. 2022)",
+  "country": "Nazione (es. Italia, Francia, Spagna)",
+  "region": "Regione vitivinicola (es. Friuli-Venezia Giulia, Piemonte, Toscana)",
+  "classification": "Classificazione (es. DOC, DOCG, IGT, AOC, DOP, IGP)",
+  "category": "Categoria (Vino Rosso, Vino Bianco, Spumante, Vino Rosato, Vino Dolce / Passito)",
+  "type": "Tipologia (Secco, Brut, Extra Dry, Dolce)",
+  "alcohol": "Grado alcolico numerico es. 13.5",
+  "grapeVarieties": [
+    { "name": "Nome vitigno", "percentage": null }
+  ],
+  "notes": "Breve descrizione enologica e abbinamenti consigliati"
+}
+
+Rispondi ESCLUSIVAMENTE con l'oggetto JSON pulito, senza markdown \`\`\`json.`;
+
+    const result = await model.generateContent([prompt, imagePart]);
+    const responseText = result.response.text();
+
+    const cleanedText = responseText
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .trim();
+
+    const parsedData = JSON.parse(cleanedText);
+    if (parsedData && (parsedData.name || parsedData.producerCellar || parsedData.vintage)) {
+      return parsedData;
+    }
+    return null;
+  } catch (err) {
+    console.warn("Gemini Vision AI Analysis Error:", err);
+    return null;
+  }
+}
 
 function isCleanLine(line) {
   if (!line || typeof line !== 'string') return false;
@@ -119,7 +188,6 @@ function parseWineFieldsFromText(rawText) {
     });
 
     if (validLines.length > 0) {
-      // Se abbiamo più righe, solitamente la riga più evidente o prima è il nome o produttore
       fields.name = validLines[0];
       if (validLines.length > 1) {
         fields.producerCellar = validLines[1];
@@ -131,7 +199,7 @@ function parseWineFieldsFromText(rawText) {
   return fields;
 }
 
-// Ricerca Automatica ed Autonoma su Internet (Wikipedia & DuckDuckGo Web Search)
+// Ricerca Automatica su Internet (Wikipedia & DuckDuckGo Web Search)
 async function searchInternetForWine(query) {
   try {
     if (!query || typeof query !== 'string') return null;
@@ -145,7 +213,6 @@ async function searchInternetForWine(query) {
 
     let combinedText = '';
 
-    // DuckDuckGo Search API per schede vini online
     const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(cleanQuery + ' vino scheda tecnica vitigno produttore')}`;
     const ddgRes = await fetch(ddgUrl, {
       headers: {
@@ -164,7 +231,6 @@ async function searchInternetForWine(query) {
       combinedText += ' ' + snippets.join(' ');
     }
 
-    // Wikipedia Italia Search API
     const wikiUrl = `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQuery + ' vino')}&format=json&origin=*`;
     const wikiRes = await fetch(wikiUrl, { headers: { 'User-Agent': 'WineApp/1.0' } });
     if (wikiRes.ok) {
@@ -198,10 +264,12 @@ export async function POST(request) {
   try {
     const contentType = request.headers.get('content-type') || '';
     let text = '';
+    let fields = {};
 
     if (contentType.includes('application/json')) {
       const json = await request.json();
       text = json.text || '';
+      fields = parseWineFieldsFromText(text);
     } else {
       const formData = await request.formData();
       const file = formData.get('file');
@@ -209,23 +277,43 @@ export async function POST(request) {
       if (file) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
+        const mimeType = file.type || 'image/jpeg';
 
-        try {
-          const TesseractModule = await import('tesseract.js');
-          const Tesseract = TesseractModule.default || TesseractModule;
-          const { data } = await Tesseract.recognize(buffer, 'ita+eng');
-          text = data?.text || '';
-        } catch (tessErr) {
-          console.warn("Server Tesseract error:", tessErr);
+        // 1. TENTA PRIMA L'ANALISI VISIVA MULTIMODALE CON GOOGLE GEMINI AI
+        const geminiResult = await analyzeWineLabelWithGemini(buffer, mimeType);
+        if (geminiResult) {
+          fields = {
+            name: geminiResult.name || '',
+            vintage: geminiResult.vintage || '',
+            country: geminiResult.country || 'Italia',
+            region: geminiResult.region || '',
+            producerCellar: geminiResult.producerCellar || '',
+            producer: geminiResult.producer || '',
+            classification: geminiResult.classification || '',
+            category: geminiResult.category || 'Vino Rosso',
+            type: geminiResult.type || 'Secco',
+            alcohol: geminiResult.alcohol || '',
+            grapeVarieties: geminiResult.grapeVarieties || [],
+            notes: geminiResult.notes || ''
+          };
+          text = `${fields.name} ${fields.producerCellar} ${fields.vintage} ${fields.region} ${fields.country}`.trim();
+        } else {
+          // 2. FALLBACK A TESSERACT OCR SE GEMINI NON È CONFIGURATO
+          try {
+            const TesseractModule = await import('tesseract.js');
+            const Tesseract = TesseractModule.default || TesseractModule;
+            const { data } = await Tesseract.recognize(buffer, 'ita+eng');
+            text = data?.text || '';
+            fields = parseWineFieldsFromText(text);
+          } catch (tessErr) {
+            console.warn("Server Tesseract error:", tessErr);
+          }
         }
       }
     }
 
-    // 1. Estrazione iniziale dal testo OCR dell'immagine
-    let fields = parseWineFieldsFromText(text);
-
-    // 2. Se l'estrazione iniziale è parziale, esegui la RICERCA INTERNET AUTONOMA in tempo reale!
-    if (text && text.trim().length > 3) {
+    // 3. Se l'estrazione è ancora parziale, compila con la ricerca internet autonoma in tempo reale
+    if (text && text.trim().length > 3 && (!fields.name || !fields.region)) {
       const onlineFields = await searchInternetForWine(text);
       if (onlineFields) {
         fields = {

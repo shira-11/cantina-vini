@@ -41,6 +41,7 @@ export default function AdminSettingsPage() {
   const [photoPreviewSeconds, setPhotoPreviewSeconds] = useState(3);
   const [enableSearchAutocomplete, setEnableSearchAutocomplete] = useState(true);
   const [deletionPin, setDeletionPin] = useState('1234');
+  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [uploadingBg, setUploadingBg] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -75,6 +76,9 @@ export default function AdminSettingsPage() {
           setEnableSearchAutocomplete(data.enableSearchAutocomplete !== false);
           if (data.deletionPin) {
             setDeletionPin(data.deletionPin);
+          }
+          if (data.geminiApiKey) {
+            setGeminiApiKey(data.geminiApiKey);
           }
           if (data.photoPreviewSeconds !== undefined) {
             setPhotoPreviewSeconds(data.photoPreviewSeconds);
@@ -139,7 +143,8 @@ export default function AdminSettingsPage() {
           loginPageBackground: loginPageBackground,
           photoPreviewSeconds: photoPreviewSeconds,
           enableSearchAutocomplete: enableSearchAutocomplete,
-          deletionPin: deletionPin
+          deletionPin: deletionPin,
+          geminiApiKey: geminiApiKey
         })
       });
 
@@ -748,6 +753,40 @@ export default function AdminSettingsPage() {
                   </span>
                 </div>
               </label>
+            </div>
+
+            {/* Card: Google Gemini Vision AI Key */}
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ background: '#f0fdf4', padding: '0.45rem', borderRadius: '8px', display: 'flex' }}>
+                  <Shield size={20} color="#16a34a" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e293b', fontWeight: '700' }}>Google Gemini Vision AI (Lettura Foto Etichetta)</h3>
+                  <span style={{ fontSize: '0.825rem', color: '#64748b' }}>Scansione multimodale visiva delle etichette bottiglia tramite IA</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>Gemini API Key</label>
+                <input
+                  type="password"
+                  placeholder="Es. AIzaSy..."
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  style={{
+                    padding: '0.65rem 0.85rem',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    fontFamily: 'monospace',
+                    width: '100%'
+                  }}
+                />
+                <span style={{ fontSize: '0.775rem', color: '#64748b' }}>
+                  Ottieni gratuitamente la tua chiave su <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>Google AI Studio</a>. Se non configurato, l'app usa il motore di ricerca visivo + web autonomo integrato.
+                </span>
+              </div>
             </div>
 
             {/* Card: Pulsanti Barra Superiore */}

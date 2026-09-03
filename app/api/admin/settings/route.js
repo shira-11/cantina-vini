@@ -8,7 +8,7 @@ export const revalidate = 0;
 export async function GET() {
   try {
     const settings = await prisma.systemSettings.findMany({
-      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds', 'visitor_allowed_buttons', 'enable_search_autocomplete', 'deletion_pin'] } }
+      where: { key: { in: ['visitor_allowed_filters', 'visitor_allow_wine_details', 'login_page_background', 'photo_preview_seconds', 'visitor_allowed_buttons', 'enable_search_autocomplete', 'deletion_pin', 'gemini_api_key'] } }
     });
 
     const filtersSetting = settings.find(s => s.key === 'visitor_allowed_filters');
@@ -18,6 +18,7 @@ export async function GET() {
     const buttonsSetting = settings.find(s => s.key === 'visitor_allowed_buttons');
     const autoSetting = settings.find(s => s.key === 'enable_search_autocomplete');
     const pinSetting = settings.find(s => s.key === 'deletion_pin');
+    const geminiSetting = settings.find(s => s.key === 'gemini_api_key');
 
     let allowedFilters = [
       'country', 'region', 'producerCellar', 'producer',
@@ -71,6 +72,11 @@ export async function GET() {
       deletionPin = pinSetting.value;
     }
 
+    let geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+    if (geminiSetting && geminiSetting.value) {
+      geminiApiKey = geminiSetting.value;
+    }
+
     return NextResponse.json({
       visitorAllowedFilters: allowedFilters,
       visitorAllowedButtons: allowedButtons,
@@ -78,7 +84,8 @@ export async function GET() {
       loginPageBackground: loginPageBackground,
       photoPreviewSeconds: photoPreviewSeconds,
       enableSearchAutocomplete: enableSearchAutocomplete,
-      deletionPin: deletionPin
+      deletionPin: deletionPin,
+      geminiApiKey: geminiApiKey
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
@@ -93,75 +100,69 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { visitorAllowedFilters, visitorAllowedButtons, visitorAllowWineDetails, loginPageBackground, photoPreviewSeconds, enableSearchAutocomplete, deletionPin } = body;
+    const { visitorAllowedFilters, visitorAllowedButtons, visitorAllowWineDetails, loginPageBackground, photoPreviewSeconds, enableSearchAutocomplete, deletionPin, geminiApiKey } = body;
 
     if (!Array.isArray(visitorAllowedFilters)) {
       return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
     }
 
-    const filterSettings = await prisma.systemSettings.upsert({
+    await prisma.systemSettings.upsert({
       where: { key: 'visitor_allowed_filters' },
       update: { value: JSON.stringify(visitorAllowedFilters) },
       create: { key: 'visitor_allowed_filters', value: JSON.stringify(visitorAllowedFilters) }
     });
 
-    const targetButtons = Array.isArray(visitorAllowedButtons) ? visitorAllowedButtons : [
-      'print_scheda', 'print_nazioni', 'print_pdf',
-      'export_excel', 'history_log', 'inventory'
-    ];
-    const buttonSettings = await prisma.systemSettings.upsert({
-      where: { key: 'visitor_allowed_buttons' },
-      update: { value: JSON.stringify(targetButtons) },
-      create: { key: 'visitor_allowed_buttons', value: JSON.stringify(targetButtons) }
-    });
+    if (Array.isArray(visitorAllowedButtons)) {
+      await prisma.systemSettings.upsert({
+        where: { key: 'visitor_allowed_buttons' },
+        update: { value: JSON.stringify(visitorAllowedButtons) },
+        create: { key: 'visitor_allowed_buttons', value: JSON.stringify(visitorAllowedButtons) }
+      });
+    }
 
-    let allowWineDetailsStr = visitorAllowWineDetails === false ? 'false' : 'true';
-    const wineDetailsSettings = await prisma.systemSettings.upsert({
+    await prisma.systemSettings.upsert({
       where: { key: 'visitor_allow_wine_details' },
-      update: { value: allowWineDetailsStr },
-      create: { key: 'visitor_allow_wine_details', value: allowWineDetailsStr }
+      update: { value: String(visitorAllowWineDetails) },
+      create: { key: 'visitor_allow_wine_details', value: String(visitorAllowWineDetails) }
     });
 
-    let loginBgStr = loginPageBackground === false ? 'false' : 'true';
-    const loginBgSettings = await prisma.systemSettings.upsert({
+    await prisma.systemSettings.upsert({
       where: { key: 'login_page_background' },
-      update: { value: loginBgStr },
-      create: { key: 'login_page_background', value: loginBgStr }
+      update: { value: String(loginPageBackground) },
+      create: { key: 'login_page_background', value: String(loginPageBackground) }
     });
 
-    let photoSecStr = String(photoPreviewSeconds || 3);
-    const photoSecSettings = await prisma.systemSettings.upsert({
+    await prisma.systemSettings.upsert({
       where: { key: 'photo_preview_seconds' },
-      update: { value: photoSecStr },
-      create: { key: 'photo_preview_seconds', value: photoSecStr }
+      update: { value: String(photoPreviewSeconds) },
+      create: { key: 'photo_preview_seconds', value: String(photoPreviewSeconds) }
     });
 
-    let enableAutoStr = enableSearchAutocomplete === false ? 'false' : 'true';
-    const autoSettings = await prisma.systemSettings.upsert({
+    await prisma.systemSettings.upsert({
       where: { key: 'enable_search_autocomplete' },
-      update: { value: enableAutoStr },
-      create: { key: 'enable_search_autocomplete', value: enableAutoStr }
+      update: { value: String(enableSearchAutocomplete) },
+      create: { key: 'enable_search_autocomplete', value: String(enableSearchAutocomplete) }
     });
 
-    let pinStr = String(deletionPin || '1234').trim();
-    const pinSettings = await prisma.systemSettings.upsert({
-      where: { key: 'deletion_pin' },
-      update: { value: pinStr },
-      create: { key: 'deletion_pin', value: pinStr }
-    });
+    if (deletionPin) {
+      await prisma.systemSettings.upsert({
+        where: { key: 'deletion_pin' },
+        update: { value: String(deletionPin) },
+        create: { key: 'deletion_pin', value: String(deletionPin) }
+      });
+    }
 
-    return NextResponse.json({
-      success: true,
-      visitorAllowedFilters: JSON.parse(filterSettings.value),
-      visitorAllowedButtons: JSON.parse(buttonSettings.value),
-      visitorAllowWineDetails: wineDetailsSettings.value === 'true',
-      loginPageBackground: loginBgSettings.value === 'true',
-      photoPreviewSeconds: parseInt(photoSecSettings.value, 10) || 3,
-      enableSearchAutocomplete: autoSettings.value === 'true',
-      deletionPin: pinSettings.value
-    });
+    if (geminiApiKey !== undefined) {
+      await prisma.systemSettings.upsert({
+        where: { key: 'gemini_api_key' },
+        update: { value: String(geminiApiKey).trim() },
+        create: { key: 'gemini_api_key', value: String(geminiApiKey).trim() }
+      });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating admin settings:', error);
+    console.error('Error saving admin settings:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
