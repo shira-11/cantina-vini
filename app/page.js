@@ -608,20 +608,28 @@ export default function Home() {
 
   const groupedMap = new Map();
   for (const w of filteredWines) {
-    if (!groupedMap.has(w.name)) {
-      groupedMap.set(w.name, {
-        name: w.name,
-        country: w.country,
-        category: w.category,
+    const cleanName = (w.name || '').trim();
+    const groupKey = cleanName.toLowerCase();
+
+    if (!groupedMap.has(groupKey)) {
+      groupedMap.set(groupKey, {
+        name: cleanName,
+        country: w.country || '',
+        category: w.category || '',
+        producerCellar: w.producerCellar || '',
         displayStock: 0,
         wines: [],
         photo: w.photo,
         id: w.id
       });
     }
-    const g = groupedMap.get(w.name);
+    const g = groupedMap.get(groupKey);
     g.wines.push(w);
     g.displayStock += w.displayStock;
+    if (!g.country && w.country) g.country = w.country;
+    if (!g.category && w.category) g.category = w.category;
+    if (!g.photo && w.photo) g.photo = w.photo;
+    if (!g.producerCellar && w.producerCellar) g.producerCellar = w.producerCellar;
   }
 
   const groupedWinesArray = Array.from(groupedMap.values()).sort((a, b) => {
@@ -1424,7 +1432,7 @@ export default function Home() {
                         setConfirmDialog({
                           message: `Sei sicuro di voler archiviare i ${selectedGroups.length} vini selezionati? Potrai recuperarli dall'Archivio.`,
                           onConfirm: async () => {
-                            const targetIds = groupedWinesArray.filter(g => selectedGroups.includes(g.name)).flatMap(g => g.wines.map(w => w.id));
+                            const targetIds = groupedWinesArray.filter(g => selectedGroups.map(s => s.trim().toLowerCase()).includes(g.name.trim().toLowerCase())).flatMap(g => g.wines.map(w => w.id));
                             try {
                               const res = await fetch('/api/wines/batch', {
                                 method: 'POST',
@@ -1446,6 +1454,38 @@ export default function Home() {
                         <span style={{ fontSize: '1.3rem' }}>🗄️</span>
                       </div>
 
+                      {selectedGroups.length >= 2 && (
+                        <>
+                          <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>
+
+                          <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
+                            setConfirmDialog({
+                              message: `Vuoi UNIFICARE i ${selectedGroups.length} vini selezionati in un'unica scheda principale trasferendo tutte le annate ed i movimenti?`,
+                              onConfirm: async () => {
+                                const targetIds = groupedWinesArray.filter(g => selectedGroups.map(s => s.trim().toLowerCase()).includes(g.name.trim().toLowerCase())).flatMap(g => g.wines.map(w => w.id));
+                                try {
+                                  const res = await fetch('/api/wines/batch', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ action: 'merge', wineIds: targetIds })
+                                  });
+                                  if (res.ok) {
+                                    alert("Vini unificati ed uniti con successo in un'unica scheda!");
+                                    setSelectedGroups([]);
+                                    fetchWines();
+                                  } else {
+                                    const err = await res.text();
+                                    alert("Errore durante l'unificazione: " + err);
+                                  }
+                                } catch (e) { alert('Errore di rete: ' + e.message); }
+                              }
+                            });
+                          }} title="Unisci / Unifica Schede Vino Duplicate">
+                            <span style={{ fontSize: '1.3rem' }}>🔗</span>
+                          </div>
+                        </>
+                      )}
+
                       <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 0.5rem' }}></div>
 
                       <div className="print-menu-container" style={{ cursor: 'pointer' }} onClick={() => {
@@ -1453,7 +1493,7 @@ export default function Home() {
                           message: `ATTENZIONE: Sei sicuro di voler ELIMINARE DEFINITIVAMENTE i ${selectedGroups.length} vini selezionati? Questa azione non è reversibile.`,
                           isDanger: true,
                           onConfirm: async () => {
-                            const targetIds = groupedWinesArray.filter(g => selectedGroups.includes(g.name)).flatMap(g => g.wines.map(w => w.id));
+                            const targetIds = groupedWinesArray.filter(g => selectedGroups.map(s => s.trim().toLowerCase()).includes(g.name.trim().toLowerCase())).flatMap(g => g.wines.map(w => w.id));
                             if (targetIds.length === 0) {
                               alert("Nessun vino valido selezionato per l'eliminazione."); return;
                             }
