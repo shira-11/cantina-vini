@@ -2784,31 +2784,32 @@ export default function WineDetail({ params }) {
                   Annata:
                 </label>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <select
+                  <input
+                    type="text"
+                    list="add-vintage-list"
+                    placeholder="Es. 2018, 1960 o S.A."
                     value={addVintageModal.vintage}
                     onChange={(e) => setAddVintageModal(prev => ({ ...prev, vintage: e.target.value }))}
                     style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', background: 'white' }}
-                  >
-                    <option value="">-- Seleziona Annata --</option>
-                    {Array.from({ length: 45 }, (_, i) => String(new Date().getFullYear() - i + 1)).map(yr => (
-                      <option key={yr} value={yr}>{yr}</option>
-                    ))}
-                    <option value="S.A.">S.A. (Senza Annata)</option>
-                  </select>
+                  />
                   <button
                     type="button"
                     className="btn"
                     style={{ padding: '0.65rem 0.85rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem' }}
-                    onClick={() => {
-                      const customYr = window.prompt("Inserisci un'annata personalizzata (es. 1985 o S.A.):");
-                      if (customYr && customYr.trim()) {
-                        setAddVintageModal(prev => ({ ...prev, vintage: customYr.trim() }));
-                      }
-                    }}
-                    title="Aggiungi o digita annata personalizzata"
+                    onClick={() => openListModal('vintage', 'Annata', metadata.vintages || [])}
+                    title="Seleziona o gestisci annate"
                   >
                     ✏️
                   </button>
+                  <datalist id="add-vintage-list">
+                    <option value="S.A.">S.A. (Senza Annata)</option>
+                    {Array.from({ length: 127 }, (_, i) => String(new Date().getFullYear() - i + 1)).map(yr => (
+                      <option key={yr} value={yr} />
+                    ))}
+                    {metadata.vintages && metadata.vintages.map(v => (
+                      <option key={v} value={v} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
