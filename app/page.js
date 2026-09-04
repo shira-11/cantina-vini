@@ -2118,6 +2118,225 @@ export default function Home() {
         </div>
       )}
 
+      {/* Floating Batch Action Bar (Azione veloce per unificare, archiviare ed eliminare vini selezionati) */}
+      {currentUser?.role !== 'viewer' && selectedGroups.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#0f172a',
+          color: 'white',
+          padding: '0.75rem 1.25rem',
+          borderRadius: '16px',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -6px rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.85rem',
+          zIndex: 9999,
+          border: '1px solid rgba(255,255,255,0.15)',
+          maxWidth: '92vw',
+          flexWrap: 'wrap',
+          justifyContent: 'center'
+        }}>
+          <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>
+            ☑ <strong>{selectedGroups.length}</strong> {selectedGroups.length === 1 ? 'vino selezionato' : 'vini selezionati'}
+          </div>
+
+          {selectedGroups.length >= 2 && (
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmDialog({
+                  message: `Vuoi UNIFICARE i ${selectedGroups.length} vini selezionati in un'unica scheda principale trasferendo tutte le annate ed i movimenti?`,
+                  onConfirm: async () => {
+                    const targetIds = groupedWinesArray.filter(g => selectedGroups.map(s => s.trim().toLowerCase()).includes(g.name.trim().toLowerCase())).flatMap(g => g.wines.map(w => w.id));
+                    try {
+                      const res = await fetch('/api/wines/batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'merge', wineIds: targetIds })
+                      });
+                      if (res.ok) {
+                        alert("Vini unificati ed uniti con successo in un'unica scheda!");
+                        setSelectedGroups([]);
+                        fetchWines();
+                      } else {
+                        const err = await res.text();
+                        alert("Errore durante l'unificazione: " + err);
+                      }
+                    } catch (e) { alert('Errore di rete: ' + e.message); }
+                  }
+                });
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.55rem 1rem',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.4)'
+              }}
+            >
+              🔗 Unisci Duplicati
+            </button>
+          )}
+
+          {!showArchive ? (
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmDialog({
+                  message: `Sei sicuro di voler archiviare i ${selectedGroups.length} vini selezionati? Potrai recuperarli dall'Archivio.`,
+                  onConfirm: async () => {
+                    const targetIds = groupedWinesArray.filter(g => selectedGroups.map(s => s.trim().toLowerCase()).includes(g.name.trim().toLowerCase())).flatMap(g => g.wines.map(w => w.id));
+                    try {
+                      const res = await fetch('/api/wines/batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'archive', wineIds: targetIds })
+                      });
+                      if (res.ok) {
+                        alert("Vini archiviati con successo!");
+                        setSelectedGroups([]);
+                        fetchWines();
+                      } else {
+                        const err = await res.text();
+                        alert("Errore durante l'archiviazione: " + err);
+                      }
+                    } catch (e) { alert('Errore di rete: ' + e.message); }
+                  }
+                });
+              }}
+              style={{
+                background: '#334155',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.55rem 0.9rem',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}
+            >
+              🗄️ Archivia
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmDialog({
+                  message: `Sei sicuro di voler ripristinare i ${selectedGroups.length} vini selezionati? Torneranno in cantina.`,
+                  onConfirm: async () => {
+                    const targetIds = groupedWinesArray.filter(g => selectedGroups.map(s => s.trim().toLowerCase()).includes(g.name.trim().toLowerCase())).flatMap(g => g.wines.map(w => w.id));
+                    try {
+                      const res = await fetch('/api/wines/batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'restore', wineIds: targetIds })
+                      });
+                      if (res.ok) {
+                        alert("Vini ripristinati con successo!");
+                        setSelectedGroups([]);
+                        fetchWines();
+                      } else {
+                        const err = await res.text();
+                        alert("Errore durante il ripristino: " + err);
+                      }
+                    } catch (e) { alert('Errore di rete: ' + e.message); }
+                  }
+                });
+              }}
+              style={{
+                background: '#334155',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.55rem 0.9rem',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}
+            >
+              ♻️ Ripristina
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setConfirmDialog({
+                message: `ATTENZIONE: Sei sicuro di voler ELIMINARE DEFINITIVAMENTE i ${selectedGroups.length} vini selezionati? Questa azione non è reversibile.`,
+                isDanger: true,
+                onConfirm: async () => {
+                  const targetIds = groupedWinesArray.filter(g => selectedGroups.map(s => s.trim().toLowerCase()).includes(g.name.trim().toLowerCase())).flatMap(g => g.wines.map(w => w.id));
+                  if (targetIds.length === 0) {
+                    alert("Nessun vino valido selezionato per l'eliminazione."); return;
+                  }
+                  try {
+                    const res = await fetch('/api/wines/batch', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ action: 'delete', wineIds: targetIds })
+                    });
+                    if (res.ok) {
+                      alert("Vini eliminati definitivamente con successo!");
+                      setSelectedGroups([]);
+                      fetchWines();
+                    } else {
+                      const err = await res.text();
+                      alert("Errore durante l'eliminazione definitiva: " + err);
+                    }
+                  } catch (e) { alert('Errore di rete: ' + e.message); }
+                }
+              });
+            }}
+            style={{
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.55rem 0.9rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            🗑️ Elimina
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedGroups([])}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#94a3b8',
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              padding: '0.2rem 0.4rem'
+            }}
+          >
+            ✕ Annulla
+          </button>
+        </div>
+      )}
+
       {/* Custom Confirm Dialog */}
       {confirmDialog && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
