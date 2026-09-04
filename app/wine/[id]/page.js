@@ -253,9 +253,9 @@ export default function WineDetail({ params }) {
     setNewMovement({
       date: new Date().toISOString().split('T')[0],
       movementType: '',
-      locationId: '',
+      locationId: wine?.locationId ? String(wine.locationId) : '',
       quantity: '',
-      bottleType: '',
+      bottleType: wine?.bottleType || 'Normale 0.75',
       reason: '',
       vendor: '',
       price: '',
@@ -279,6 +279,30 @@ export default function WineDetail({ params }) {
       // ALWAYS default to tutte-le-annate (it's the initial state of activeTab)
     }
   }, [unwrappedParams.id]);
+
+  // Pre-compila in automatico Tipo Bottiglia e Cantina nel form Movimenti se già presenti nella Scheda Vino
+  useEffect(() => {
+    if (wine) {
+      const defaultBottle = wine.bottleType || 'Normale 0.75';
+      const defaultLoc = wine.locationId 
+        ? String(wine.locationId) 
+        : (locations && locations.length > 0 ? String(locations[0].id) : '');
+
+      setNewMovement(prev => {
+        let updated = false;
+        const copy = { ...prev };
+        if (!copy.bottleType || copy.bottleType === '') {
+          copy.bottleType = defaultBottle;
+          updated = true;
+        }
+        if (!copy.locationId || copy.locationId === '') {
+          copy.locationId = defaultLoc;
+          updated = true;
+        }
+        return updated ? copy : prev;
+      });
+    }
+  }, [wine?.id, wine?.bottleType, wine?.locationId, locations]);
 
   const fetchWine = async () => {
     try {
