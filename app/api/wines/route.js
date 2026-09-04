@@ -142,17 +142,22 @@ export async function POST(request) {
                 });
               });
             }
-            // Always log the creation of the wine record
-            const locId = (data.movements && data.movements[0]?.locationId) ? parseInt(data.movements[0].locationId) : 1;
-            movs.push({
-              date: new Date(),
-              movementType: 'Modifica',
-              quantity: 0,
-              reason: 'Nuova Scheda Vino',
-              locationId: locId,
-              notes: 'Nuova scheda vino aggiunta al gestionale',
-              user: currentUser || null
-            });
+            // Always log the creation of the wine record if a valid location is provided
+            const locId = (data.movements && data.movements[0]?.locationId) 
+              ? parseInt(data.movements[0].locationId) 
+              : (data.locationId ? parseInt(data.locationId) : null);
+            
+            if (locId) {
+              movs.push({
+                date: new Date(),
+                movementType: 'Modifica',
+                quantity: 0,
+                reason: 'Nuova Scheda Vino',
+                locationId: locId,
+                notes: 'Nuova scheda vino aggiunta al gestionale',
+                user: currentUser || null
+              });
+            }
             return movs;
           })()
         },

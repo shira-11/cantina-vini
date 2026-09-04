@@ -888,8 +888,13 @@ export default function WineDetail({ params }) {
   const stockSummary = {};
   if (wine && wine.movements) {
     wine.movements.forEach(m => {
+      // Ignora i movimenti di registro/sistema ('Modifica' / 'Nuova Scheda Vino' con giacenza 0)
+      if (m.movementType === 'Modifica' || m.reason === 'Nuova Scheda Vino') return;
+
       const locName = m.location ? m.location.name : 'Sconosciuta';
-      const typeStr = !isDefaultBottle(m.bottleType) ? ` (${m.bottleType})` : "";
+      if (locName === 'Sconosciuta' && m.quantity === 0) return;
+
+      const typeStr = !isDefaultBottle(m.bottleType || wine.bottleType) ? ` (${m.bottleType || wine.bottleType})` : "";
       const key = `${locName}${typeStr}`;
       if (!stockSummary[key]) stockSummary[key] = 0;
       if (m.movementType === 'Ingresso') stockSummary[key] += m.quantity;
