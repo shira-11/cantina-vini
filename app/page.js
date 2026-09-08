@@ -744,47 +744,78 @@ export default function Home() {
       });
       const data = await res.json();
 
-      if (res.ok && data.text) {
-        // Parole comuni sulle etichette da ignorare
-        const blacklist = ['denominazione', 'origine', 'controllata', 'garantita', 'imbottigliato', 'prodotto', 'italia', 'vendemmia', 'cantina', 'annata', 'contiene', 'solfiti', 'volume', 'alcol', 'viticoltori', 'agricola', 'tenuta', 'azienda', 'delle', 'della', 'degli', 'riserva', 'superiore', 'classico', 'docg', 'doc', 'igt'];
+      if (res.ok && (data.text || data.fields?.name)) {
+        // Se Gemini ha identificato il nome esatto del vino
+        if (data.fields && data.fields.name) {
+          const exactName = data.fields.name.trim();
+          const pCellar = (data.fields.producerCellar || '').trim();
 
-        // Pulisce il testo includendo lettere accentate
-        const cleanText = data.text.replace(/[^a-zA-ZÀ-ÖØ-öø-ÿ\s]/g, ' ');
-        const wordsArray = cleanText.split(/[\s\n]+/).filter(w => w.length > 3 && !blacklist.includes(w.toLowerCase()));
+          // Cerca se esiste già nella cantina locale
+          let bestMatch = null;
+          let highestScore = 0;
 
-        // Cerca il miglior abbinamento confrontando le parole lette con il database locale
-        let bestMatch = null;
-        let highestScore = 0;
+          wines.forEach(wine => {
+            let score = 0;
+            const wineNameLower = wine.name.toLowerCase();
+            const searchNameLower = exactName.toLowerCase();
 
-        wines.forEach(wine => {
-          let score = 0;
-          const wineString = `${wine.name} ${wine.producer} ${wine.producerCellar || ''}`.toLowerCase();
-
-          wordsArray.forEach(word => {
-            if (wineString.includes(word.toLowerCase())) {
-              // Parole più lunghe danno più punteggio
-              score += word.length;
+            if (wineNameLower.includes(searchNameLower) || searchNameLower.includes(wineNameLower)) {
+              score += 10;
+            }
+            if (pCellar && (wine.producerCellar || '').toLowerCase().includes(pCellar.toLowerCase())) {
+              score += 5;
+            }
+            if (score > highestScore) {
+              highestScore = score;
+              bestMatch = wine;
             }
           });
 
-          if (score > highestScore) {
-            highestScore = score;
-            bestMatch = wine;
-          }
-        });
-
-        if (bestMatch && highestScore > 3) {
-          // Usa il nome del produttore o del vino che ha matchato meglio
-          setSearch(bestMatch.name);
-        } else {
-          // Fallback alla vecchia logica se non trova corrispondenze chiare nel db
-          wordsArray.sort((a, b) => b.length - a.length);
-          const bestWord = wordsArray.length > 0 ? wordsArray[0] : '';
-
-          if (bestWord) {
-            setSearch(bestWord);
+          if (bestMatch && highestScore >= 5) {
+            setSearch(bestMatch.name);
           } else {
-            alert('Testo non leggibile o troppo breve, riprova con una foto più nitida.');
+            // Se non c'è in cantina, imposta il nome esatto identificato dall'IA
+            setSearch(exactName);
+          }
+        } else {
+          // Parole comuni sulle etichette da ignorare se non c'è Gemini
+          const blacklist = ['denominazione', 'origine', 'controllata', 'garantita', 'imbottigliato', 'prodotto', 'italia', 'vendemmia', 'cantina', 'annata', 'contiene', 'solfiti', 'volume', 'alcol', 'viticoltori', 'agricola', 'tenuta', 'azienda', 'delle', 'della', 'degli', 'riserva', 'superiore', 'classico', 'docg', 'doc', 'igt'];
+
+          // Pulisce il testo includendo lettere accentate
+          const cleanText = (data.text || '').replace(/[^a-zA-ZÀ-ÖØ-öø-ÿ\s]/g, ' ');
+          const wordsArray = cleanText.split(/[\s\n]+/).filter(w => w.length > 3 && !blacklist.includes(w.toLowerCase()));
+
+          // Cerca il miglior abbinamento confrontando le parole lette con il database locale
+          let bestMatch = null;
+          let highestScore = 0;
+
+          wines.forEach(wine => {
+            let score = 0;
+            const wineString = `${wine.name} ${wine.producer} ${wine.producerCellar || ''}`.toLowerCase();
+
+            wordsArray.forEach(word => {
+              if (wineString.includes(word.toLowerCase())) {
+                score += word.length;
+              }
+            });
+
+            if (score > highestScore) {
+              highestScore = score;
+              bestMatch = wine;
+            }
+          });
+
+          if (bestMatch && highestScore > 3) {
+            setSearch(bestMatch.name);
+          } else {
+            wordsArray.sort((a, b) => b.length - a.length);
+            const bestWord = wordsArray.length > 0 ? wordsArray[0] : '';
+
+            if (bestWord) {
+              setSearch(bestWord);
+            } else {
+              alert('Testo non leggibile o troppo breve, riprova con una foto più nitida.');
+            }
           }
         }
       } else {

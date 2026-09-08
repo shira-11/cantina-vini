@@ -534,36 +534,13 @@ export default function WineDetail({ params }) {
     customAlert('🔍 Lettura ed analisi etichetta in corso...');
     try {
       const compressedFile = await compressImage(file);
-      let recognizedText = '';
 
-      // Tenta la lettura via Tesseract nel browser client (funziona al 100% su Vercel online senza timeout)
-      try {
-        const TesseractModule = await import('tesseract.js');
-        const Tesseract = TesseractModule.default || TesseractModule;
-        
-        const worker = await Tesseract.createWorker('ita+eng');
-        const ret = await worker.recognize(compressedFile);
-        recognizedText = ret?.data?.text || '';
-        await worker.terminate();
-      } catch (clientOcrErr) {
-        console.warn("Client Tesseract fallback to server:", clientOcrErr);
-      }
-
-      let ocrRes;
-      if (recognizedText && recognizedText.trim().length > 3) {
-        ocrRes = await fetch('/api/ocr', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: recognizedText })
-        });
-      } else {
-        const ocrFormData = new FormData();
-        ocrFormData.append('file', compressedFile);
-        ocrRes = await fetch('/api/ocr', {
-          method: 'POST',
-          body: ocrFormData
-        });
-      }
+      const ocrFormData = new FormData();
+      ocrFormData.append('file', compressedFile);
+      const ocrRes = await fetch('/api/ocr', {
+        method: 'POST',
+        body: ocrFormData
+      });
 
       const ocrData = await ocrRes.json();
       if (ocrRes.ok && ocrData.fields) {
