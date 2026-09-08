@@ -19,7 +19,6 @@ async function analyzeWineLabelWithGemini(imageBuffer, mimeType = 'image/jpeg') 
     if (!apiKey) return null;
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const imagePart = {
       inlineData: {
@@ -28,16 +27,17 @@ async function analyzeWineLabelWithGemini(imageBuffer, mimeType = 'image/jpeg') 
       }
     };
 
-    const prompt = `Sei un sommelier esperto ed un sistema OCR visivo di altissima precisione.
-Analizza attentamente l'immagine dell'etichetta di questa bottiglia di vino ed estrai le seguenti informazioni in formato JSON valido:
+    const prompt = `Sei un sommelier esperto ed un sistema visivo OCR di altissima precisione.
+Analizza attentamente l'immagine dell'etichetta di questa bottiglia di vino ed estrai il nome esatto del vino, la cantina ed i metadati completi.
 
+Restituisci un oggetto JSON valido con la seguente struttura esatta:
 {
-  "name": "Nome specifico del vino (es. Identità, Barolo Riserva, Sassicaia)",
-  "producerCellar": "Cantina Produttrice o Azienda Agricola (es. Specogna, Antinori)",
-  "producer": "Produttore / Enologo se presente",
-  "vintage": "Anno / Annata a 4 cifre (es. 2022)",
-  "country": "Nazione (es. Italia, Francia, Spagna)",
-  "region": "Regione vitivinicola (es. Friuli-Venezia Giulia, Piemonte, Toscana)",
+  "name": "Nome completo ed esatto del vino (inclusi Cru, Sezione o Riserva es. Barolo Bussia Riserva, Specogna Identità)",
+  "producerCellar": "Azienda Agricola / Cantina Produttrice (es. Marchesi di Barolo, Specogna)",
+  "producer": "Nome del produttore/enologo se indicato",
+  "vintage": "Anno / Annata (es. 2022, 2018)",
+  "country": "Nazione (es. Italia, Francia)",
+  "region": "Regione vitivinicola (es. Piemonte, Toscana, Friuli-Venezia Giulia)",
   "classification": "Classificazione (es. DOC, DOCG, IGT, AOC, DOP, IGP)",
   "category": "Categoria (Vino Rosso, Vino Bianco, Spumante, Vino Rosato, Vino Dolce / Passito)",
   "type": "Tipologia (Secco, Brut, Extra Dry, Dolce)",
@@ -45,12 +45,20 @@ Analizza attentamente l'immagine dell'etichetta di questa bottiglia di vino ed e
   "grapeVarieties": [
     { "name": "Nome vitigno", "percentage": null }
   ],
-  "notes": "Breve descrizione enologica e abbinamenti consigliati"
+  "notes": "Note di degustazione e descrizione"
 }
 
-Rispondi ESCLUSIVAMENTE con l'oggetto JSON pulito, senza markdown \`\`\`json.`;
+Rispondi ESCLUSIVAMENTE con il JSON pulito, senza markdown \`\`\`json.`;
 
-    const result = await model.generateContent([prompt, imagePart]);
+    let result;
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      result = await model.generateContent([prompt, imagePart]);
+    } catch (mErr) {
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      result = await model.generateContent([prompt, imagePart]);
+    }
+
     const responseText = result.response.text();
 
     const cleanedText = responseText
