@@ -1219,7 +1219,7 @@ export default function InventoryPage() {
                       setNewTitle(`Inventario ${newYear}`);
                     }
                   }}
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '2px solid #6366f1', fontSize: '14px', boxSizing: 'border-box', background: '#f8fafc', fontWeight: 'bold', color: '#312e81' }}
+                  style={{ width: '100%', height: '42px', padding: '0 12px', borderRadius: '6px', border: '2px solid #6366f1', fontSize: '14px', boxSizing: 'border-box', background: '#f8fafc', fontWeight: 'bold', color: '#312e81' }}
                 >
                   {!userAllowedLocations && <option value="">🏢 Tutte le Cantine (Generale)</option>}
                   {availableLocations.map(l => (
@@ -1237,50 +1237,49 @@ export default function InventoryPage() {
                   placeholder={`es. Inventario ${newYear} o Inventario Fine Anno`}
                   value={newTitle}
                   onChange={e => setNewTitle(e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
+                  style={{ width: '100%', height: '42px', padding: '0 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
                 />
               </div>
 
-              {/* Mese e Anno di Riferimento */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#1e293b' }}>
-                    Mese Riferimento:
-                  </label>
-                  <select
-                    value={newMonth}
-                    onChange={e => {
-                      const m = e.target.value;
-                      setNewMonth(m);
-                      const selectedLoc = locations.find(l => String(l.id) === String(newLocId));
-                      const locSuffix = selectedLoc ? ` - ${selectedLoc.name}` : '';
-                      setNewTitle(`Inventario ${m} ${newYear}${locSuffix}`);
-                    }}
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box', background: 'white' }}
-                  >
-                    {["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"].map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
+              {/* Mese di Riferimento */}
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#1e293b' }}>
+                  Mese Riferimento:
+                </label>
+                <select
+                  value={newMonth}
+                  onChange={e => {
+                    const m = e.target.value;
+                    setNewMonth(m);
+                    const selectedLoc = locations.find(l => String(l.id) === String(newLocId));
+                    const locSuffix = selectedLoc ? ` - ${selectedLoc.name}` : '';
+                    setNewTitle(`Inventario ${m} ${newYear}${locSuffix}`);
+                  }}
+                  style={{ width: '100%', height: '42px', padding: '0 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box', background: 'white' }}
+                >
+                  {["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"].map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#1e293b' }}>
-                    Anno Riferimento:
-                  </label>
-                  <input
-                    type="number"
-                    value={newYear}
-                    onChange={e => {
-                      const y = parseInt(e.target.value) || new Date().getFullYear();
-                      setNewYear(y);
-                      const selectedLoc = locations.find(l => String(l.id) === String(newLocId));
-                      const locSuffix = selectedLoc ? ` - ${selectedLoc.name}` : '';
-                      setNewTitle(`Inventario ${newMonth} ${y}${locSuffix}`);
-                    }}
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
-                  />
-                </div>
+              {/* Anno di Riferimento */}
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px', color: '#1e293b' }}>
+                  Anno Riferimento:
+                </label>
+                <input
+                  type="number"
+                  value={newYear}
+                  onChange={e => {
+                    const y = parseInt(e.target.value) || new Date().getFullYear();
+                    setNewYear(y);
+                    const selectedLoc = locations.find(l => String(l.id) === String(newLocId));
+                    const locSuffix = selectedLoc ? ` - ${selectedLoc.name}` : '';
+                    setNewTitle(`Inventario ${newMonth} ${y}${locSuffix}`);
+                  }}
+                  style={{ width: '100%', height: '42px', padding: '0 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
+                />
               </div>
 
               <div>
