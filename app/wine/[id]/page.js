@@ -718,6 +718,33 @@ export default function WineDetail({ params }) {
     }
   };
 
+  const handleClearMovementsForLocation = async (locationId) => {
+    if (!verifyDeletionPin()) return;
+    const targetLoc = locations.find(l => l.id.toString() === locationId.toString());
+    const locName = targetLoc ? targetLoc.name : 'cantina selezionata';
+
+    if (window.confirm(`Sei sicuro di voler eliminare TUTTI i movimenti di questo vino per "${locName}"?\nLa giacenza in questa cantina verrà azzerata.`)) {
+      try {
+        const movsToDelete = (wine.movements || []).filter(m => m.locationId?.toString() === locationId.toString());
+        for (const m of movsToDelete) {
+          if (String(m.id).startsWith('temp-')) {
+            setWine(prev => ({
+              ...prev,
+              movements: prev.movements.filter(x => x.id !== m.id)
+            }));
+          } else {
+            await fetch(`/api/movements/${m.id}`, { method: 'DELETE' });
+          }
+        }
+        customAlert(`\n🧹 Movimenti per ${locName} svuotati con successo!\n`);
+        fetchWine();
+      } catch (err) {
+        console.error(err);
+        customAlert("Errore durante lo svuotamento: " + err.message);
+      }
+    }
+  };
+
   const handleDeleteVintage = async (vintageId, isCurrent) => {
     if (window.confirm("Sei sicuro di voler eliminare definitivamente questa annata e tutti i suoi movimenti? L'azione non è annullabile.")) {
       if (!verifyDeletionPin()) return;
@@ -1569,16 +1596,30 @@ export default function WineDetail({ params }) {
                       </div>
                     )}
 
-                    <div style={{ marginTop: '2rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <label style={{ fontWeight: 'bold' }}>Filtra per cantina:</label>
-                      <select
-                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)' }}
-                        value={selectedLocationFilter}
-                        onChange={e => setSelectedLocationFilter(e.target.value)}
-                      >
-                        <option value="">Tutte le cantine</option>
-                        {locations.map(l => <option key={l.id} value={l.id.toString()}>{l.name}</option>)}
-                      </select>
+                    <div style={{ marginTop: '2rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <label style={{ fontWeight: 'bold' }}>Filtra per cantina:</label>
+                        <select
+                          style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                          value={selectedLocationFilter}
+                          onChange={e => setSelectedLocationFilter(e.target.value)}
+                        >
+                          <option value="">Tutte le cantine</option>
+                          {locations.map(l => <option key={l.id} value={l.id.toString()}>{l.name}</option>)}
+                        </select>
+                      </div>
+
+                      {selectedLocationFilter && currentUser?.role !== 'viewer' && (
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 'bold' }}
+                          onClick={() => handleClearMovementsForLocation(selectedLocationFilter)}
+                          title="Svuota tutti i movimenti di questo vino per la cantina selezionata"
+                        >
+                          <RotateCw size={14} /> Svuota Movimenti ({locations.find(l => l.id.toString() === selectedLocationFilter)?.name || 'Cantina'})
+                        </button>
+                      )}
                     </div>
 
                     <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
