@@ -1927,7 +1927,10 @@ export default function WineDetail({ params }) {
                         <button type="button" className="btn" title="Gestisci Anno" onClick={(e) => { e.preventDefault(); openListModal('vintage', 'Anno', metadata.vintages); }} style={{ border: '1px solid var(--border-color)', background: 'white', padding: '0 0.5rem' }}>✏️</button>
                       </div>
                       <datalist id="vintage-list">
-                        {metadata.vintages.map(v => <option key={v} value={v} />)}
+                        {Array.from(new Set([
+                          ...Array.from({ length: 127 }, (_, i) => String(new Date().getFullYear() - i + 1)),
+                          ...(metadata?.vintages || []).map(String)
+                        ])).map(v => <option key={v} value={v} />)}
                       </datalist>
                     </div>
 
@@ -2882,11 +2885,11 @@ export default function WineDetail({ params }) {
                   </button>
                   <datalist id="add-vintage-list">
                     <option value="S.A.">S.A. (Senza Annata)</option>
-                    {Array.from({ length: 127 }, (_, i) => String(new Date().getFullYear() - i + 1)).map(yr => (
+                    {Array.from(new Set([
+                      ...Array.from({ length: 127 }, (_, i) => String(new Date().getFullYear() - i + 1)),
+                      ...(metadata?.vintages || []).map(String)
+                    ])).filter(yr => yr !== "S.A.").map(yr => (
                       <option key={yr} value={yr} />
-                    ))}
-                    {metadata.vintages && metadata.vintages.map(v => (
-                      <option key={v} value={v} />
                     ))}
                   </datalist>
                 </div>
