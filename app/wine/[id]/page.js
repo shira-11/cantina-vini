@@ -2951,16 +2951,27 @@ export default function WineDetail({ params }) {
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
                     Cantina / Posizione:
                   </label>
-                  <select
-                    value={addVintageModal.locationId}
-                    onChange={(e) => setAddVintageModal(prev => ({ ...prev, locationId: e.target.value }))}
-                    style={{ width: '100%', height: '42px', padding: '0 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', background: 'white', boxSizing: 'border-box' }}
-                  >
-                    <option value="">-- Seleziona Cantina --</option>
-                    {locations.map(l => (
-                      <option key={l.id} value={l.id.toString()}>{l.name}</option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <select
+                      value={addVintageModal.locationId}
+                      onChange={(e) => setAddVintageModal(prev => ({ ...prev, locationId: e.target.value }))}
+                      style={{ flex: 1, height: '42px', padding: '0 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', background: 'white', boxSizing: 'border-box' }}
+                    >
+                      <option value="">-- Seleziona Cantina --</option>
+                      {locations.map(l => (
+                        <option key={l.id} value={l.id.toString()}>{l.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn btn-pencil"
+                      style={{ height: '42px', width: '42px', minWidth: '42px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', flexShrink: 0 }}
+                      onClick={() => openListModal('_initialLocationName', 'Cantina Fisica', locations.map(l => l.name))}
+                      title="Seleziona o gestisci cantine fisiche"
+                    >
+                      ✏️
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
