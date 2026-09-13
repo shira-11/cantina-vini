@@ -2996,18 +2996,39 @@ export default function WineDetail({ params }) {
                     return;
                   }
 
-                  // Controllo duplicato
-                  const isDuplicate = wine.allVintages && wine.allVintages.some(v => 
+                  // Verifica se l'annata + tipo bottiglia esiste già in archivio per questo vino
+                  const existingMatch = wine.allVintages && wine.allVintages.find(v => 
                     String(v.vintage || '').trim() === vStr &&
                     String(v.bottleType || 'Normale 0.75').trim() === bStr
                   );
 
-                  if (isDuplicate) {
-                    customAlert(`Attenzione: L'annata ${vStr} con tipo bottiglia "${bStr}" è già presente in archivio per questo vino!`);
+                  setIsSaving(true);
+
+                  if (existingMatch) {
+                    try {
+                      if (qty > 0 && locId) {
+                        await fetch('/api/movements', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            wineId: existingMatch.id,
+                            locationId: locId,
+                            movementType: 'Ingresso',
+                            quantity: qty,
+                            bottleType: bStr,
+                            reason: 'Carico Iniziale',
+                            date: new Date().toISOString()
+                          })
+                        });
+                      }
+                      window.location.href = `/wine/${existingMatch.id}`;
+                    } catch (err) {
+                      setIsSaving(false);
+                      customAlert('Errore durante il caricamento del movimento nella cantina selezionata');
+                    }
                     return;
                   }
 
-                  setIsSaving(true);
                   const payload = { ...wine };
                   delete payload.id;
                   delete payload.movements;
