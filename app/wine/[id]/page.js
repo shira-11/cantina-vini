@@ -2901,20 +2901,14 @@ export default function WineDetail({ params }) {
                   Tipo Bottiglia:
                 </label>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <select
+                  <input
+                    type="text"
+                    list="add-bottle-list"
+                    placeholder="Es. Normale 0.75 L o Magnum 1,5 L"
                     value={addVintageModal.bottleType}
                     onChange={(e) => setAddVintageModal(prev => ({ ...prev, bottleType: e.target.value }))}
                     style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', background: 'white' }}
-                  >
-                    <option value="Normale 0.75">Normale 0.75 L</option>
-                    <option value="1,5 L">Magnum 1,5 L</option>
-                    <option value="3 L">Jeroboam 3 L</option>
-                    <option value="6 L">Mathusalem 6 L</option>
-                    <option value="0,375 L">Mezza 0,375 L</option>
-                    {metadata.bottleTypes && metadata.bottleTypes.map(bt => (
-                      <option key={bt} value={bt}>{bt}</option>
-                    ))}
-                  </select>
+                  />
                   <button
                     type="button"
                     className="btn"
@@ -2924,6 +2918,16 @@ export default function WineDetail({ params }) {
                   >
                     ✏️
                   </button>
+                  <datalist id="add-bottle-list">
+                    <option value="Normale 0.75" />
+                    <option value="1,5 L" />
+                    <option value="3 L" />
+                    <option value="6 L" />
+                    <option value="0,375 L" />
+                    {Array.from(new Set(metadata?.bottleTypes || [])).map(bt => (
+                      <option key={bt} value={bt} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
