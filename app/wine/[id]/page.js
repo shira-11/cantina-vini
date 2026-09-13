@@ -845,6 +845,39 @@ export default function WineDetail({ params }) {
       }
 
       if (isNew) {
+        // Controllo duplicati preventivo per evitare doppie schede identiche
+        try {
+          const checkRes = await fetch(`/api/wines?search=${encodeURIComponent(dataToSave.name.trim())}`);
+          if (checkRes.ok) {
+            const existingWines = await checkRes.json();
+            const targetVintage = String(dataToSave.vintage || '').trim();
+            const targetBottle = String(dataToSave.bottleType || dataToSave._initialBottleType || 'Normale 0.75').trim();
+
+            const duplicate = existingWines.find(w =>
+              String(w.name || '').trim().toLowerCase() === dataToSave.name.trim().toLowerCase() &&
+              String(w.vintage || '').trim() === targetVintage &&
+              String(w.bottleType || 'Normale 0.75').trim() === targetBottle
+            );
+
+            if (duplicate) {
+              clearInterval(progressInterval);
+              setIsSaving(false);
+              setSavingProgress(null);
+              const openExisting = window.confirm(
+                `⚠️ ATTENZIONE: SCHEDA GIA' ESISTENTE!\n\nEsiste già la scheda per "${duplicate.name}" - Annata ${duplicate.vintage || 'N.D.'} (${duplicate.bottleType || 'Normale 0.75'}).\n\nVuoi aprire la scheda già esistente per aggiornarne la giacenza?\n(Clicca OK per aprire quella esistente, Annulla per crearne comunque una nuova)`
+              );
+              if (openExisting) {
+                router.push(`/wine/${duplicate.id}`);
+                return;
+              }
+              setIsSaving(true);
+              setSavingProgress(50);
+            }
+          }
+        } catch (checkErr) {
+          console.warn("Duplicate check warning:", checkErr);
+        }
+
         const payload = { ...dataToSave };
         if (locationId) {
           payload.movements = [{
