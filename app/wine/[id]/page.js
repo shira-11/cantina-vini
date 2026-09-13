@@ -964,6 +964,48 @@ export default function WineDetail({ params }) {
     });
   }
 
+  const handleMovimentaClick = (locKey) => {
+    const bTypeMatch = locKey.match(/\((.*?)\)/);
+    const bottleTypeToPrefill = (bTypeMatch && bTypeMatch[1]) ? bTypeMatch[1] : (wine?.bottleType || wine?._initialBottleType || 'Normale 0.75');
+    const cleanLocName = locKey.replace(/\s*\(.*?\)\s*/, '').trim();
+    const cleanLocObj = locations.find(l => 
+      l.name && l.name.trim().toLowerCase() === cleanLocName.toLowerCase()
+    );
+    
+    const locIdStr = cleanLocObj ? cleanLocObj.id.toString() : (locations[0]?.id?.toString() || '');
+    if (locIdStr) {
+      setSelectedLocationFilter(locIdStr);
+    }
+
+    // Trova l'ultimo movimento per recuperare venditore, prezzo e prezzo provvisorio
+    const lastMovForLoc = wine?.movements?.find(m => String(m.locationId) === locIdStr);
+    const lastMovAny = wine?.movements?.[0];
+    const sourceMov = lastMovForLoc || lastMovAny;
+
+    const pricePrefill = sourceMov?.price !== null && sourceMov?.price !== undefined ? String(sourceMov.price) : (wine?._initialPrice ? String(wine._initialPrice) : '');
+    const tempPricePrefill = sourceMov?.tempPrice !== null && sourceMov?.tempPrice !== undefined ? String(sourceMov.tempPrice) : (wine?._initialTempPrice ? String(wine._initialTempPrice) : '');
+    const vendorPrefill = sourceMov?.vendor ? sourceMov.vendor : (wine?.vendor || '');
+
+    setEditingMovementId(null);
+    setNewMovement({
+      date: new Date().toISOString().split('T')[0],
+      locationId: locIdStr,
+      bottleType: bottleTypeToPrefill,
+      price: pricePrefill,
+      tempPrice: tempPricePrefill,
+      vendor: vendorPrefill,
+      movementType: '', // Lasciato da selezionare (Ingresso / Uscita)
+      quantity: '',     // Lasciato da inserire per l'utente
+      reason: '',       // Lasciato da selezionare
+      notes: ''
+    });
+
+    setActiveTab('movimenti');
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
   const handleDeleteWine = async () => {
     if (window.confirm("Sei sicuro di voler eliminare definitivamente questa scheda vino? Verranno eliminati anche tutti i movimenti e le foto associate. L'azione non è annullabile.")) {
       if (!verifyDeletionPin()) return;
@@ -1278,17 +1320,7 @@ export default function WineDetail({ params }) {
                                  <button
                                    className="btn btn-primary"
                                    style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', borderRadius: '8px' }}
-                                   onClick={() => {
-                                      const bTypeMatch = loc.match(/\((.*?)\)/);
-                                      const bottleTypeToPrefill = bTypeMatch ? bTypeMatch[1] : '';
-                                      const cleanLocName = loc.replace(/\s*\(.*?\)\s*/, '').trim();
-                                      const cleanLocObj = locations.find(l => l.name === cleanLocName);
-                                      
-                                      if (cleanLocObj) {
-                                        setNewMovement({ ...newMovement, locationId: cleanLocObj.id.toString(), bottleType: bottleTypeToPrefill, movementType: '' });
-                                        setActiveTab('movimenti');
-                                      }
-                                   }}
+                                   onClick={() => handleMovimentaClick(loc)}
                                  >
                                    Movimenta
                                  </button>
@@ -1320,16 +1352,7 @@ export default function WineDetail({ params }) {
                                       <button
                                         className="btn btn-primary"
                                         style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                                        onClick={() => {
-                                          const bTypeMatch = loc.match(/\((.*?)\)/);
-                                          const bottleTypeToPrefill = bTypeMatch ? bTypeMatch[1] : '';
-                                          const cleanLocObj = locations.find(l => l.name === cleanLocName);
-                                          
-                                          if (cleanLocObj) {
-                                            setNewMovement({ ...newMovement, locationId: cleanLocObj.id.toString(), bottleType: bottleTypeToPrefill, movementType: '' });
-                                            setActiveTab('movimenti');
-                                          }
-                                        }}
+                                        onClick={() => handleMovimentaClick(loc)}
                                       >
                                         Movimenta
                                       </button>
