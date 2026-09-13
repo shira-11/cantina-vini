@@ -852,19 +852,28 @@ export default function WineDetail({ params }) {
             const existingWines = await checkRes.json();
             const targetVintage = String(dataToSave.vintage || '').trim();
             const targetBottle = String(dataToSave.bottleType || dataToSave._initialBottleType || 'Normale 0.75').trim();
+            const targetLocName = String(dataToSave._initialLocationName || '').trim();
 
-            const duplicate = existingWines.find(w =>
-              String(w.name || '').trim().toLowerCase() === dataToSave.name.trim().toLowerCase() &&
-              String(w.vintage || '').trim() === targetVintage &&
-              String(w.bottleType || 'Normale 0.75').trim() === targetBottle
-            );
+            const duplicate = existingWines.find(w => {
+              const nameMatch = String(w.name || '').trim().toLowerCase() === dataToSave.name.trim().toLowerCase();
+              const vintageMatch = String(w.vintage || '').trim() === targetVintage;
+              const bottleMatch = String(w.bottleType || 'Normale 0.75').trim() === targetBottle;
+              if (!nameMatch || !vintageMatch || !bottleMatch) return false;
+
+              if (targetLocName && w.movements && w.movements.length > 0) {
+                const hasLoc = w.movements.some(m => m.location?.name === targetLocName);
+                if (hasLoc) return true;
+              }
+              return true;
+            });
 
             if (duplicate) {
               clearInterval(progressInterval);
               setIsSaving(false);
               setSavingProgress(null);
+              const locInfo = targetLocName ? ` collocato in "${targetLocName}"` : '';
               const openExisting = window.confirm(
-                `⚠️ ATTENZIONE: SCHEDA GIA' ESISTENTE!\n\nEsiste già la scheda per "${duplicate.name}" - Annata ${duplicate.vintage || 'N.D.'} (${duplicate.bottleType || 'Normale 0.75'}).\n\nVuoi aprire la scheda già esistente per aggiornarne la giacenza?\n(Clicca OK per aprire quella esistente, Annulla per crearne comunque una nuova)`
+                `⚠️ ATTENZIONE: SCHEDA GIA' ESISTENTE!\n\nEsiste già la scheda per "${duplicate.name}" - Annata ${duplicate.vintage || 'N.D.'} (${duplicate.bottleType || 'Normale 0.75'})${locInfo}.\n\nVuoi aprire la scheda già esistente per aggiornarne la giacenza?\n(Clicca OK per aprire quella esistente, Annulla per crearne comunque una nuova)`
               );
               if (openExisting) {
                 router.push(`/wine/${duplicate.id}`);
