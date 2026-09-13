@@ -494,38 +494,54 @@ export default function WineDetail({ params }) {
 
   const compressImage = (file) => {
     return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new window.Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200;
-          const MAX_HEIGHT = 1600;
-          let width = img.width;
-          let height = img.height;
+      if (!file || !(file instanceof Blob || file instanceof File)) {
+        return resolve(file);
+      }
+      try {
+        const reader = new FileReader();
+        reader.onerror = () => resolve(file);
+        reader.onload = (event) => {
+          const img = new window.Image();
+          img.onerror = () => resolve(file);
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              const MAX_WIDTH = 1200;
+              const MAX_HEIGHT = 1600;
+              let width = img.width;
+              let height = img.height;
 
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height *= MAX_WIDTH / width;
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width *= MAX_HEIGHT / height;
+                  height = MAX_HEIGHT;
+                }
+              }
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              canvas.toBlob((blob) => {
+                if (!blob) resolve(file);
+                else resolve(new File([blob], file.name || 'photo.jpg', { type: 'image/jpeg' }));
+              }, 'image/jpeg', 0.92);
+            } catch (err) {
+              console.warn("Canvas compression exception:", err);
+              resolve(file);
             }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => {
-            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
-          }, 'image/jpeg', 0.92);
+          };
+          img.src = event.target.result;
         };
-      };
+        reader.readAsDataURL(file);
+      } catch (err) {
+        console.warn("FileReader exception:", err);
+        resolve(file);
+      }
     });
   };
 
@@ -605,30 +621,30 @@ export default function WineDetail({ params }) {
   };
 
   const handleUpload = async (e, type) => {
-    const file = e.target.files[0];
+    const file = e.target?.files?.[0] || e.target?.files;
     if (!file) return;
 
     setUploading(true);
     
-    // Comprime l'immagine prima di inviarla (risolve il limite del server)
-    const compressedFile = await compressImage(file);
-    const localBlobUrl = URL.createObjectURL(compressedFile);
-
-    // Mostra subito l'anteprima foto all'utente ed apri il crop modal!
-    if (type === 'front') {
-      setWine(prev => ({ ...prev, photo: localBlobUrl }));
-    } else {
-      setWine(prev => ({ ...prev, photoBack: localBlobUrl }));
-    }
-    setCropModal({ isOpen: true, photoUrl: localBlobUrl, type });
-
-    const formData = new FormData();
-    formData.append('file', compressedFile);
-    formData.append('wineName', wine.name || 'Sconosciuto');
-    formData.append('vintage', wine.vintage || '');
-    formData.append('type', type);
-
     try {
+      // Comprime l'immagine prima di inviarla (risolve il limite del server)
+      const compressedFile = await compressImage(file);
+      const localBlobUrl = URL.createObjectURL(compressedFile);
+
+      // Mostra subito l'anteprima foto all'utente ed apri il crop modal!
+      if (type === 'front') {
+        setWine(prev => ({ ...prev, photo: localBlobUrl }));
+      } else {
+        setWine(prev => ({ ...prev, photoBack: localBlobUrl }));
+      }
+      setCropModal({ isOpen: true, photoUrl: localBlobUrl, type });
+
+      const formData = new FormData();
+      formData.append('file', compressedFile);
+      formData.append('wineName', wine?.name || 'Sconosciuto');
+      formData.append('vintage', wine?.vintage || '');
+      formData.append('type', type);
+
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData
@@ -966,7 +982,10 @@ export default function WineDetail({ params }) {
         type={cropModal.type}
         wineName={wine.name}
         vintage={wine.vintage}
-        onClose={() => setCropModal({ isOpen: false, photoUrl: null, type: 'front' })}
+        onClose={() => {
+          setCropModal({ isOpen: false, photoUrl: null, type: 'front' });
+          setUploading(false);
+        }}
         onSave={(croppedUrlOrFile, cropType) => {
           if (cropType === 'ai') {
             processAiFileScan(croppedUrlOrFile);
