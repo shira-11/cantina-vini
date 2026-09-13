@@ -2415,7 +2415,7 @@ export default function WineDetail({ params }) {
 
       {/* MODAL GESTIONE ELENCHI */}
       {listModal.isOpen && (
-        <div className="modal-overlay" onClick={() => setListModal({ isOpen: false, field: '', label: '', options: [] })}>
+        <div className="modal-overlay" style={{ zIndex: 100000 }} onClick={() => setListModal({ isOpen: false, field: '', label: '', options: [] })}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', width: '90%', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Gestisci {listModal.label}</h2>
