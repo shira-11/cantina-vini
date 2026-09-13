@@ -364,6 +364,28 @@ body {
   background-color: var(--primary-hover);
 }
 
+.btn-pencil {
+  height: 44px;
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  background: white;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+}
+
+.btn-pencil:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
 .status-message {
   padding: 1rem;
   border-radius: var(--radius-md);

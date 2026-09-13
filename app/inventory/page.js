@@ -1299,14 +1299,14 @@ export default function InventoryPage() {
                 <button
                   type="button"
                   onClick={() => setShowNewModal(false)}
-                  style={{ padding: '10px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#f1f5f9', fontWeight: 'bold', cursor: 'pointer' }}
+                  style={{ height: '42px', padding: '0 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#f1f5f9', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
                 >
                   Annulla
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', background: '#10b981', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
+                  style={{ height: '42px', padding: '0 20px', borderRadius: '6px', border: 'none', background: '#10b981', color: 'white', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}
                 >
                   {saving ? 'Creazione...' : 'Crea e Inizia Conteggio'}
                 </button>
