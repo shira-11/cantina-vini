@@ -57,26 +57,53 @@ export default function PrintScheda() {
             const currentGroupBy = sessionStorage.getItem('printGroupBy');
             if (currentGroupBy === 'filtri_attivi') {
               setGroupBy(currentGroupBy);
+              const newSections = [];
+              
+              // Group by Country first, then by Region so each Region gets its own dedicated section
               const groupsByCountry = new Map();
               for (const g of parsed) {
                 const c = g.country || 'Altra Nazione';
-                if (!groupsByCountry.has(c)) groupsByCountry.set(c, []);
-                groupsByCountry.get(c).push(g);
+                if (!groupsByCountry.has(c)) groupsByCountry.set(c, new Map());
+                const regionMap = groupsByCountry.get(c);
+                
+                // Get regions present in this wine group
+                const regions = [...new Set(g.wines.map(w => w.region).filter(Boolean))];
+                if (regions.length === 0) regions.push('Altra Regione');
+                
+                for (const reg of regions) {
+                  if (!regionMap.has(reg)) regionMap.set(reg, []);
+                  
+                  // Include only wines belonging to this region
+                  const regionWines = g.wines.filter(w => (w.region || 'Altra Regione') === reg);
+                  if (regionWines.length > 0) {
+                    regionMap.get(reg).push({
+                      ...g,
+                      wines: regionWines
+                    });
+                  }
+                }
               }
               
               const sortedCountries = Array.from(groupsByCountry.keys()).sort();
-              const newSections = [];
               
               for (const c of sortedCountries) {
-                const cGroups = groupsByCountry.get(c);
-                const uniqueRegions = [...new Set(cGroups.flatMap(g => g.wines.map(w => w.region)).filter(Boolean))].sort();
-                const uniqueCategories = [...new Set(cGroups.map(g => g.category).filter(Boolean))].sort();
+                const regionMap = groupsByCountry.get(c);
+                const sortedRegions = Array.from(regionMap.keys()).sort();
                 
-                const coverLines = [c.toUpperCase()];
-                if (uniqueRegions.length > 0) coverLines.push(uniqueRegions.join(', ').toUpperCase());
-                if (uniqueCategories.length > 0) coverLines.push(uniqueCategories.join(', ').toUpperCase());
-                
-                newSections.push({ coverLines, groups: cGroups });
+                for (const reg of sortedRegions) {
+                  const regGroups = regionMap.get(reg);
+                  const uniqueCategories = [...new Set(regGroups.map(g => g.category).filter(Boolean))].sort();
+                  
+                  const coverLines = [c.toUpperCase()];
+                  if (reg && reg !== 'Altra Regione') {
+                    coverLines.push(reg.toUpperCase());
+                  }
+                  if (uniqueCategories.length > 0) {
+                    coverLines.push(uniqueCategories.join(', ').toUpperCase());
+                  }
+                  
+                  newSections.push({ coverLines, groups: regGroups });
+                }
               }
               
               setSections(newSections);
