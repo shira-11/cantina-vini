@@ -1,7 +1,7 @@
 'use client';
 // Version 1.0.4 - Clean Wine Titles without Camera Icon or Underline
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, Wine, CheckCircle2, AlertTriangle, Plus, Search,
@@ -366,52 +366,63 @@ export default function InventoryPage() {
     }
   };
 
-  // Filter items
-  const filteredItems = items.filter(item => {
-    const wine = item.wine || {};
-    const loc = item.location || {};
-    
-    // Text search
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchName = wine.name?.toLowerCase().includes(q);
-      const matchVintage = wine.vintage?.toLowerCase().includes(q);
-      const matchProducer = wine.producer?.toLowerCase().includes(q);
-      const matchLoc = loc.name?.toLowerCase().includes(q);
-      if (!matchName && !matchVintage && !matchProducer && !matchLoc) return false;
+  // Filter items (memoized to eliminate UI lag on large wine lists)
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      const wine = item.wine || {};
+      const loc = item.location || {};
+
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchName = wine.name?.toLowerCase().includes(q);
+        const matchVintage = wine.vintage?.toLowerCase().includes(q);
+        const matchProducer = wine.producer?.toLowerCase().includes(q);
+        const matchLoc = loc.name?.toLowerCase().includes(q);
+        if (!matchName && !matchVintage && !matchProducer && !matchLoc) return false;
+      }
+
+      if (selectedLocFilter && loc.name !== selectedLocFilter) return false;
+      if (userAllowedLocations && loc.name && !userAllowedLocations.includes(loc.name)) return false;
+
+      if (selectedTab === 'pending' && item.isChecked) return false;
+      if (selectedTab === 'done' && !item.isChecked) return false;
+      if (selectedTab === 'discrepancy') {
+        if (item.countedQty === null) return false;
+        if (item.countedQty === item.expectedQty) return false;
+      }
+
+      return true;
+    });
+  }, [items, searchQuery, selectedLocFilter, selectedTab, userAllowedLocations]);
+
+  // Calculate session stats (memoized)
+  const { totalCount, checkedCount, pendingCount, discrepancyCount, progressPercent } = useMemo(() => {
+    const total = items.length;
+    const checked = items.filter(i => i.isChecked).length;
+    const pending = total - checked;
+    const discrepancy = items.filter(i => i.countedQty !== null && i.countedQty !== i.expectedQty).length;
+    const progress = total > 0 ? Math.round((checked / total) * 100) : 0;
+    return {
+      totalCount: total,
+      checkedCount: checked,
+      pendingCount: pending,
+      discrepancyCount: discrepancy,
+      progressPercent: progress
+    };
+  }, [items]);
+
+  // Group filtered items by Wine Name (memoized)
+  const groupedItems = useMemo(() => {
+    const map = new Map();
+    for (const item of filteredItems) {
+      const name = item.wine ? item.wine.name : 'Vino sconosciuto';
+      if (!map.has(name)) {
+        map.set(name, []);
+      }
+      map.get(name).push(item);
     }
-
-    // Location filter
-    if (selectedLocFilter && loc.name !== selectedLocFilter) return false;
-    if (userAllowedLocations && loc.name && !userAllowedLocations.includes(loc.name)) return false;
-
-    // Tab filter
-    if (selectedTab === 'pending' && item.isChecked) return false;
-    if (selectedTab === 'done' && !item.isChecked) return false;
-    if (selectedTab === 'discrepancy') {
-      if (item.countedQty === null) return false;
-      if (item.countedQty === item.expectedQty) return false;
-    }
-
-    return true;
-  });
-
-  // Calculate session stats
-  const totalCount = items.length;
-  const checkedCount = items.filter(i => i.isChecked).length;
-  const pendingCount = totalCount - checkedCount;
-  const discrepancyCount = items.filter(i => i.countedQty !== null && i.countedQty !== i.expectedQty).length;
-  const progressPercent = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
-
-  // Group filtered items by Wine Name
-  const groupedItems = new Map();
-  for (const item of filteredItems) {
-    const name = item.wine ? item.wine.name : 'Vino sconosciuto';
-    if (!groupedItems.has(name)) {
-      groupedItems.set(name, []);
-    }
-    groupedItems.get(name).push(item);
-  }
+    return map;
+  }, [filteredItems]);
 
   const handleOpenNewModal = () => {
     const months = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];

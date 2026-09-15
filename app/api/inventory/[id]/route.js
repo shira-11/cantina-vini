@@ -57,20 +57,42 @@ export async function PUT(request, { params }) {
     const sessionId = parseInt(id);
     const body = await request.json();
 
-    // Batch update items
-    if (body.items && Array.isArray(body.items)) {
-      const updatePromises = body.items.map(item => {
-        return prisma.inventoryItem.update({
-          where: { id: item.id },
-          data: {
-            countedQty: item.countedQty !== undefined ? item.countedQty : undefined,
-            isChecked: item.isChecked !== undefined ? item.isChecked : undefined,
-            notes: item.notes !== undefined ? item.notes : undefined
-          }
-        });
+    // Batch update items (Diff & Chunked Transaction to prevent SQLite DB lock contention)
+    if (body.items && Array.isArray(body.items) && body.items.length > 0) {
+      const existingItems = await prisma.inventoryItem.findMany({
+        where: { sessionId },
+        select: { id: true, countedQty: true, isChecked: true, notes: true }
+      });
+      const existingMap = new Map(existingItems.map(i => [i.id, i]));
+
+      const changedItems = body.items.filter(item => {
+        const existing = existingMap.get(item.id);
+        if (!existing) return true;
+        return (
+          (item.countedQty !== undefined && item.countedQty !== existing.countedQty) ||
+          (item.isChecked !== undefined && item.isChecked !== existing.isChecked) ||
+          (item.notes !== undefined && item.notes !== existing.notes)
+        );
       });
 
-      await Promise.all(updatePromises);
+      if (changedItems.length > 0) {
+        const chunkSize = 50;
+        for (let i = 0; i < changedItems.length; i += chunkSize) {
+          const chunk = changedItems.slice(i, i + chunkSize);
+          await prisma.$transaction(
+            chunk.map(item =>
+              prisma.inventoryItem.update({
+                where: { id: item.id },
+                data: {
+                  countedQty: item.countedQty !== undefined ? item.countedQty : undefined,
+                  isChecked: item.isChecked !== undefined ? item.isChecked : undefined,
+                  notes: item.notes !== undefined ? item.notes : undefined
+                }
+              })
+            )
+          );
+        }
+      }
     }
 
     // Single item update
