@@ -22,6 +22,26 @@ export async function GET() {
     const vendors = await prisma.movement.findMany({ distinct: ['vendor'], select: { vendor: true }, where: { vendor: { not: null, not: '' } } });
     const locations = await prisma.location.findMany({ select: { name: true } });
 
+    // Fetch hidden metadata items from SystemSettings
+    const hiddenSettings = await prisma.systemSettings.findMany({
+      where: { key: { startsWith: 'hidden_metadata_' } }
+    });
+
+    const hiddenMap = {};
+    hiddenSettings.forEach(s => {
+      try {
+        const fieldName = s.key.replace('hidden_metadata_', '');
+        hiddenMap[fieldName] = JSON.parse(s.value);
+      } catch (e) {}
+    });
+
+    const isNotHidden = (field, val) => {
+      if (!val) return false;
+      const hiddenList = hiddenMap[field];
+      if (!hiddenList || !Array.isArray(hiddenList)) return true;
+      return !hiddenList.includes(val);
+    };
+
     const defaultRegions = [
       'Toscana', 'Piemonte', 'Trentino Alto Adige', 'Sicilia', 
       'Friuli Venezia Giulia', 'Campania', 'Emilia Romagna', 
@@ -42,7 +62,7 @@ export async function GET() {
     ];
 
     const defaultReasons = [
-      'Acquisto', 'Allineamento da PDF', 'Consumo', 'Giulio', 'Inventario', 'Inventario 2026', 'Regalo', 'Vendita'
+      'Acquisto', 'Consumo', 'Inventario', 'Regalo', 'Vendita'
     ];
 
     const defaultGrapeVarieties = [
@@ -113,21 +133,21 @@ export async function GET() {
 
     // Extract values, merge with defaults if needed, and sort alphabetically
     const data = {
-      vintages: vintages.map(v => v.vintage).sort(),
-      countries: countries.map(c => c.country).sort(),
-      regions: [...new Set([...defaultRegions, ...regions.map(r => r.region)])].sort(),
+      vintages: vintages.map(v => v.vintage).filter(v => isNotHidden('vintage', v)).sort(),
+      countries: countries.map(c => c.country).filter(c => isNotHidden('country', c)).sort(),
+      regions: [...new Set([...defaultRegions, ...regions.map(r => r.region)])].filter(r => isNotHidden('region', r)).sort(),
       regionsByCountry: regionsByCountry,
-      producers: producers.map(p => p.producerCellar).sort(),
-      producerNames: producerNames.map(p => p.producer).sort(),
-      classifications: classifications.map(c => c.classification).sort(),
-      categories: categories.map(c => c.category).sort(),
-      types: [...new Set([...defaultTypes, ...types.map(t => t.type)])].sort(),
-      grapeVarieties: [...new Set([...defaultGrapeVarieties, ...dbGrapes.map(g => g.name)])].sort(),
+      producers: producers.map(p => p.producerCellar).filter(p => isNotHidden('producerCellar', p)).sort(),
+      producerNames: producerNames.map(p => p.producer).filter(p => isNotHidden('producer', p)).sort(),
+      classifications: classifications.map(c => c.classification).filter(c => isNotHidden('classification', c)).sort(),
+      categories: categories.map(c => c.category).filter(c => isNotHidden('category', c)).sort(),
+      types: [...new Set([...defaultTypes, ...types.map(t => t.type)])].filter(t => isNotHidden('type', t)).sort(),
+      grapeVarieties: [...new Set([...defaultGrapeVarieties, ...dbGrapes.map(g => g.name)])].filter(g => isNotHidden('grapeVarieties', g)).sort(),
       
       // Movement & Wine metadata
-      bottleTypes: [...new Set([...defaultBottleTypes, ...wineBottleTypes.map(w => w.bottleType), ...movementBottleTypes.map(b => b.bottleType)])].sort(),
-      reasons: [...new Set([...defaultReasons, ...reasons.map(r => r.reason), ...locations.map(l => l.name)])].sort(),
-      vendors: vendors.map(v => v.vendor).sort(),
+      bottleTypes: [...new Set([...defaultBottleTypes, ...wineBottleTypes.map(w => w.bottleType), ...movementBottleTypes.map(b => b.bottleType)])].filter(b => isNotHidden('bottleType', b)).sort(),
+      reasons: [...new Set([...defaultReasons, ...reasons.map(r => r.reason), ...locations.map(l => l.name)])].filter(r => isNotHidden('reason', r)).sort(),
+      vendors: vendors.map(v => v.vendor).filter(v => isNotHidden('vendor', v)).sort(),
     };
 
     return NextResponse.json(data);
@@ -150,43 +170,95 @@ export async function PUT(request) {
       return NextResponse.json({ error: "Campo non valido per l'aggiornamento globale" }, { status: 400 });
     }
 
-    if (!oldVal) {
-      return NextResponse.json({ error: "Valore originale mancante" }, { status: 400 });
+    const actualField = field === '_initialBottleType' ? 'bottleType' : field;
+    const settingKey = `hidden_metadata_${actualField}`;
+
+    // If deleting item (newVal is null or empty)
+    if (!newVal || newVal.trim() === '') {
+      if (!oldVal) {
+        return NextResponse.json({ error: "Valore originale mancante" }, { status: 400 });
+      }
+
+      // Add to hidden metadata list in SystemSettings
+      const existingSetting = await prisma.systemSettings.findUnique({ where: { key: settingKey } });
+      let hiddenList = [];
+      if (existingSetting && existingSetting.value) {
+        try { hiddenList = JSON.parse(existingSetting.value); } catch(e) {}
+      }
+      if (!hiddenList.includes(oldVal)) {
+        hiddenList.push(oldVal);
+        await prisma.systemSettings.upsert({
+          where: { key: settingKey },
+          update: { value: JSON.stringify(hiddenList) },
+          create: { key: settingKey, value: JSON.stringify(hiddenList) }
+        });
+      }
+
+      // Update database tables
+      if (actualField === 'grapeVarieties') {
+        await prisma.grapeVariety.deleteMany({ where: { name: oldVal } });
+      } else if (['bottleType', 'reason', 'vendor'].includes(actualField)) {
+        await prisma.movement.updateMany({
+          where: { [actualField]: oldVal },
+          data: { [actualField]: null }
+        });
+      } else {
+        await prisma.wine.updateMany({
+          where: { [actualField]: oldVal },
+          data: { [actualField]: null }
+        });
+      }
+
+      return NextResponse.json({ success: true });
     }
 
-    const finalVal = (newVal && newVal.trim() !== '') ? newVal.trim() : null;
+    // If adding or renaming item (newVal is provided)
+    const finalVal = newVal.trim();
 
-    if (field === 'grapeVarieties') {
-      if (!finalVal) {
-        const result = await prisma.grapeVariety.deleteMany({
-          where: { name: oldVal }
-        });
-        return NextResponse.json({ success: true, count: result.count });
-      } else {
-        const result = await prisma.grapeVariety.updateMany({
+    // If adding a new item or renaming, un-hide it if it was previously hidden
+    const existingSetting = await prisma.systemSettings.findUnique({ where: { key: settingKey } });
+    if (existingSetting && existingSetting.value) {
+      try {
+        let hiddenList = JSON.parse(existingSetting.value);
+        let changed = false;
+        if (oldVal && hiddenList.includes(oldVal)) {
+          hiddenList = hiddenList.filter(x => x !== oldVal);
+          changed = true;
+        }
+        if (hiddenList.includes(finalVal)) {
+          hiddenList = hiddenList.filter(x => x !== finalVal);
+          changed = true;
+        }
+        if (changed) {
+          await prisma.systemSettings.upsert({
+            where: { key: settingKey },
+            update: { value: JSON.stringify(hiddenList) },
+            create: { key: settingKey, value: JSON.stringify(hiddenList) }
+          });
+        }
+      } catch (e) {}
+    }
+
+    if (oldVal) {
+      if (actualField === 'grapeVarieties') {
+        await prisma.grapeVariety.updateMany({
           where: { name: oldVal },
           data: { name: finalVal }
         });
-        return NextResponse.json({ success: true, count: result.count });
+      } else if (['bottleType', 'reason', 'vendor'].includes(actualField)) {
+        await prisma.movement.updateMany({
+          where: { [actualField]: oldVal },
+          data: { [actualField]: finalVal }
+        });
+      } else {
+        await prisma.wine.updateMany({
+          where: { [actualField]: oldVal },
+          data: { [actualField]: finalVal }
+        });
       }
     }
 
-    if (['bottleType', '_initialBottleType', 'reason', 'vendor'].includes(field)) {
-      const dbField = field === '_initialBottleType' ? 'bottleType' : field;
-      const result = await prisma.movement.updateMany({
-        where: { [dbField]: oldVal },
-        data: { [dbField]: finalVal }
-      });
-      return NextResponse.json({ success: true, count: result.count });
-    }
-
-    // Default for Wine table fields
-    const result = await prisma.wine.updateMany({
-      where: { [field]: oldVal },
-      data: { [field]: finalVal }
-    });
-
-    return NextResponse.json({ success: true, count: result.count });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Database Error (PUT metadata):", error);
     return NextResponse.json({ error: "Failed to update metadata" }, { status: 500 });

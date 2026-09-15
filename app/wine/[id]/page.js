@@ -2641,6 +2641,14 @@ export default function WineDetail({ params }) {
                     const newGrapes = [...(wine.grapeVarieties || []), { name: newVal.trim(), percentage: '' }];
                     setWine({ ...wine, grapeVarieties: newGrapes });
                   } else {
+                    try {
+                      await fetch('/api/wines/metadata', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ field: listModal.field, oldVal: '', newVal: newVal.trim() })
+                      });
+                      fetchMetadata();
+                    } catch (e) {}
                     setWine({ ...wine, [listModal.field]: newVal.trim() });
                   }
                   setListModal({ isOpen: false, field: '', label: '', options: [] });
