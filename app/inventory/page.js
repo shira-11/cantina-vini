@@ -15,6 +15,7 @@ export default function InventoryPage() {
   const [activeSession, setActiveSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null); // { type: 'success'|'error', text: string }
   const [locations, setLocations] = useState([]);
 
   // Photo preview hover state
@@ -214,9 +215,14 @@ export default function InventoryPage() {
   const handleUpdateItemCount = (itemId, countedQty, isChecked = true) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === itemId) {
+        let finalQty = null;
+        if (countedQty !== null && countedQty !== undefined && countedQty !== '') {
+          const parsed = parseInt(countedQty);
+          finalQty = !isNaN(parsed) ? Math.max(0, parsed) : null;
+        }
         return {
           ...item,
-          countedQty: countedQty !== null ? Math.max(0, parseInt(countedQty) || 0) : null,
+          countedQty: finalQty,
           isChecked: isChecked
         };
       }
@@ -249,14 +255,17 @@ export default function InventoryPage() {
         const updated = await res.json();
         setActiveSession(updated);
         setItems(updated.items || []);
-        alert("Bozza inventario salvata con successo!");
+        setToastMsg({ type: 'success', text: '💾 Bozza inventario salvata con successo!' });
+        setTimeout(() => setToastMsg(null), 3500);
       } else {
-        alert("Errore durante il salvataggio della bozza.");
+        setToastMsg({ type: 'error', text: 'Errore durante il salvataggio della bozza.' });
+        setTimeout(() => setToastMsg(null), 4500);
       }
       setSaving(false);
     } catch (err) {
       console.error(err);
-      alert("Errore di salvataggio: " + err.message);
+      setToastMsg({ type: 'error', text: 'Errore di salvataggio: ' + err.message });
+      setTimeout(() => setToastMsg(null), 4500);
       setSaving(false);
     }
   };
@@ -470,6 +479,27 @@ export default function InventoryPage() {
       </header>
 
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px' }}>
+        {toastMsg && (
+          <div style={{
+            position: 'fixed',
+            top: '80px',
+            right: '24px',
+            zIndex: 9999,
+            backgroundColor: toastMsg.type === 'success' ? '#059669' : '#dc2626',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            {toastMsg.text}
+          </div>
+        )}
+
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
             <RefreshCw size={32} className="spin" style={{ marginBottom: '12px' }} />
@@ -725,7 +755,8 @@ export default function InventoryPage() {
                           gap: '6px'
                         }}
                       >
-                        <Save size={16} /> Salva Bozza
+                        {saving ? <RefreshCw size={16} className="spin" /> : <Save size={16} />}
+                        {saving ? 'Salvataggio...' : 'Salva Bozza'}
                       </button>
 
                       <button

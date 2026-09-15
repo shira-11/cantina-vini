@@ -102,9 +102,30 @@ export async function PUT(request, { params }) {
       include: {
         items: {
           include: {
-            wine: true,
-            location: true
-          }
+            wine: {
+              select: {
+                id: true,
+                name: true,
+                vintage: true,
+                bottleType: true,
+                producer: true,
+                producerCellar: true,
+                country: true,
+                category: true,
+                photo: true
+              }
+            },
+            location: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          },
+          orderBy: [
+            { wine: { name: 'asc' } },
+            { wine: { vintage: 'asc' } }
+          ]
         }
       }
     });
