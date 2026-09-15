@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { X, Loader2, ArrowRightCircle, ArrowLeftCircle, User, Edit3, Trash2, Sparkles, RefreshCw, Search } from 'lucide-react';
+import { X, Loader2, ArrowRightCircle, ArrowLeftCircle, User, Edit3, Trash2, Sparkles, RefreshCw, Search, ClipboardCheck } from 'lucide-react';
 
 export default function GlobalMovementLog({ isOpen, onClose }) {
   const [movements, setMovements] = useState([]);
@@ -103,6 +103,7 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
       const reason = (m.reason || '').toLowerCase();
       const location = (m.location?.name || '').toLowerCase();
       
+      const match = wineName.includes(q) || producer.includes(q) || user.includes(q) || notes.includes(q) || reason.includes(q) || location.includes(q);
       if (!match) return false;
     }
 
@@ -237,6 +238,7 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
                 const isEliminazione = typeLower.includes('eliminazione');
                 const isModificaMovimento = typeLower.includes('modifica movimento');
                 const isModifica = typeLower.includes('modifica') || typeLower.includes('scheda');
+                const isInventario = (m.reason || '').toLowerCase().includes('inventario') || (m.notes || '').toLowerCase().includes('inventario');
 
                 let icon = <Edit3 size={18} />;
                 let badgeBg = '#eff6ff';
@@ -245,7 +247,21 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
                 let label = 'Modifica Scheda';
                 let quantityStr = '';
 
-                if (isIngresso) {
+                if (isInventario && isIngresso) {
+                  icon = <ClipboardCheck size={18} />;
+                  badgeBg = '#f0fdf4';
+                  badgeColor = '#047857';
+                  badgeBorder = '#a7f3d0';
+                  label = 'Rettifica Inventario (+)';
+                  quantityStr = `+${m.quantity} bt`;
+                } else if (isInventario && isUscita) {
+                  icon = <ClipboardCheck size={18} />;
+                  badgeBg = '#fff1f2';
+                  badgeColor = '#be123c';
+                  badgeBorder = '#fecdd3';
+                  label = 'Rettifica Inventario (-)';
+                  quantityStr = `-${m.quantity} bt`;
+                } else if (isIngresso) {
                   icon = <ArrowRightCircle size={18} />;
                   badgeBg = '#f0fdf4';
                   badgeColor = '#16a34a';
