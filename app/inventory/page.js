@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, Wine, CheckCircle2, AlertTriangle, Plus, Search,
   Printer, Save, Check, RefreshCw, XCircle, FileText, Calendar,
-  ChevronDown, ChevronUp, Layers, CheckSquare, ShieldCheck, Camera, Trash2
+  ChevronDown, ChevronUp, Layers, CheckSquare, ShieldCheck, Camera, Trash2, FileSpreadsheet, Download
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export default function InventoryPage() {
   const router = useRouter();
@@ -268,6 +269,49 @@ export default function InventoryPage() {
       setTimeout(() => setToastMsg(null), 4500);
       setSaving(false);
     }
+  };
+
+  const handleDownloadExcel = () => {
+    if (!activeSession || !items.length) return;
+
+    const dataRows = items.map(item => {
+      const wine = item.wine || {};
+      const loc = item.location || {};
+      let bType = wine.bottleType || '';
+      if (bType.toLowerCase().includes('0.75') || bType.toLowerCase().includes('normale')) bType = '0.75L';
+
+      return {
+        'Cantina / Posizione': loc.name || 'Generale',
+        'Nome Vino': wine.name || 'Vino sconosciuto',
+        'Produttore': wine.producer || '',
+        'Annata': wine.vintage || '-',
+        'Formato': bType || '-',
+        'Giacenza Teorica PC': item.expectedQty || 0,
+        'Conteggio Reale Campo': item.countedQty !== null ? item.countedQty : '',
+        'Stato': item.isChecked ? 'Verificato' : 'Da Contare',
+        'Note': item.notes || ''
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataRows);
+    worksheet['!cols'] = [
+      { wch: 22 },
+      { wch: 35 },
+      { wch: 25 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 18 },
+      { wch: 22 },
+      { wch: 12 },
+      { wch: 20 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventario');
+
+    const cleanTitle = (activeSession.title || 'Inventario').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `${cleanTitle}_${new Date().toLocaleDateString('it-IT').replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, filename);
   };
 
   const handleFinalizeSession = async () => {
@@ -744,7 +788,27 @@ export default function InventoryPage() {
                     }}
                     title="Stampa foglio spunta per conteggio a penna"
                   >
-                    <Printer size={16} /> Foglio Cartaceo (PDF)
+                    <Printer size={16} /> Foglio Cartaceo / PDF
+                  </button>
+
+                  <button
+                    onClick={handleDownloadExcel}
+                    style={{
+                      padding: '8px 14px',
+                      backgroundColor: '#ecfdf5',
+                      border: '1px solid #a7f3d0',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      fontSize: '13px',
+                      color: '#047857',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                    title="Scarica il foglio di conteggio in formato Excel editable"
+                  >
+                    <FileSpreadsheet size={16} /> Scarica Excel (.xlsx)
                   </button>
 
                   {activeSession.status === 'in_progress' && (

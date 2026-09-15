@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Wine, Printer, LayoutGrid, List } from 'lucide-react';
+import { ArrowLeft, Wine, Printer, LayoutGrid, List, Download, FileSpreadsheet, Loader2 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 import WineBottleLoader from '@/components/WineBottleLoader';
 
@@ -10,6 +11,7 @@ export default function PrintInventarioPage() {
   const router = useRouter();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' (2 colonne compatto) or 'table' (1 colonna standard)
 
   useEffect(() => {
@@ -51,22 +53,6 @@ export default function PrintInventarioPage() {
     locationMap.get(locName).push(item);
   }
 
-  // Create a flattened list of items with location info attached for 2-column splitting
-  const allItemsWithLoc = [];
-  locationMap.forEach((items, locName) => {
-    items.forEach((item, idx) => {
-      allItemsWithLoc.push({
-        ...item,
-        locName,
-        isFirstInLoc: idx === 0
-      });
-    });
-  });
-
-  const halfIndex = Math.ceil(allItemsWithLoc.length / 2);
-  const col1Items = allItemsWithLoc.slice(0, halfIndex);
-  const col2Items = allItemsWithLoc.slice(halfIndex);
-
   const formatBottleType = (rawType) => {
     if (!rawType) return '-';
     const lower = rawType.toLowerCase();
@@ -77,50 +63,78 @@ export default function PrintInventarioPage() {
     return rawType;
   };
 
-  const renderColumnRows = (itemsList) => {
-    let lastLoc = null;
-    return itemsList.map(item => {
-      const showLocHeader = item.locName !== lastLoc;
-      lastLoc = item.locName;
+  const handleDownloadExcel = () => {
+    if (!session || !session.items) return;
 
-      const wine = item.wine;
-      const bType = formatBottleType(wine?.bottleType);
+    const dataRows = [];
+    locationMap.forEach((items, locName) => {
+      items.forEach(item => {
+        const wine = item.wine || {};
+        const bType = formatBottleType(wine.bottleType);
 
-      return (
-        <React.Fragment key={item.id}>
-          {showLocHeader && (
-            <tr>
-              <td colSpan="5" className="location-header">
-                📍 {item.locName}
-              </td>
-            </tr>
-          )}
-          <tr>
-            <td className="text-left text-bold" style={{ fontSize: '9.5px', padding: '2px 4px' }}>
-              <div>{wine ? wine.name : 'Vino non identificato'}</div>
-              {wine && wine.producer ? (
-                <div style={{ fontSize: '8.5px', color: '#64748b', fontWeight: 'normal' }}>{wine.producer}</div>
-              ) : null}
-            </td>
-            <td style={{ fontSize: '9px', whiteSpace: 'nowrap', padding: '2px 4px' }}>
-              <strong>{wine?.vintage || '-'}</strong>
-              <div style={{ fontSize: '8px', color: '#64748b' }}>{bType}</div>
-            </td>
-            <td style={{ fontWeight: 'bold', fontSize: '9.5px', backgroundColor: '#f8fafc', padding: '2px 4px' }}>
-              {item.expectedQty}
-            </td>
-            <td style={{ backgroundColor: '#ffffff', padding: '2px 4px' }}>
-              <div className="write-box">
-                {item.countedQty !== null ? item.countedQty : ''}
-              </div>
-            </td>
-            <td style={{ padding: '2px 4px' }}>
-              <div className="check-box" style={{ backgroundColor: item.isChecked ? '#10b981' : 'transparent' }}></div>
-            </td>
-          </tr>
-        </React.Fragment>
-      );
+        dataRows.push({
+          'Cantina / Posizione': locName,
+          'Nome Vino': wine.name || 'Vino sconosciuto',
+          'Produttore': wine.producer || '',
+          'Annata': wine.vintage || '-',
+          'Formato': bType || '-',
+          'Giacenza Teorica PC': item.expectedQty || 0,
+          'Conteggio Reale Campo': item.countedQty !== null ? item.countedQty : '',
+          'Stato': item.isChecked ? 'Verificato' : 'Da Contare',
+          'Note': item.notes || ''
+        });
+      });
     });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataRows);
+    worksheet['!cols'] = [
+      { wch: 22 },
+      { wch: 35 },
+      { wch: 25 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 18 },
+      { wch: 22 },
+      { wch: 12 },
+      { wch: 20 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventario Fisico');
+
+    const cleanTitle = (session.title || 'Inventario').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `${cleanTitle}_${today.replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, filename);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      setPdfDownloading(true);
+      const html2pdf = (await import('html2pdf.js')).default;
+      const element = document.getElementById('printable-inventory-area');
+      if (!element) {
+        setPdfDownloading(false);
+        window.print();
+        return;
+      }
+
+      const cleanTitle = (session.title || 'Inventario').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const opt = {
+        margin:       [5, 5, 5, 5],
+        filename:     `${cleanTitle}_${today.replace(/\//g, '-')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      await html2pdf().set(opt).from(element).save();
+      setPdfDownloading(false);
+    } catch (err) {
+      console.error(err);
+      setPdfDownloading(false);
+      window.print();
+    }
   };
 
   return (
@@ -143,7 +157,7 @@ export default function PrintInventarioPage() {
           print-color-adjust: exact;
         }
         @media print {
-          html, body, main {
+          html, body {
             background-color: white !important;
             color: black !important;
             padding: 0 !important;
@@ -160,18 +174,25 @@ export default function PrintInventarioPage() {
           @page { size: A4 portrait !important; margin: 6mm !important; }
           .print-page {
             box-shadow: none !important;
-            margin: 0 auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
-            padding: 0 !important;
+            min-height: 0 !important;
             border: none !important;
             border-radius: 0 !important;
             display: block !important;
             overflow: visible !important;
           }
-          table { page-break-inside: auto; }
-          tr { page-break-inside: avoid; page-break-after: auto; }
-          thead { display: table-header-group; }
+          .grid-columns-container {
+            column-count: 2 !important;
+            column-gap: 10px !important;
+            column-fill: auto !important;
+            display: block !important;
+          }
+          table { page-break-inside: auto; width: 100% !important; }
+          tr { break-inside: avoid !important; page-break-inside: avoid !important; page-break-after: auto; }
+          thead { display: table-header-group !important; }
         }
         .print-page {
           background: white;
@@ -229,14 +250,10 @@ export default function PrintInventarioPage() {
           font-weight: bold;
           font-size: 11px;
         }
-        .grid-columns {
-          display: flex;
-          gap: 10px;
-          align-items: flex-start;
-        }
-        .grid-col {
-          flex: 1;
-          min-width: 0;
+        .grid-columns-container {
+          column-count: 2;
+          column-gap: 12px;
+          display: block;
         }
       `}} />
 
@@ -254,7 +271,9 @@ export default function PrintInventarioPage() {
         justify: 'space-between',
         alignItems: 'center',
         marginBottom: '10px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.25)'
+        boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+        flexWrap: 'wrap',
+        gap: '12px'
       }}>
         <div
           style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
@@ -264,7 +283,7 @@ export default function PrintInventarioPage() {
           <ArrowLeft size={24} color="white" />
           <Wine size={24} color="#3b82f6" />
           <div>
-            <h2 style={{ color: 'white', margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>STAMPA FOGLIO INVENTARIO</h2>
+            <h2 style={{ color: 'white', margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>FOGLIO INVENTARIO (STAMPA & DOWNLOAD)</h2>
             <div style={{ color: '#94a3b8', fontSize: '12px' }}>{session.title} ({session.items.length} voci)</div>
           </div>
         </div>
@@ -310,28 +329,76 @@ export default function PrintInventarioPage() {
           </button>
         </div>
 
-        <button
-          onClick={() => window.print()}
-          style={{
-            padding: '8px 20px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            background: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 8px rgba(16, 185, 129, 0.3)'
-          }}
-        >
-          <Printer size={18} /> Stampa Foglio (PDF)
-        </button>
+        {/* Action Buttons: Browser Print, PDF Download, Excel Download */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleDownloadExcel}
+            style={{
+              padding: '8px 14px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              background: '#047857',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(4, 120, 87, 0.3)'
+            }}
+            title="Scarica il foglio inventario in formato Excel editable"
+          >
+            <FileSpreadsheet size={16} /> Scarica Excel (.xlsx)
+          </button>
+
+          <button
+            onClick={handleDownloadPDF}
+            disabled={pdfDownloading}
+            style={{
+              padding: '8px 14px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
+            }}
+            title="Scarica direttamente il file PDF sul dispositivo"
+          >
+            {pdfDownloading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
+            {pdfDownloading ? 'Generazione PDF...' : 'Scarica PDF File'}
+          </button>
+
+          <button
+            onClick={() => window.print()}
+            style={{
+              padding: '8px 16px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+            }}
+            title="Apri finestra di stampa browser"
+          >
+            <Printer size={16} /> Stampa Browser
+          </button>
+        </div>
       </div>
 
-      <div className="print-page">
+      <div className="print-page" id="printable-inventory-area">
         {/* Compact Document Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid #0f172a', paddingBottom: '6px', marginBottom: '10px' }}>
           <div>
@@ -350,63 +417,23 @@ export default function PrintInventarioPage() {
           </div>
         </div>
 
-        {viewMode === 'grid' ? (
-          /* 2-Column Ultra Compact Printable Grid Layout */
-          <div className="grid-columns">
-            {/* Left Column */}
-            <div className="grid-col">
-              <table className="inv-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '50%' }} className="text-left">Vino / Produttore</th>
-                    <th style={{ width: '16%' }}>Ann./Form.</th>
-                    <th style={{ width: '11%' }}>Teor.</th>
-                    <th style={{ width: '15%' }}>Reali</th>
-                    <th style={{ width: '8%' }}>✓</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {renderColumnRows(col1Items)}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Right Column */}
-            <div className="grid-col">
-              <table className="inv-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '50%' }} className="text-left">Vino / Produttore</th>
-                    <th style={{ width: '16%' }}>Ann./Form.</th>
-                    <th style={{ width: '11%' }}>Teor.</th>
-                    <th style={{ width: '15%' }}>Reali</th>
-                    <th style={{ width: '8%' }}>✓</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {renderColumnRows(col2Items)}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : (
-          /* 1-Column Full Width Table Layout (Optimized Compact Padding) */
+        <div className={viewMode === 'grid' ? 'grid-columns-container' : ''}>
           <table className="inv-table">
             <thead>
               <tr>
-                <th style={{ width: '38%' }} className="text-left">Vino / Produttore</th>
-                <th style={{ width: '12%' }}>Annata</th>
-                <th style={{ width: '12%' }}>Formato</th>
-                <th style={{ width: '12%' }}>Teorico PC</th>
-                <th style={{ width: '18%' }}>Contate Reali</th>
-                <th style={{ width: '8%' }}>Check</th>
+                <th style={{ width: viewMode === 'grid' ? '46%' : '38%' }} className="text-left">Vino / Produttore</th>
+                <th style={{ width: '12%' }}>{viewMode === 'grid' ? 'Ann./Form.' : 'Annata'}</th>
+                {viewMode !== 'grid' && <th style={{ width: '12%' }}>Formato</th>}
+                <th style={{ width: viewMode === 'grid' ? '12%' : '12%' }}>Teorico PC</th>
+                <th style={{ width: viewMode === 'grid' ? '18%' : '18%' }}>Contate Reali</th>
+                <th style={{ width: viewMode === 'grid' ? '12%' : '8%' }}>Check</th>
               </tr>
             </thead>
             <tbody>
               {Array.from(locationMap.entries()).map(([locName, items]) => (
                 <React.Fragment key={locName}>
                   <tr>
-                    <td colSpan="6" className="location-header">
+                    <td colSpan={viewMode === 'grid' ? 5 : 6} className="location-header">
                       📍 {locName} ({items.length} vini/annate)
                     </td>
                   </tr>
@@ -416,12 +443,21 @@ export default function PrintInventarioPage() {
 
                     return (
                       <tr key={item.id}>
-                        <td className="text-left text-bold" style={{ padding: '3px 6px' }}>
-                          {wine ? wine.name : 'Vino non identificato'}
-                          {wine && wine.producer ? <span style={{ fontSize: '9.5px', color: '#64748b', fontWeight: 'normal', display: 'block' }}>{wine.producer}</span> : null}
+                        <td className="text-left text-bold" style={{ padding: '3px 5px' }}>
+                          <div>{wine ? wine.name : 'Vino non identificato'}</div>
+                          {wine && wine.producer ? <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 'normal', display: 'block' }}>{wine.producer}</span> : null}
                         </td>
-                        <td style={{ fontWeight: 'bold', fontSize: '11px' }}>{wine ? (wine.vintage || '-') : '-'}</td>
-                        <td>{bType}</td>
+                        {viewMode === 'grid' ? (
+                          <td style={{ fontSize: '9px', whiteSpace: 'nowrap', padding: '2px 4px' }}>
+                            <strong>{wine?.vintage || '-'}</strong>
+                            <div style={{ fontSize: '8px', color: '#64748b' }}>{bType}</div>
+                          </td>
+                        ) : (
+                          <>
+                            <td style={{ fontWeight: 'bold', fontSize: '11px' }}>{wine ? (wine.vintage || '-') : '-'}</td>
+                            <td>{bType}</td>
+                          </>
+                        )}
                         <td style={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>
                           {item.expectedQty} bt.
                         </td>
@@ -440,7 +476,7 @@ export default function PrintInventarioPage() {
               ))}
             </tbody>
           </table>
-        )}
+        </div>
 
         {/* Footer */}
         <div style={{ marginTop: '16px', paddingTop: '8px', borderTop: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748b' }}>
