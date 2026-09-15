@@ -163,11 +163,11 @@ export default function PrintGiacenzeDettaglio() {
           table-layout: fixed;
           border-collapse: collapse;
           margin-top: 1rem;
-          font-size: 10px;
+          font-size: ${locationsToRender.length > 8 ? '8.5px' : locationsToRender.length > 5 ? '9.5px' : '10px'};
         }
         .detail-table th, .detail-table td {
           border: 1px solid #aaa;
-          padding: 3px 2px;
+          padding: ${locationsToRender.length > 8 ? '2px 1px' : '3px 2px'};
           text-align: center;
           word-break: break-word;
         }
@@ -178,7 +178,7 @@ export default function PrintGiacenzeDettaglio() {
         .text-left { text-align: left !important; }
         .text-bold { font-weight: bold; }
         @media print {
-          .detail-table { font-size: 9.5px; }
+          .detail-table { font-size: ${locationsToRender.length > 8 ? '7.5px' : locationsToRender.length > 5 ? '8.5px' : '9.5px'} !important; }
         }
       `}} />
 
