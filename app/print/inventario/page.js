@@ -48,7 +48,7 @@ export default function PrintInventarioPage() {
     return rawType;
   };
 
-  // Group & Paginate items into exact A4 pages
+  // Group & Paginate items into exact A4 pages to avoid blank page overflow & footer spills
   const pagedData = useMemo(() => {
     if (!session || !session.items) return [];
 
@@ -71,10 +71,10 @@ export default function PrintInventarioPage() {
       });
     });
 
-    // Determine max rows per page
-    // 2-column mode: 70 entries max per page (35 per column) -> ~240mm height
-    // 1-column mode: 32 entries max per page -> ~240mm height
-    const maxEntriesPerPage = viewMode === 'grid' ? 70 : 32;
+    // Max entries per page (conservative limit so height never exceeds ~210mm, leaving safe margins)
+    // 2-column mode: 60 entries max per page (30 per column)
+    // 1-column mode: 28 entries max per page
+    const maxEntriesPerPage = viewMode === 'grid' ? 60 : 28;
 
     const pages = [];
     let currentEntries = [];
@@ -265,13 +265,11 @@ export default function PrintInventarioPage() {
             padding: 4mm 6mm !important;
             width: 100% !important;
             max-width: 100% !important;
-            min-height: 285mm !important;
-            max-height: 287mm !important;
+            height: auto !important;
+            min-height: 0 !important;
             border: none !important;
             border-radius: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify: space-between !important;
+            display: block !important;
             box-sizing: border-box !important;
             page-break-after: always !important;
             break-after: page !important;
@@ -287,15 +285,14 @@ export default function PrintInventarioPage() {
           background: white;
           width: 210mm;
           max-width: 98vw;
-          min-height: 285mm;
+          height: auto;
+          min-height: 0;
           padding: 6mm 8mm;
           margin: 15px auto;
           box-shadow: 0 4px 10px rgba(0,0,0,0.5);
           box-sizing: border-box;
           border-radius: 6px;
-          display: flex;
-          flex-direction: column;
-          justify: space-between;
+          display: block;
           page-break-after: always;
           break-after: page;
         }
@@ -495,6 +492,7 @@ export default function PrintInventarioPage() {
         {pagedData.map((pageEntries, pageIdx) => {
           const pageNum = pageIdx + 1;
           const totalPages = pagedData.length;
+          const isLastPage = pageNum === totalPages;
 
           let leftCol = pageEntries;
           let rightCol = [];
@@ -588,9 +586,15 @@ export default function PrintInventarioPage() {
                 )}
               </div>
 
-              {/* Page Footer (REPEATED ON EVERY PAGE) */}
-              <div style={{ paddingTop: '6px', borderTop: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', fontSize: '9.5px', color: '#64748b', marginTop: '8px' }}>
-                <div>Firma Operatore Conteggio: ___________________________</div>
+              {/* Page Footer (Signature line ON LAST PAGE ONLY to prevent blank page overflow) */}
+              <div style={{ paddingTop: '6px', borderTop: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', fontSize: '9.5px', color: '#64748b', marginTop: '10px' }}>
+                {isLastPage ? (
+                  <div>Firma Operatore Conteggio: ___________________________</div>
+                ) : (
+                  <div style={{ fontStyle: 'italic', fontSize: '9px', color: '#94a3b8' }}>
+                    Cantina {session.title} - Foglio di Conteggio Fisico
+                  </div>
+                )}
                 <div style={{ fontWeight: 'bold', color: '#334155' }}>
                   Pagina {pageNum} di {totalPages}
                 </div>
