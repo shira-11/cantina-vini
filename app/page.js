@@ -13,7 +13,6 @@ import { StockCell } from './components/StockCell';
 import { MobileCatalog } from './components/MobileCatalog';
 import HelpGuideModal from './components/HelpGuideModal';
 import GlobalMovementLog from './components/GlobalMovementLog';
-import CantinaLogoBadge from './components/CantinaLogoBadge';
 import QRCodeModal from '@/components/QRCodeModal';
 import QRScannerModal from '@/components/QRScannerModal';
 
@@ -1000,8 +999,10 @@ export default function Home() {
                   }
                 }
               }}
+              title="Torna alla Home e resetta filtri"
             >
-              <CantinaLogoBadge showArchive={showArchive} />
+              <Wine size={28} color="var(--primary-color)" />
+              <h2 style={{ margin: 0 }}>{showArchive ? 'ARCHIVIO VINI' : 'CANTINA'}</h2>
             </div>
             <button
               type="button"

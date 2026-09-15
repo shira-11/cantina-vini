@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation';
 import { Wine, Search, Monitor, Filter, X, Loader2, Plus, Settings, Shield, History, LogOut, Mic, CheckSquare, QrCode } from 'lucide-react';
 import { getCountryFlag, getBadgeClass, getStockBreakdown, correctSpokenWineTranscript, getWineSearchSuggestions } from '../utils/wineHelpers';
 import { StockCell } from './StockCell';
-import CantinaLogoBadge from './CantinaLogoBadge';
 
 export const MobileCatalog = ({
   wines,
@@ -201,7 +200,7 @@ export const MobileCatalog = ({
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <div
+          <h1
             onClick={() => {
               if (typeof window !== 'undefined' && window.location.pathname !== '/') {
                 window.location.href = '/';
@@ -220,9 +219,11 @@ export const MobileCatalog = ({
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }
             }}
+            style={{ fontSize: '1.5rem', margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+            title="Torna alla Home e resetta filtri"
           >
-            <CantinaLogoBadge size="small" />
-          </div>
+            <Wine size={24} color="#6366f1" /> CANTINA
+          </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             {currentUser?.username && (
               <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569', backgroundColor: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
