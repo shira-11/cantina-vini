@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Wine, Printer, LayoutGrid, List, Download, FileSpreadsheet, Loader2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -12,7 +12,7 @@ export default function PrintInventarioPage() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pdfDownloading, setPdfDownloading] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' (2 colonne compatto) or 'table' (1 colonna standard)
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' (2 colonne compatto) or 'table' (1 colonna)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -38,21 +38,6 @@ export default function PrintInventarioPage() {
     }
   }, []);
 
-  if (loading) return <WineBottleLoader message="Caricamento Foglio Inventario..." />;
-  if (!session) return <div style={{ padding: '2rem' }}>Nessuna sessione di inventario selezionata.</div>;
-
-  const today = new Date(session.createdAt).toLocaleDateString('it-IT');
-
-  // Group items by Location
-  const locationMap = new Map();
-  for (const item of session.items) {
-    const locName = item.location ? item.location.name : 'Generale / Senza Cantina';
-    if (!locationMap.has(locName)) {
-      locationMap.set(locName, []);
-    }
-    locationMap.get(locName).push(item);
-  }
-
   const formatBottleType = (rawType) => {
     if (!rawType) return '-';
     const lower = rawType.toLowerCase();
@@ -63,27 +48,79 @@ export default function PrintInventarioPage() {
     return rawType;
   };
 
+  // Group & Paginate items into exact A4 pages
+  const pagedData = useMemo(() => {
+    if (!session || !session.items) return [];
+
+    // Group items by location
+    const locationMap = new Map();
+    for (const item of session.items) {
+      const locName = item.location ? item.location.name : 'Generale / Senza Cantina';
+      if (!locationMap.has(locName)) {
+        locationMap.set(locName, []);
+      }
+      locationMap.get(locName).push(item);
+    }
+
+    // Flat list of entries (headers and items)
+    const flatEntries = [];
+    locationMap.forEach((items, locName) => {
+      flatEntries.push({ type: 'header', locName, count: items.length });
+      items.forEach(item => {
+        flatEntries.push({ type: 'item', item, locName });
+      });
+    });
+
+    // Determine max rows per page
+    // 2-column mode: 70 entries max per page (35 per column) -> ~240mm height
+    // 1-column mode: 32 entries max per page -> ~240mm height
+    const maxEntriesPerPage = viewMode === 'grid' ? 70 : 32;
+
+    const pages = [];
+    let currentEntries = [];
+    let currentCost = 0;
+
+    for (const entry of flatEntries) {
+      const cost = entry.type === 'header' ? 1.4 : 1;
+      if (currentCost + cost > maxEntriesPerPage && currentEntries.length > 0) {
+        pages.push(currentEntries);
+        currentEntries = [];
+        currentCost = 0;
+      }
+      currentEntries.push(entry);
+      currentCost += cost;
+    }
+    if (currentEntries.length > 0) {
+      pages.push(currentEntries);
+    }
+
+    return pages;
+  }, [session, viewMode]);
+
+  if (loading) return <WineBottleLoader message="Caricamento Foglio Inventario..." />;
+  if (!session) return <div style={{ padding: '2rem' }}>Nessuna sessione di inventario selezionata.</div>;
+
+  const today = new Date(session.createdAt).toLocaleDateString('it-IT');
+
   const handleDownloadExcel = () => {
     if (!session || !session.items) return;
 
-    const dataRows = [];
-    locationMap.forEach((items, locName) => {
-      items.forEach(item => {
-        const wine = item.wine || {};
-        const bType = formatBottleType(wine.bottleType);
+    const dataRows = session.items.map(item => {
+      const wine = item.wine || {};
+      const loc = item.location || {};
+      const bType = formatBottleType(wine.bottleType);
 
-        dataRows.push({
-          'Cantina / Posizione': locName,
-          'Nome Vino': wine.name || 'Vino sconosciuto',
-          'Produttore': wine.producer || '',
-          'Annata': wine.vintage || '-',
-          'Formato': bType || '-',
-          'Giacenza Teorica PC': item.expectedQty || 0,
-          'Conteggio Reale Campo': item.countedQty !== null ? item.countedQty : '',
-          'Stato': item.isChecked ? 'Verificato' : 'Da Contare',
-          'Note': item.notes || ''
-        });
-      });
+      return {
+        'Cantina / Posizione': loc.name || 'Generale',
+        'Nome Vino': wine.name || 'Vino sconosciuto',
+        'Produttore': wine.producer || '',
+        'Annata': wine.vintage || '-',
+        'Formato': bType || '-',
+        'Giacenza Teorica PC': item.expectedQty || 0,
+        'Conteggio Reale Campo': item.countedQty !== null ? item.countedQty : '',
+        'Stato': item.isChecked ? 'Verificato' : 'Da Contare',
+        'Note': item.notes || ''
+      };
     });
 
     const worksheet = XLSX.utils.json_to_sheet(dataRows);
@@ -121,11 +158,12 @@ export default function PrintInventarioPage() {
 
       const cleanTitle = (session.title || 'Inventario').replace(/[^a-zA-Z0-9_-]/g, '_');
       const opt = {
-        margin:       [5, 5, 5, 5],
+        margin:       [4, 4, 4, 4],
         filename:     `${cleanTitle}_${today.replace(/\//g, '-')}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['css', 'legacy'], pagebreak: '.print-a4-page' }
       };
 
       await html2pdf().set(opt).from(element).save();
@@ -137,12 +175,63 @@ export default function PrintInventarioPage() {
     }
   };
 
+  const renderTableRows = (entries) => {
+    return entries.map((entry, idx) => {
+      if (entry.type === 'header') {
+        return (
+          <tr key={`hdr-${entry.locName}-${idx}`}>
+            <td colSpan={viewMode === 'grid' ? 5 : 6} className="location-header">
+              📍 {entry.locName} ({entry.count} voci)
+            </td>
+          </tr>
+        );
+      }
+
+      const item = entry.item;
+      const wine = item.wine;
+      const bType = formatBottleType(wine?.bottleType);
+
+      return (
+        <tr key={item.id}>
+          <td className="text-left text-bold" style={{ padding: '3px 5px' }}>
+            <div style={{ fontSize: '9.5px', fontWeight: 'bold' }}>{wine ? wine.name : 'Vino sconosciuto'}</div>
+            {wine && wine.producer ? (
+              <div style={{ fontSize: '8px', color: '#64748b', fontWeight: 'normal' }}>{wine.producer}</div>
+            ) : null}
+          </td>
+          {viewMode === 'grid' ? (
+            <td style={{ fontSize: '9px', whiteSpace: 'nowrap', padding: '2px 4px' }}>
+              <strong>{wine?.vintage || '-'}</strong>
+              <div style={{ fontSize: '8px', color: '#64748b' }}>{bType}</div>
+            </td>
+          ) : (
+            <>
+              <td style={{ fontWeight: 'bold', fontSize: '10.5px' }}>{wine ? (wine.vintage || '-') : '-'}</td>
+              <td>{bType}</td>
+            </>
+          )}
+          <td style={{ fontWeight: 'bold', backgroundColor: '#f8fafc', padding: '2px 4px' }}>
+            {item.expectedQty} <span style={{ fontSize: '8.5px', fontWeight: 'normal' }}>bt.</span>
+          </td>
+          <td style={{ backgroundColor: '#ffffff', padding: '2px 4px' }}>
+            <div className="write-box">
+              {item.countedQty !== null ? item.countedQty : ''}
+            </div>
+          </td>
+          <td style={{ padding: '2px 4px' }}>
+            <div className="check-box" style={{ backgroundColor: item.isChecked ? '#10b981' : 'transparent' }}></div>
+          </td>
+        </tr>
+      );
+    });
+  };
+
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
         @page {
           size: A4 portrait;
-          margin: 6mm;
+          margin: 4mm;
         }
         body {
           background-color: #525659;
@@ -165,55 +254,61 @@ export default function PrintInventarioPage() {
             display: block !important;
             overflow: visible !important;
             height: auto !important;
-            max-height: none !important;
             width: 100% !important;
-            position: static !important;
           }
           .no-print { display: none !important; }
           header, footer, nav, .sidebar { display: none !important; }
-          @page { size: A4 portrait !important; margin: 6mm !important; }
-          .print-page {
+          @page { size: A4 portrait !important; margin: 4mm !important; }
+          .print-a4-page {
             box-shadow: none !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: 4mm 6mm !important;
             width: 100% !important;
             max-width: 100% !important;
-            min-height: 0 !important;
+            min-height: 285mm !important;
+            max-height: 287mm !important;
             border: none !important;
             border-radius: 0 !important;
-            display: block !important;
-            overflow: visible !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify: space-between !important;
+            box-sizing: border-box !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
-          .grid-columns-container {
-            column-count: 2 !important;
-            column-gap: 10px !important;
-            column-fill: auto !important;
-            display: block !important;
-          }
-          table { page-break-inside: auto; width: 100% !important; }
-          tr { break-inside: avoid !important; page-break-inside: avoid !important; page-break-after: auto; }
+          table { width: 100% !important; border-collapse: collapse !important; }
+          tr { break-inside: avoid !important; page-break-inside: avoid !important; }
           thead { display: table-header-group !important; }
         }
-        .print-page {
+
+        .print-a4-page {
           background: white;
           width: 210mm;
           max-width: 98vw;
-          min-height: 270mm;
-          padding: 8mm 10mm;
+          min-height: 285mm;
+          padding: 6mm 8mm;
           margin: 15px auto;
           box-shadow: 0 4px 10px rgba(0,0,0,0.5);
           box-sizing: border-box;
           border-radius: 6px;
+          display: flex;
+          flex-direction: column;
+          justify: space-between;
+          page-break-after: always;
+          break-after: page;
         }
+
         .inv-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 10px;
+          font-size: 9.5px;
           line-height: 1.2;
         }
         .inv-table th, .inv-table td {
           border: 1px solid #cbd5e1;
-          padding: 3px 5px;
+          padding: 3px 4px;
           text-align: center;
           vertical-align: middle;
         }
@@ -221,14 +316,14 @@ export default function PrintInventarioPage() {
           background-color: #f1f5f9;
           font-weight: bold;
           color: #0f172a;
-          font-size: 10px;
-          padding: 4px 5px;
+          font-size: 9.5px;
+          padding: 4px 4px;
         }
         .text-left { text-align: left !important; }
         .text-bold { font-weight: bold; }
         .location-header {
           background-color: #e2e8f0;
-          font-size: 10.5px;
+          font-size: 10px;
           font-weight: bold;
           text-align: left;
           padding: 3px 6px;
@@ -248,12 +343,7 @@ export default function PrintInventarioPage() {
           min-width: 24px;
           display: inline-block;
           font-weight: bold;
-          font-size: 11px;
-        }
-        .grid-columns-container {
-          column-count: 2;
-          column-gap: 12px;
-          display: block;
+          font-size: 10.5px;
         }
       `}} />
 
@@ -284,7 +374,9 @@ export default function PrintInventarioPage() {
           <Wine size={24} color="#3b82f6" />
           <div>
             <h2 style={{ color: 'white', margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>FOGLIO INVENTARIO (STAMPA & DOWNLOAD)</h2>
-            <div style={{ color: '#94a3b8', fontSize: '12px' }}>{session.title} ({session.items.length} voci)</div>
+            <div style={{ color: '#94a3b8', fontSize: '12px' }}>
+              {session.title} ({session.items.length} voci su {pagedData.length} pagine)
+            </div>
           </div>
         </div>
 
@@ -398,91 +490,114 @@ export default function PrintInventarioPage() {
         </div>
       </div>
 
-      <div className="print-page" id="printable-inventory-area">
-        {/* Compact Document Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid #0f172a', paddingBottom: '6px', marginBottom: '10px' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '17px', textTransform: 'uppercase', color: '#0f172a', fontWeight: 'bold', letterSpacing: '-0.3px' }}>
-              {session.title}
-            </h1>
-            <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
-              Foglio di Conteggio Fisico sul Campo (Anno {session.year})
-            </div>
-          </div>
-          <div style={{ textAlign: 'right', fontSize: '11px', color: '#334155', lineHeight: '1.3' }}>
-            <div><strong>Data:</strong> {today} | <strong>Totale Voci:</strong> {session.items.length}</div>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>
-              {viewMode === 'grid' ? 'Layout 2 Colonne Ottimizzato Stampa' : 'Layout Tabellare Standard'}
-            </div>
-          </div>
-        </div>
+      {/* Printable Pages Container */}
+      <div id="printable-inventory-area">
+        {pagedData.map((pageEntries, pageIdx) => {
+          const pageNum = pageIdx + 1;
+          const totalPages = pagedData.length;
 
-        <div className={viewMode === 'grid' ? 'grid-columns-container' : ''}>
-          <table className="inv-table">
-            <thead>
-              <tr>
-                <th style={{ width: viewMode === 'grid' ? '46%' : '38%' }} className="text-left">Vino / Produttore</th>
-                <th style={{ width: '12%' }}>{viewMode === 'grid' ? 'Ann./Form.' : 'Annata'}</th>
-                {viewMode !== 'grid' && <th style={{ width: '12%' }}>Formato</th>}
-                <th style={{ width: viewMode === 'grid' ? '12%' : '12%' }}>Teorico PC</th>
-                <th style={{ width: viewMode === 'grid' ? '18%' : '18%' }}>Contate Reali</th>
-                <th style={{ width: viewMode === 'grid' ? '12%' : '8%' }}>Check</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from(locationMap.entries()).map(([locName, items]) => (
-                <React.Fragment key={locName}>
-                  <tr>
-                    <td colSpan={viewMode === 'grid' ? 5 : 6} className="location-header">
-                      📍 {locName} ({items.length} vini/annate)
-                    </td>
-                  </tr>
-                  {items.map(item => {
-                    const wine = item.wine;
-                    const bType = formatBottleType(wine?.bottleType);
+          let leftCol = pageEntries;
+          let rightCol = [];
 
-                    return (
-                      <tr key={item.id}>
-                        <td className="text-left text-bold" style={{ padding: '3px 5px' }}>
-                          <div>{wine ? wine.name : 'Vino non identificato'}</div>
-                          {wine && wine.producer ? <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 'normal', display: 'block' }}>{wine.producer}</span> : null}
-                        </td>
-                        {viewMode === 'grid' ? (
-                          <td style={{ fontSize: '9px', whiteSpace: 'nowrap', padding: '2px 4px' }}>
-                            <strong>{wine?.vintage || '-'}</strong>
-                            <div style={{ fontSize: '8px', color: '#64748b' }}>{bType}</div>
-                          </td>
-                        ) : (
-                          <>
-                            <td style={{ fontWeight: 'bold', fontSize: '11px' }}>{wine ? (wine.vintage || '-') : '-'}</td>
-                            <td>{bType}</td>
-                          </>
-                        )}
-                        <td style={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>
-                          {item.expectedQty} bt.
-                        </td>
-                        <td style={{ backgroundColor: '#ffffff' }}>
-                          <div className="write-box">
-                            {item.countedQty !== null ? item.countedQty : ''}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="check-box" style={{ backgroundColor: item.isChecked ? '#10b981' : 'transparent' }}></div>
-                        </td>
+          if (viewMode === 'grid') {
+            const half = Math.ceil(pageEntries.length / 2);
+            leftCol = pageEntries.slice(0, half);
+            rightCol = pageEntries.slice(half);
+          }
+
+          return (
+            <div key={`page-${pageNum}`} className="print-a4-page">
+              {/* Document Header (REPEATED ON EVERY PAGE) */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid #0f172a', paddingBottom: '5px', marginBottom: '8px' }}>
+                  <div>
+                    <h1 style={{ margin: 0, fontSize: '16px', textTransform: 'uppercase', color: '#0f172a', fontWeight: 'bold', letterSpacing: '-0.3px' }}>
+                      {session.title}
+                    </h1>
+                    <div style={{ fontSize: '10.5px', color: '#475569', marginTop: '2px' }}>
+                      Foglio di Conteggio Fisico sul Campo (Anno {session.year})
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', fontSize: '10.5px', color: '#334155', lineHeight: '1.3' }}>
+                    <div><strong>Data:</strong> {today} | <strong>Totale Voci:</strong> {session.items.length}</div>
+                    <div style={{ fontSize: '10px', color: '#2563eb', fontWeight: 'bold' }}>
+                      Pagina {pageNum} di {totalPages} {viewMode === 'grid' ? '(Layout 2 Colonne Ottimizzato)' : ''}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Page Content */}
+                {viewMode === 'grid' ? (
+                  /* 2-Column Side-by-Side Tables */
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'flex-start' }}>
+                    {/* Left Column Table */}
+                    <div>
+                      <table className="inv-table">
+                        <thead>
+                          <tr>
+                            <th style={{ width: '46%' }} className="text-left">Vino / Produttore</th>
+                            <th style={{ width: '16%' }}>Ann./Form.</th>
+                            <th style={{ width: '12%' }}>Teor.</th>
+                            <th style={{ width: '16%' }}>Reali</th>
+                            <th style={{ width: '10%' }}>✓</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {renderTableRows(leftCol)}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Right Column Table */}
+                    <div>
+                      {rightCol.length > 0 ? (
+                        <table className="inv-table">
+                          <thead>
+                            <tr>
+                              <th style={{ width: '46%' }} className="text-left">Vino / Produttore</th>
+                              <th style={{ width: '16%' }}>Ann./Form.</th>
+                              <th style={{ width: '12%' }}>Teor.</th>
+                              <th style={{ width: '16%' }}>Reali</th>
+                              <th style={{ width: '10%' }}>✓</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {renderTableRows(rightCol)}
+                          </tbody>
+                        </table>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  /* 1-Column Table */
+                  <table className="inv-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '38%' }} className="text-left">Vino / Produttore</th>
+                        <th style={{ width: '12%' }}>Annata</th>
+                        <th style={{ width: '12%' }}>Formato</th>
+                        <th style={{ width: '12%' }}>Teorico PC</th>
+                        <th style={{ width: '18%' }}>Contate Reali</th>
+                        <th style={{ width: '8%' }}>Check</th>
                       </tr>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </thead>
+                    <tbody>
+                      {renderTableRows(leftCol)}
+                    </tbody>
+                  </table>
+                )}
+              </div>
 
-        {/* Footer */}
-        <div style={{ marginTop: '16px', paddingTop: '8px', borderTop: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748b' }}>
-          <div>Firma Operatore Conteggio: ___________________________</div>
-          <div>Pagina Inventario Fisico Cantina</div>
-        </div>
+              {/* Page Footer (REPEATED ON EVERY PAGE) */}
+              <div style={{ paddingTop: '6px', borderTop: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', fontSize: '9.5px', color: '#64748b', marginTop: '8px' }}>
+                <div>Firma Operatore Conteggio: ___________________________</div>
+                <div style={{ fontWeight: 'bold', color: '#334155' }}>
+                  Pagina {pageNum} di {totalPages}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </>
   );
