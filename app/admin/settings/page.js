@@ -50,6 +50,7 @@ export default function AdminSettingsPage() {
   const [newLocationName, setNewLocationName] = useState('');
   const [editingLocId, setEditingLocId] = useState(null);
   const [editingLocName, setEditingLocName] = useState('');
+  const [clearModalLoc, setClearModalLoc] = useState(null);
 
   const fetchLocations = async () => {
     try {
@@ -235,19 +236,26 @@ export default function AdminSettingsPage() {
   };
 
   const handleClearLocationStock = async (loc) => {
-    const userPin = prompt(`🔑 Inserisci il PIN di Sicurezza per azzerare tutte le bottiglie in "${loc.name}":`);
+    const userPin = prompt(`🔑 Inserisci il PIN di Sicurezza per procedere allo svuotamento di "${loc.name}":`);
     if (userPin !== deletionPin) {
       alert("❌ PIN di Sicurezza errato. Operazione annullata.");
       return;
     }
 
-    if (!confirm(`⚠️ Sei sicuro di voler SVUOTARE LA CANTINA "${loc.name}"?\n\nTutte le giacenze attive in questa cantina verranno azzerate. Non verranno aggiunte bottiglie su altre cantine.`)) return;
+    setClearModalLoc(loc);
+  };
 
+  const executeClearLocation = async (loc, clearMovements) => {
     try {
-      const res = await fetch(`/api/locations/${loc.id}/clear`, { method: 'POST' });
+      const res = await fetch(`/api/locations/${loc.id}/clear`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clearMovements })
+      });
       if (res.ok) {
         const data = await res.json();
         setMessage({ text: data.message || `Cantina "${loc.name}" svuotata con successo.`, type: 'success' });
+        setClearModalLoc(null);
         fetchLocations();
       } else {
         const err = await res.json();
@@ -255,6 +263,7 @@ export default function AdminSettingsPage() {
       }
     } catch (e) {
       console.error(e);
+      alert('Errore durante lo svuotamento della cantina');
     }
   };
 
@@ -977,6 +986,88 @@ export default function AdminSettingsPage() {
         </div>
 
       </div>
+
+      {/* Modal Scelta Svuotamento Cantina */}
+      {clearModalLoc && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 100000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            maxWidth: '520px',
+            width: '100%',
+            padding: '1.75rem',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
+          }}>
+            <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.25rem', fontWeight: '700', color: '#0f172a' }}>
+              🧹 Modalità Svuotamento: "{clearModalLoc.name}"
+            </h3>
+            <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+              Come desideri svuotare la cantina <strong>"{clearModalLoc.name}"</strong>? Le altre cantine e i relativi movimenti non verranno toccati.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <button
+                type="button"
+                onClick={() => executeClearLocation(clearModalLoc, false)}
+                style={{
+                  display: 'flex', flexDirection: 'column', textAlign: 'left',
+                  background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '10px',
+                  padding: '1rem', cursor: 'pointer', transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ fontWeight: '700', color: '#92400e', fontSize: '0.95rem', marginBottom: '0.2rem' }}>
+                  📦 Solo Giacenze (Conserva Storico Movimenti)
+                </div>
+                <div style={{ fontSize: '0.825rem', color: '#78350f', lineHeight: '1.3' }}>
+                  Azzera le bottiglie in questa cantina creando un movimento d'uscita. Tutti i movimenti passati rimangono conservati nel registro.
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => executeClearLocation(clearModalLoc, true)}
+                style={{
+                  display: 'flex', flexDirection: 'column', textAlign: 'left',
+                  background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '10px',
+                  padding: '1rem', cursor: 'pointer', transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ fontWeight: '700', color: '#991b1b', fontSize: '0.95rem', marginBottom: '0.2rem' }}>
+                  🧹 Giacenze + Storico Movimenti (Pulisci Tutto)
+                </div>
+                <div style={{ fontSize: '0.825rem', color: '#7f1d1d', lineHeight: '1.3' }}>
+                  Azzera le bottiglie ED ELIMINA definitivamente tutto lo storico movimenti di questa specifica cantina, senza lasciar traccia per questa cantina.
+                </div>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setClearModalLoc(null)}
+                style={{
+                  padding: '0.6rem 1.25rem',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

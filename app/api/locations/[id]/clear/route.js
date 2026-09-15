@@ -24,6 +24,24 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Cantina non trovata" }, { status: 404 });
     }
 
+    const body = await request.json().catch(() => ({}));
+    const clearMovements = body.clearMovements === true;
+
+    if (clearMovements) {
+      // Svuotamento COMPLETO: azzera giacenze ed elimina TUTTI i movimenti della cantina
+      const deletedMovements = await prisma.movement.deleteMany({
+        where: { locationId }
+      });
+
+      syncEventEmitter.emit('db_update');
+
+      return NextResponse.json({
+        success: true,
+        message: `Cantina "${location.name}" svuotata totalmente. Azzerate le giacenze ed eliminati ${deletedMovements.count} movimenti dallo storico.`,
+        deletedMovementsCount: deletedMovements.count
+      });
+    }
+
     // Troviamo tutti i movimenti della cantina selezionata
     const movements = await prisma.movement.findMany({
       where: { locationId }
@@ -67,7 +85,7 @@ export async function POST(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: `Cantina "${location.name}" svuotata con successo. Azzerate ${clearedBottlesCount} bottiglie di ${clearedWinesCount} vini.`,
+      message: `Cantina "${location.name}" svuotata con successo. Azzerate ${clearedBottlesCount} bottiglie di ${clearedWinesCount} vini (storico movimenti conservato).`,
       clearedWinesCount,
       clearedBottlesCount
     });
