@@ -625,7 +625,7 @@ export default function AdminUsersPage() {
                   type="button"
                   className="btn"
                   onClick={() => setIsAuthModalOpen(false)}
-                  style={{ flex: 1, border: '1px solid #cbd5e1', background: 'white' }}
+                  style={{ flex: 1, border: '1px solid #cbd5e1', background: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: 'center', fontWeight: '600', color: '#334155' }}
                 >
                   Annulla
                 </button>
