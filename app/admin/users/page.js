@@ -571,25 +571,25 @@ export default function AdminUsersPage() {
               <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem auto', border: '1px solid #bfdbfe' }}>
                 <KeyRound size={28} />
               </div>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold', color: '#0f172a' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold', color: '#0f172a', textAlign: 'center' }}>
                 🔑 Conferma Password Admin
               </h3>
-              <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.85rem', color: '#64748b', lineHeight: '1.4' }}>
+              <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.85rem', color: '#64748b', lineHeight: '1.4', textAlign: 'center' }}>
                 Per motivi di sicurezza, inserisci la tua password personale per accedere alla <strong>Sezione Riservata Amministratori</strong>:
               </p>
             </div>
 
             {authError && (
-              <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '0.65rem', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '0.65rem', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '0.4rem' }}>
                 <AlertTriangle size={16} style={{ flexShrink: 0 }} />
                 <span>{authError}</span>
               </div>
             )}
 
-            <form onSubmit={handleVerifyAdminPassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div className="form-group">
-                <label style={{ fontWeight: '600', fontSize: '0.875rem', color: '#334155' }}>Password Personale Admin</label>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginTop: '0.35rem' }}>
+            <form onSubmit={handleVerifyAdminPassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
+              <div className="form-group" style={{ textAlign: 'center' }}>
+                <label style={{ fontWeight: '600', fontSize: '0.875rem', color: '#334155', textAlign: 'center', display: 'block', width: '100%', marginBottom: '0.35rem' }}>Password Personale Admin</label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
                   <input
                     type={showAuthPassword ? "text" : "password"}
                     value={adminPasswordInput}
@@ -597,19 +597,22 @@ export default function AdminUsersPage() {
                     placeholder="Inserisci la tua password..."
                     autoFocus
                     required
-                    style={{ width: '100%', padding: '0.65rem 2.5rem 0.65rem 0.75rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '1rem' }}
+                    style={{ width: '100%', textAlign: 'center', padding: '0.65rem 2.5rem 0.65rem 2.5rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '1rem' }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowAuthPassword(!showAuthPassword)}
                     style={{
                       position: 'absolute',
-                      right: '0.5rem',
+                      right: '0.6rem',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
                       color: '#64748b',
-                      padding: '0.25rem'
+                      padding: '0.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                   >
                     {showAuthPassword ? <EyeOff size={18} /> : <Eye size={18} />}
