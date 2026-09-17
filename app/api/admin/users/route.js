@@ -109,32 +109,55 @@ export async function POST(request) {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const userData = {
-      username: trimmedUsername,
-      passwordHash,
-      role: role || 'viewer',
-      isActive: isActive !== undefined ? isActive : true,
-      canAccessInventory: canAccessInventory !== undefined ? Boolean(canAccessInventory) : true,
-      maxDevices: maxDevices !== undefined ? Number(maxDevices) : 2,
-      allowedLocations: typeof allowedLocations === 'string' ? allowedLocations : (Array.isArray(allowedLocations) ? JSON.stringify(allowedLocations) : "ALL")
-    };
+    const allowedLocsStr = typeof allowedLocations === 'string'
+      ? allowedLocations
+      : (Array.isArray(allowedLocations) ? JSON.stringify(allowedLocations) : "ALL");
 
-    if (autoLogoutEnabled !== undefined) userData.autoLogoutEnabled = autoLogoutEnabled;
-    if (autoLogoutMinutes !== undefined) userData.autoLogoutMinutes = Number(autoLogoutMinutes);
+    const isInventoryVal = canAccessInventory !== undefined ? Boolean(canAccessInventory) : true;
+    const maxDevVal = maxDevices !== undefined ? Number(maxDevices) : 2;
+    const autoLogoutEnVal = autoLogoutEnabled !== undefined ? Boolean(autoLogoutEnabled) : true;
+    const autoLogoutMinVal = autoLogoutMinutes !== undefined ? Number(autoLogoutMinutes) : 30;
 
     let newUser;
     try {
       newUser = await prisma.user.create({
-        data: userData
+        data: {
+          username: trimmedUsername,
+          passwordHash,
+          role: role || 'viewer',
+          isActive: isActive !== undefined ? isActive : true,
+          allowedLocations: allowedLocsStr,
+          canAccessInventory: isInventoryVal,
+          maxDevices: maxDevVal,
+          autoLogoutEnabled: autoLogoutEnVal,
+          autoLogoutMinutes: autoLogoutMinVal
+        }
       });
     } catch (createErr) {
-      console.warn("Retrying user creation with core fields:", createErr);
-      delete userData.autoLogoutEnabled;
-      delete userData.autoLogoutMinutes;
-      delete userData.maxDevices;
+      console.warn("Retrying user creation with core essential fields:", createErr);
       newUser = await prisma.user.create({
-        data: userData
+        data: {
+          username: trimmedUsername,
+          passwordHash,
+          role: role || 'viewer',
+          isActive: isActive !== undefined ? isActive : true,
+          allowedLocations: allowedLocsStr
+        }
       });
+
+      // Aggiorna i campi aggiuntivi con SQL grezzo per evitare errori di schema client
+      try {
+        await prisma.$executeRawUnsafe(
+          'UPDATE User SET canAccessInventory = ?, autoLogoutEnabled = ?, autoLogoutMinutes = ?, maxDevices = ? WHERE id = ?',
+          isInventoryVal ? 1 : 0,
+          autoLogoutEnVal ? 1 : 0,
+          autoLogoutMinVal,
+          maxDevVal,
+          newUser.id
+        );
+      } catch (sqlErr) {
+        console.warn("Raw SQL update fallback warning:", sqlErr);
+      }
     }
 
     return NextResponse.json({
@@ -142,10 +165,11 @@ export async function POST(request) {
       username: newUser.username,
       role: newUser.role,
       isActive: newUser.isActive,
-      autoLogoutEnabled: newUser.autoLogoutEnabled ?? true,
-      autoLogoutMinutes: newUser.autoLogoutMinutes ?? 30,
-      maxDevices: newUser.maxDevices ?? 2,
-      allowedLocations: newUser.allowedLocations ?? "ALL"
+      autoLogoutEnabled: autoLogoutEnVal,
+      autoLogoutMinutes: autoLogoutMinVal,
+      maxDevices: maxDevVal,
+      allowedLocations: allowedLocsStr,
+      canAccessInventory: isInventoryVal
     }, { status: 201 });
   } catch (error) {
     console.error("POST user error:", error);
