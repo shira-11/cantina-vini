@@ -53,3 +53,11 @@ sito vino da carica FTP/
 
 Vini PDF/
 *.pdf
+
+# Local asset archives (not needed in cloud web bundle)
+Foto vini/
+vini_Foto/
+Vini_07-07-2026/
+*.traineddata
+backups/
+

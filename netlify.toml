@@ -4,6 +4,10 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  NEXT_EXTERNAL_PACKAGES = "@prisma/client,prisma,tesseract.js,better-sqlite3"
+
+[functions]
+  node_bundler = "esbuild"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
