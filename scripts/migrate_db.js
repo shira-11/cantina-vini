@@ -1,11 +1,16 @@
-const Database = require('better-sqlite3');
+let Database;
+try {
+  Database = require('better-sqlite3');
+} catch (e) {
+  console.log('better-sqlite3 not available in this environment, skipping local migration');
+}
 const path = require('path');
 const fs = require('fs');
 
 const dbPath = path.join(process.cwd(), 'prisma', 'cantina.db');
 console.log('Running database migration for Railway/Production at:', dbPath);
 
-if (fs.existsSync(dbPath)) {
+if (Database && fs.existsSync(dbPath)) {
   try {
     const db = new Database(dbPath);
 
