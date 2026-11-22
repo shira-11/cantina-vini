@@ -22,6 +22,9 @@ async function migrateAndUpload() {
       vintage TEXT,
       country TEXT,
       region TEXT,
+      position TEXT,
+      collocation TEXT,
+      shelfNumber TEXT,
       producerCellar TEXT,
       producer TEXT,
       classification TEXT,
@@ -65,6 +68,9 @@ async function migrateAndUpload() {
       movementType TEXT NOT NULL,
       quantity INTEGER NOT NULL,
       bottleType TEXT,
+      position TEXT,
+      collocation TEXT,
+      shelfNumber TEXT,
       reason TEXT,
       vendor TEXT,
       price REAL,
@@ -108,6 +114,22 @@ async function migrateAndUpload() {
 
   try {
     await tursoClient.execute(`ALTER TABLE User ADD COLUMN allowedLocations TEXT DEFAULT 'ALL';`);
+  } catch (e) {}
+
+  try {
+    await tursoClient.execute(`ALTER TABLE Wine ADD COLUMN collocation TEXT;`);
+  } catch (e) {}
+
+  try {
+    await tursoClient.execute(`ALTER TABLE Wine ADD COLUMN shelfNumber TEXT;`);
+  } catch (e) {}
+
+  try {
+    await tursoClient.execute(`ALTER TABLE Movement ADD COLUMN collocation TEXT;`);
+  } catch (e) {}
+
+  try {
+    await tursoClient.execute(`ALTER TABLE Movement ADD COLUMN shelfNumber TEXT;`);
   } catch (e) {}
 
   await tursoClient.execute(`

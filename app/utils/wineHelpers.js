@@ -34,6 +34,19 @@ export const getBadgeClass = (category) => {
   return 'badge';
 };
 
+export const getCollocationIcon = (collocation) => {
+  if (!collocation) return '';
+  const c = collocation.toLowerCase().trim();
+  if (c.includes('frigo')) return '🧊';
+  if (c.includes('scaffal')) return '🧱';
+  if (c.includes('carton')) return '📦';
+  if (c.includes('cantin')) return '🍷';
+  if (c.includes('armadi')) return '🚪';
+  if (c.includes('tavol')) return '🪑';
+  if (c.includes('cassa')) return '🪵';
+  return '📍';
+};
+
 export const getStockBreakdown = (winesArray) => {
   if (!winesArray) return [];
   const locMap = {};

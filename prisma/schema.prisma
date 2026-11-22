@@ -17,6 +17,9 @@ model Wine {
   vintage         String?
   country         String?
   region          String?
+  position        String?
+  collocation     String?
+  shelfNumber     String?
   producerCellar  String?
   producer        String?
   classification  String?
@@ -67,6 +70,9 @@ model Movement {
   movementType  String   // "Ingresso" o "Uscita"
   quantity      Int
   bottleType    String?
+  position      String?
+  collocation   String?
+  shelfNumber   String?
   reason        String?
   vendor        String?
   price         Float?

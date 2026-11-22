@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { X, Loader2, ArrowRightCircle, ArrowLeftCircle, User, Edit3, Trash2, Sparkles, RefreshCw, Search, ClipboardCheck } from 'lucide-react';
+import { getCollocationIcon } from '../utils/wineHelpers';
 
 export default function GlobalMovementLog({ isOpen, onClose }) {
   const [movements, setMovements] = useState([]);
@@ -338,6 +339,9 @@ export default function GlobalMovementLog({ isOpen, onClose }) {
                       <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '0.15rem' }}>
                         {m.wine?.producer && <span>Prod: <strong>{m.wine.producer}</strong> | </span>}
                         {m.location?.name && <span>Cantina: <strong>{m.location.name}</strong></span>}
+                        {m.collocation && (
+                          <span> | Postazione: <strong>{getCollocationIcon(m.collocation)} {m.collocation}{m.shelfNumber ? ` (Scaff. ${m.shelfNumber})` : ''}</strong></span>
+                        )}
                       </div>
 
                       {(m.notes || m.reason) && (

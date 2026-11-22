@@ -1015,6 +1015,11 @@ export default function PrintScheda() {
                               <span className="wine-grapes" style={{ marginBottom: 0 }}>
                                 {getWineGrapes(mainWine) !== mainWine.category ? getWineGrapes(mainWine) : ''}
                               </span>
+                              {(mainWine.position || mainWine.collocation) && (
+                                <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', fontWeight: '500' }}>
+                                  Posizione: {mainWine.position || [mainWine.collocation, mainWine.shelfNumber ? `Scaffale ${mainWine.shelfNumber}` : ''].filter(Boolean).join(' - ')}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </>

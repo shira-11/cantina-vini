@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { syncEventEmitter } from '@/lib/eventEmitter';
+import { addCustomMetadata } from '@/lib/metadata';
 
 export async function POST(request) {
   try {
@@ -19,6 +20,8 @@ export async function POST(request) {
         quantity: parseInt(data.quantity),
         date: data.date ? new Date(data.date) : undefined,
         bottleType: data.bottleType,
+        collocation: data.collocation || null,
+        shelfNumber: data.shelfNumber || null,
         reason: data.reason,
         vendor: data.vendor,
         price: data.price ? parseFloat(data.price) : null,
@@ -27,6 +30,12 @@ export async function POST(request) {
         user: data.user || currentUser || null
       }
     });
+    if (data.collocation) await addCustomMetadata('collocation', data.collocation);
+    if (data.shelfNumber) await addCustomMetadata('shelfNumber', data.shelfNumber);
+    if (data.bottleType) await addCustomMetadata('bottleType', data.bottleType);
+    if (data.reason) await addCustomMetadata('reason', data.reason);
+    if (data.vendor) await addCustomMetadata('vendor', data.vendor);
+
     syncEventEmitter.emit('db_update');
     return NextResponse.json(movement, { status: 201 });
   } catch (error) {

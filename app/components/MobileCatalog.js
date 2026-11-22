@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wine, Search, Monitor, Filter, X, Loader2, Plus, Settings, Shield, History, LogOut, Mic, CheckSquare, QrCode } from 'lucide-react';
-import { getCountryFlag, getBadgeClass, getStockBreakdown, correctSpokenWineTranscript, getWineSearchSuggestions } from '../utils/wineHelpers';
+import { getCountryFlag, getBadgeClass, getCollocationIcon, getStockBreakdown, correctSpokenWineTranscript, getWineSearchSuggestions } from '../utils/wineHelpers';
 import { StockCell } from './StockCell';
 
 export const MobileCatalog = ({
@@ -21,6 +21,7 @@ export const MobileCatalog = ({
   uniqueProducers,
   uniqueClassifications,
   uniqueCategories,
+  uniqueCollocations = [],
   uniqueLocations,
   uniqueBottleTypes,
   currentUser,
@@ -160,7 +161,9 @@ export const MobileCatalog = ({
     const countryMatch = w.country?.toLowerCase().includes(q);
     const regionMatch = w.region?.toLowerCase().includes(q);
     const classificationMatch = w.classification?.toLowerCase().includes(q);
-    return idMatch || nameMatch || producerMatch || vintageMatch || categoryMatch || countryMatch || regionMatch || classificationMatch;
+    const collocationMatch = w.collocation?.toLowerCase().includes(q);
+    const shelfMatch = w.shelfNumber?.toLowerCase().includes(q);
+    return idMatch || nameMatch || producerMatch || vintageMatch || categoryMatch || countryMatch || regionMatch || classificationMatch || collocationMatch || shelfMatch;
   });
 
   // Reset visible count when wines list changes (e.g., due to filters/search)
@@ -209,6 +212,7 @@ export const MobileCatalog = ({
                 setFilters({
                   country: '',
                   region: '',
+                  collocation: '',
                   producerCellar: '',
                   producer: '',
                   classification: '',
@@ -621,6 +625,40 @@ export const MobileCatalog = ({
                 </div>
               )}
 
+              {canViewFilter('collocation') && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: filters.collocation ? '#047857' : '#334155' }}>
+                    {filters.collocation ? '🟢 ' : ''}Collocazione
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {['', ...uniqueCollocations].map(c => {
+                      const isSelected = (filters.collocation || '') === c;
+                      const label = c ? `${getCollocationIcon(c)} ${c}` : 'Tutte';
+                      return (
+                        <button
+                          key={c || 'all'}
+                          type="button"
+                          onClick={() => setFilters({ ...filters, collocation: c })}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '20px',
+                            border: isSelected && c ? '2px solid #10b981' : (isSelected ? '2px solid #6366f1' : '1px solid #cbd5e1'),
+                            backgroundColor: isSelected && c ? '#ecfdf5' : (isSelected ? '#eeeffe' : '#f8fafc'),
+                            color: isSelected && c ? '#047857' : (isSelected ? '#4338ca' : '#475569'),
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {canViewFilter('country') && (
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 'bold', color: filters.country ? '#047857' : '#334155' }}>
@@ -896,7 +934,7 @@ export const MobileCatalog = ({
               <div style={{ marginTop: '1rem' }}>
                 <button
                   onClick={() => {
-                    setFilters({ country: '', region: '', producerCellar: '', producer: '', classification: '', category: '', location: '', availability: '', photo: '', bottleType: '' });
+                    setFilters({ country: '', region: '', collocation: '', producerCellar: '', producer: '', classification: '', category: '', location: '', availability: '', photo: '', bottleType: '' });
                     setSearch('');
                   }}
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569', fontSize: '1rem', marginBottom: '0.5rem', cursor: 'pointer' }}

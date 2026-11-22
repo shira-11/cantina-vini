@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { syncEventEmitter } from '@/lib/eventEmitter';
+import { addCustomMetadata } from '@/lib/metadata';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -40,6 +41,8 @@ export async function GET(request) {
             { producer: { contains: term } },
             { producerCellar: { contains: term } },
             { region: { contains: term } },
+            { collocation: { contains: term } },
+            { shelfNumber: { contains: term } },
             { classification: { contains: term } },
             { bottleType: { contains: term } },
             { vintage: { contains: term } },
@@ -110,6 +113,9 @@ export async function POST(request) {
         vintage: data.vintage,
         country: data.country,
         region: data.region,
+        position: data.position || null,
+        collocation: data.collocation || null,
+        shelfNumber: data.shelfNumber || null,
         producerCellar: data.producerCellar,
         producer: data.producer,
         classification: data.classification,
@@ -132,6 +138,8 @@ export async function POST(request) {
                   movementType: m.movementType,
                   quantity: m.quantity,
                   bottleType: m.bottleType,
+                  collocation: m.collocation || data.collocation || null,
+                  shelfNumber: m.shelfNumber || data.shelfNumber || null,
                   reason: m.reason,
                   vendor: m.vendor,
                   price: m.price ? parseFloat(m.price) : null,
@@ -169,6 +177,16 @@ export async function POST(request) {
         } : undefined
       }
     });
+
+    // Auto-register custom metadata to keep in suggestions
+    if (data.position) await addCustomMetadata('position', data.position);
+    if (data.collocation) await addCustomMetadata('collocation', data.collocation);
+    if (data.shelfNumber) await addCustomMetadata('shelfNumber', data.shelfNumber);
+    if (data.producerCellar) await addCustomMetadata('producerCellar', data.producerCellar);
+    if (data.producer) await addCustomMetadata('producer', data.producer);
+    if (data.classification) await addCustomMetadata('classification', data.classification);
+    if (data.category) await addCustomMetadata('category', data.category);
+    if (data.type) await addCustomMetadata('type', data.type);
 
     syncEventEmitter.emit('db_update');
     return NextResponse.json(newWine, { status: 201 });

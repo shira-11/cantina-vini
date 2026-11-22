@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Trash, Image as ImageIcon, Edit2, List, FileText, ArrowRightLeft, Camera, Wine, Printer, RotateCw, Crop, QrCode, Plus, X, Sparkles, Search } from 'lucide-react';
 import { use } from 'react';
@@ -35,6 +35,19 @@ const getCountryFlag = (country) => {
   return '🌍';
 };
 
+export const getCollocationIcon = (collocation) => {
+  if (!collocation) return '';
+  const c = collocation.toLowerCase().trim();
+  if (c.includes('frigo')) return '🧊';
+  if (c.includes('scaffal')) return '🧱';
+  if (c.includes('carton')) return '📦';
+  if (c.includes('cantin')) return '🍷';
+  if (c.includes('armadi')) return '🚪';
+  if (c.includes('tavol')) return '🪑';
+  if (c.includes('cassa')) return '🪵';
+  return '📍';
+};
+
 export default function WineDetail({ params }) {
   const unwrappedParams = use(params);
   const router = useRouter();
@@ -58,7 +71,8 @@ export default function WineDetail({ params }) {
   const [cropModal, setCropModal] = useState({ isOpen: false, photoUrl: null, type: 'front' });
   const [showQRModal, setShowQRModal] = useState(false);
   const [deletionPin, setDeletionPin] = useState('1234');
-  const [addVintageModal, setAddVintageModal] = useState({ isOpen: false, vintage: '', bottleType: '', quantity: '0', locationId: '' });
+  const [addVintageModal, setAddVintageModal] = useState({ isOpen: false, vintage: '', bottleType: '', quantity: '0', locationId: '', position: '' });
+  const [positionModal, setPositionModal] = useState({ isOpen: false, wineId: null, locationId: null, locationName: '', vintage: '', bottleType: '', position: '' });
   const customAlert = (msg) => { setToastMessage(msg); setTimeout(() => setToastMessage(''), 4000); };
 
   const verifyDeletionPin = () => {
@@ -97,6 +111,8 @@ export default function WineDetail({ params }) {
     locationId: '',
     quantity: '',
     bottleType: '',
+    collocation: '',
+    shelfNumber: '',
     reason: '',
     vendor: '',
     price: '',
@@ -105,7 +121,7 @@ export default function WineDetail({ params }) {
   });
   const [editingMovementId, setEditingMovementId] = useState(null);
   const [metadata, setMetadata] = useState({
-    vintages: [], countries: [], regions: [], producers: [],
+    vintages: [], countries: [], regions: [], collocations: [], shelfNumbers: [], producers: [],
     classifications: [], categories: [], types: []
   });
 
@@ -179,6 +195,60 @@ export default function WineDetail({ params }) {
     setListModal({ isOpen: true, field, label, options });
   };
 
+  const openPositionModalForLocation = (locName, locId, currentPos) => {
+    if (currentUser?.role === 'viewer') return;
+    setPositionModal({
+      isOpen: true,
+      wineId: wine.id,
+      locationId: locId || null,
+      locationName: locName || '',
+      vintage: wine.vintage || 'Senza annata',
+      bottleType: wine.bottleType || 'Normale 0.75',
+      position: currentPos || ''
+    });
+  };
+
+  const handleSavePosition = async () => {
+    if (!positionModal.wineId) return;
+    const newPos = (positionModal.position || '').trim();
+    try {
+      const payload = positionModal.locationId
+        ? { locationId: positionModal.locationId, position: newPos }
+        : { position: newPos };
+
+      const res = await fetch(`/api/wines/${positionModal.wineId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        if (fetchWineRef.current) await fetchWineRef.current();
+        fetchMetadata();
+        setPositionModal({ isOpen: false, wineId: null, locationId: null, locationName: '', vintage: '', bottleType: '', position: '' });
+        customAlert('\n📍 Posizione salvata con successo!\n');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        customAlert('Errore aggiornamento posizione: ' + (err.error || 'Sconosciuto'));
+      }
+    } catch (err) {
+      customAlert('Errore di rete durante il salvataggio della posizione');
+    }
+  };
+
+  const quickPositionChips = useMemo(() => {
+    if (metadata?.positions && metadata.positions.length > 0) {
+      return metadata.positions;
+    }
+    const list = [];
+    (locations || []).forEach(l => {
+      if (l.name && !list.includes(l.name)) list.push(l.name);
+    });
+    ['Scaffale 1', 'Scaffale 2', 'Scaffale 3', 'Scaffale 4', 'Scaffale 5', 'Frigo', 'Cartone', 'Cantina 1'].forEach(p => {
+      if (!list.includes(p)) list.push(p);
+    });
+    return list;
+  }, [locations, metadata?.positions]);
+
 
   const hasUnsavedChanges = (() => {
     if (!wine) return false;
@@ -189,7 +259,7 @@ export default function WineDetail({ params }) {
 
     // Confronta i campi principali della scheda
     const fieldsToCompare = [
-      'name', 'vintage', 'country', 'region', 'producer', 'producerCellar',
+      'name', 'vintage', 'country', 'region', 'position', 'producer', 'producerCellar',
       'classification', 'category', 'type', 'alcoholContent', 'tempMin', 'tempMax',
       'notes', 'photo', 'photoBack', 'bottleType', '_initialLocationName', '_initialQuantity',
       '_initialPrice', '_initialTempPrice'
@@ -256,6 +326,8 @@ export default function WineDetail({ params }) {
       locationId: wine?.locationId ? String(wine.locationId) : '',
       quantity: '',
       bottleType: wine?.bottleType || 'Normale 0.75',
+      collocation: wine?.collocation || '',
+      shelfNumber: wine?.shelfNumber || '',
       reason: '',
       vendor: '',
       price: '',
@@ -266,7 +338,7 @@ export default function WineDetail({ params }) {
 
     if (unwrappedParams.id === 'new') {
       const defaultWine = {
-        name: '', vintage: '', country: '', region: '', producerCellar: '',
+        name: '', vintage: '', country: '', region: '', collocation: '', shelfNumber: '', producerCellar: '',
         classification: '', category: '', type: '', alcoholContent: '',
         tempMin: '14', tempMax: '16', notes: '', photo: null, photoBack: null
       };
@@ -797,6 +869,8 @@ export default function WineDetail({ params }) {
       locationId: m.locationId ? m.locationId.toString() : (m.location?.id ? m.location.id.toString() : ''),
       quantity: m.quantity.toString(),
       bottleType: m.bottleType || 'Normale 0.75',
+      collocation: m.collocation || '',
+      shelfNumber: m.shelfNumber || '',
       reason: m.reason || '',
       vendor: m.vendor || '',
       price: m.price ? m.price.toString() : '',
@@ -964,6 +1038,38 @@ export default function WineDetail({ params }) {
     });
   }
 
+  // Giacenze dettagliate per Cantina + Tipo Bottiglia + Posizione/Collocazione + Scaffale
+  const activeStockLots = (() => {
+    if (!wine || !wine.movements) return [];
+    const map = new Map();
+    wine.movements.forEach(m => {
+      if (m.movementType === 'Modifica' || m.reason === 'Nuova Scheda Vino') return;
+      const locId = m.locationId ? String(m.locationId) : (m.location?.id ? String(m.location.id) : '');
+      const locName = m.location ? m.location.name : 'Sconosciuta';
+      if (locName === 'Sconosciuta' && m.quantity === 0) return;
+      const bType = m.bottleType || wine.bottleType || 'Normale 0.75';
+      const pos = (m.position || '').trim();
+      const coll = m.collocation || '';
+      const shelf = m.shelfNumber || '';
+      const key = `${locId}___${bType}___${pos}___${coll}___${shelf}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          locId,
+          locName,
+          bottleType: bType,
+          position: pos,
+          collocation: coll,
+          shelfNumber: shelf,
+          quantity: 0
+        });
+      }
+      const entry = map.get(key);
+      if (m.movementType === 'Ingresso') entry.quantity += (m.quantity || 0);
+      else if (m.movementType === 'Uscita') entry.quantity -= (m.quantity || 0);
+    });
+    return Array.from(map.values()).filter(lot => lot.quantity > 0);
+  })();
+
   const handleMovimentaClick = (locKey) => {
     const bTypeMatch = locKey.match(/\((.*?)\)/);
     const bottleTypeToPrefill = (bTypeMatch && bTypeMatch[1]) ? bTypeMatch[1] : (wine?.bottleType || wine?._initialBottleType || 'Normale 0.75');
@@ -986,11 +1092,16 @@ export default function WineDetail({ params }) {
     const tempPricePrefill = sourceMov?.tempPrice !== null && sourceMov?.tempPrice !== undefined ? String(sourceMov.tempPrice) : (wine?._initialTempPrice ? String(wine._initialTempPrice) : '');
     const vendorPrefill = sourceMov?.vendor ? sourceMov.vendor : (wine?.vendor || '');
 
+    const collocationPrefill = sourceMov?.collocation || wine?.collocation || '';
+    const shelfPrefill = sourceMov?.shelfNumber || wine?.shelfNumber || '';
+
     setEditingMovementId(null);
     setNewMovement({
       date: new Date().toISOString().split('T')[0],
       locationId: locIdStr,
       bottleType: bottleTypeToPrefill,
+      collocation: collocationPrefill,
+      shelfNumber: shelfPrefill,
       price: pricePrefill,
       tempPrice: tempPricePrefill,
       vendor: vendorPrefill,
@@ -1311,10 +1422,43 @@ export default function WineDetail({ params }) {
                            <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: '12px', color: '#64748b' }}>Nessuna giacenza</div>
                         ) : (
                            Object.entries(stockSummary).map(([loc, qty]) => {
+                             const cleanLocName = loc.replace(/\s*\(.*?\)\s*/, '').trim();
+                             const locObj = locations.find(l => l.name === cleanLocName);
+                             const lotsForLoc = activeStockLots.filter(l => l.locName === cleanLocName);
+                             const locPos = (() => {
+                               const lotsWithPos = lotsForLoc.filter(l => l.position);
+                               if (lotsWithPos.length > 0) return lotsWithPos.map(l => l.position).join(', ');
+                               const movWithPos = (wine.movements || []).find(m =>
+                                 (m.location?.name === cleanLocName || (locObj && m.locationId === locObj.id)) &&
+                                 (m.position || m.collocation)
+                               );
+                               if (movWithPos) return movWithPos.position || [movWithPos.collocation, movWithPos.shelfNumber ? `Scaffale ${movWithPos.shelfNumber}` : ''].filter(Boolean).join(' - ');
+                               return '';
+                             })();
                              return (
                                <div key={loc} style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                  <div>
                                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#0f172a', marginBottom: '0.25rem' }}>{loc}</div>
+                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}>
+                                     {locPos ? (
+                                       <span
+                                         onClick={() => currentUser?.role !== 'viewer' && openPositionModalForLocation(cleanLocName, locObj?.id, locPos)}
+                                         style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', background: '#e0f2fe', border: '1px solid #bae6fd', fontSize: '0.8rem', fontWeight: '500', color: '#0369a1', cursor: 'pointer' }}
+                                       >
+                                         📍 {locPos} ✏️
+                                       </span>
+                                     ) : (
+                                       currentUser?.role !== 'viewer' && (
+                                         <button
+                                           type="button"
+                                           onClick={() => openPositionModalForLocation(cleanLocName, locObj?.id, '')}
+                                           style={{ background: 'white', border: '1px dashed #cbd5e1', color: '#64748b', borderRadius: '6px', padding: '0.15rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                                         >
+                                           + Posizione
+                                         </button>
+                                       )
+                                     )}
+                                   </div>
                                    <div className={qty > 0 ? 'stock-positive' : 'stock-zero'} style={{ fontSize: '1rem', display: 'inline-block', padding: '0.25rem 0.5rem' }}>{qty} bt.</div>
                                  </div>
                                  <button
@@ -1334,9 +1478,10 @@ export default function WineDetail({ params }) {
                         <table className="data-table" style={{ width: '100%', minWidth: '400px' }}>
                           <thead>
                             <tr>
-                              <th style={{ width: '33.33%', textAlign: 'left', paddingLeft: '1rem' }}>Cantina Fisica</th>
-                              <th style={{ width: '33.33%', textAlign: 'center' }}>Quantità</th>
-                              <th style={{ width: '33.33%', textAlign: 'center' }}>Azione</th>
+                              <th style={{ width: '30%', textAlign: 'left', paddingLeft: '1rem' }}>Cantina Fisica</th>
+                              <th style={{ width: '32%', textAlign: 'left' }}>Posizione</th>
+                              <th style={{ width: '18%', textAlign: 'center' }}>Quantità</th>
+                              <th style={{ width: '20%', textAlign: 'center' }}>Azione</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1345,7 +1490,94 @@ export default function WineDetail({ params }) {
                               const isAllowed = !userAllowedLocations || userAllowedLocations.includes(cleanLocName);
                               return (
                                 <tr key={loc}>
-                                  <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>{loc}</td>
+                                  <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>
+                                    <div style={{ fontWeight: '500' }}>{loc}</div>
+                                  </td>
+                                  <td style={{ textAlign: 'left' }}>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                                      {(() => {
+                                        const cleanLocName = loc.replace(/\s*\(.*?\)\s*/, '').trim();
+                                        const locObj = locations.find(l => l.name === cleanLocName);
+                                        const lotsForLoc = activeStockLots.filter(l => l.locName === cleanLocName);
+                                        const locPos = (() => {
+                                          const lotsWithPos = lotsForLoc.filter(l => l.position);
+                                          if (lotsWithPos.length > 0) {
+                                            return lotsWithPos.map(l => l.position).join(', ');
+                                          }
+                                          const movWithPos = (wine.movements || []).find(m =>
+                                            (m.location?.name === cleanLocName || (locObj && m.locationId === locObj.id)) &&
+                                            (m.position || m.collocation)
+                                          );
+                                          if (movWithPos) {
+                                            return movWithPos.position || [movWithPos.collocation, movWithPos.shelfNumber ? `Scaffale ${movWithPos.shelfNumber}` : ''].filter(Boolean).join(' - ');
+                                          }
+                                          return '';
+                                        })();
+
+                                        if (locPos) {
+                                          return (
+                                            <>
+                                              <span
+                                                onClick={() => currentUser?.role !== 'viewer' && openPositionModalForLocation(cleanLocName, locObj?.id, locPos)}
+                                                style={{
+                                                  padding: '0.25rem 0.65rem',
+                                                  borderRadius: '6px',
+                                                  background: '#f1f5f9',
+                                                  border: '1px solid #cbd5e1',
+                                                  fontSize: '0.875rem',
+                                                  fontWeight: '500',
+                                                  color: '#1e293b',
+                                                  cursor: currentUser?.role !== 'viewer' ? 'pointer' : 'default',
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '0.3rem',
+                                                  maxWidth: '220px',
+                                                  overflow: 'hidden',
+                                                  textOverflow: 'ellipsis',
+                                                  whiteSpace: 'nowrap'
+                                                }}
+                                                title={currentUser?.role !== 'viewer' ? `Clicca per modificare la posizione a ${cleanLocName}` : undefined}
+                                              >
+                                                📍 {locPos}
+                                              </span>
+                                              {currentUser?.role !== 'viewer' && (
+                                                <button
+                                                  type="button"
+                                                  className="btn btn-pencil"
+                                                  onClick={() => openPositionModalForLocation(cleanLocName, locObj?.id, locPos)}
+                                                  title={`Modifica posizione per ${cleanLocName}`}
+                                                  style={{ padding: '0.2rem 0.45rem', fontSize: '0.8rem' }}
+                                                >
+                                                  ✏️
+                                                </button>
+                                              )}
+                                            </>
+                                          );
+                                        }
+
+                                        return currentUser?.role !== 'viewer' ? (
+                                          <button
+                                            type="button"
+                                            onClick={() => openPositionModalForLocation(cleanLocName, locObj?.id, '')}
+                                            style={{
+                                              background: '#f8fafc',
+                                              border: '1px dashed #cbd5e1',
+                                              color: '#64748b',
+                                              borderRadius: '6px',
+                                              padding: '0.25rem 0.6rem',
+                                              fontSize: '0.8rem',
+                                              cursor: 'pointer'
+                                            }}
+                                            title={`Imposta posizione per ${cleanLocName}`}
+                                          >
+                                            + Imposta posizione
+                                          </button>
+                                        ) : (
+                                          <span style={{ color: '#94a3b8' }}>—</span>
+                                        );
+                                      })()}
+                                    </div>
+                                  </td>
                                   <td className={qty > 0 ? 'stock-positive' : 'stock-zero'} style={{ textAlign: 'center' }}>{qty} bt.</td>
                                   <td style={{ textAlign: 'center' }}>
                                     {isAllowed ? (
@@ -1366,7 +1598,7 @@ export default function WineDetail({ params }) {
                               );
                             })}
                             {Object.keys(stockSummary).length === 0 && (
-                              <tr><td colSpan="3" style={{ textAlign: 'center', padding: '1rem' }}>Nessuna giacenza</td></tr>
+                              <tr><td colSpan="4" style={{ textAlign: 'center', padding: '1rem' }}>Nessuna giacenza</td></tr>
                             )}
                           </tbody>
                         </table>
@@ -1395,18 +1627,18 @@ export default function WineDetail({ params }) {
                         <thead>
                           <tr>
                             <th 
-                              style={{ width: '33.33%', textAlign: 'left', paddingLeft: '2rem', cursor: 'pointer' }}
+                              style={{ width: '40%', textAlign: 'left', paddingLeft: '1.5rem', cursor: 'pointer' }}
                               onClick={() => setVintageSortConfig({ key: 'vintage', direction: vintageSortConfig.key === 'vintage' && vintageSortConfig.direction === 'desc' ? 'asc' : 'desc' })}
                             >
                               Annata {vintageSortConfig.key === 'vintage' ? (vintageSortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                             </th>
                             <th 
-                              style={{ width: '33.33%', textAlign: 'center', cursor: 'pointer' }}
+                              style={{ width: '30%', textAlign: 'center', cursor: 'pointer' }}
                               onClick={() => setVintageSortConfig({ key: 'stock', direction: vintageSortConfig.key === 'stock' && vintageSortConfig.direction === 'desc' ? 'asc' : 'desc' })}
                             >
                               Giacenza Totale {vintageSortConfig.key === 'stock' ? (vintageSortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                             </th>
-                            <th style={{ width: '33.33%', textAlign: 'right', paddingRight: '2rem' }}>Azione</th>
+                            <th style={{ width: '30%', textAlign: 'right', paddingRight: '1.5rem' }}>Azione</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1425,12 +1657,12 @@ export default function WineDetail({ params }) {
                               const isCurrent = v.id === wine.id;
                               return (
                                 <tr key={v.id} style={{ backgroundColor: isCurrent ? '#f0fdf4' : 'transparent' }}>
-                                  <td style={{ fontWeight: isCurrent ? 'bold' : 'normal', textAlign: 'left', paddingLeft: '2rem' }}>
+                                  <td style={{ fontWeight: isCurrent ? 'bold' : 'normal', textAlign: 'left', paddingLeft: '1.5rem' }}>
                                     {v.vintage} <span style={{ color: '#64748b', fontSize: '0.9em', marginLeft: '0.5rem' }}>({v.bottleType || 'Normale 0.75'})</span>
                                     {isCurrent && <span style={{ fontSize: '0.8rem', color: 'var(--success-color)', marginLeft: '0.5rem' }}>(Attuale)</span>}
                                   </td>
                                   <td className={v.stock > 0 ? 'stock-positive' : 'stock-zero'} style={{ fontWeight: isCurrent ? 'bold' : 'normal', textAlign: 'center' }}>{v.stock} bt.</td>
-                                  <td style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', paddingRight: '2rem' }}>
+                                  <td style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', paddingRight: '1.5rem' }}>
                                     <button className="btn" style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem', border: '1px solid var(--border-color)', background: 'white', minWidth: '110px' }} onClick={() => router.push(`/wine/${v.id}`)} disabled={isCurrent}>
                                       {isCurrent ? 'Sei già qui' : 'Apri Scheda'}
                                     </button>
@@ -1459,6 +1691,52 @@ export default function WineDetail({ params }) {
                         <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>
                           {editingMovementId ? 'Modifica Movimento' : 'Aggiungi Movimento'}
                         </h3>
+
+                        {activeStockLots.length > 0 && (
+                          <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: '#e0f2fe', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 'bold', color: '#0369a1', marginBottom: '0.4rem' }}>
+                              📍 Postazioni attuali in cantina (clicca per selezionare):
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                              {activeStockLots.map((lot, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewMovement(prev => ({
+                                      ...prev,
+                                      locationId: lot.locId || prev.locationId,
+                                      bottleType: lot.bottleType || prev.bottleType,
+                                      collocation: lot.collocation || '',
+                                      shelfNumber: lot.shelfNumber || ''
+                                    }));
+                                  }}
+                                  style={{
+                                    fontSize: '0.8rem',
+                                    padding: '0.3rem 0.6rem',
+                                    borderRadius: '6px',
+                                    background: 'white',
+                                    border: '1px solid #7dd3fc',
+                                    color: '#0c4a6e',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                  }}
+                                  title="Clicca per impostare cantina, collocazione e scaffale"
+                                >
+                                  <strong>{lot.locName}</strong>
+                                  {lot.collocation && <span>• {getCollocationIcon(lot.collocation)} {lot.collocation}</span>}
+                                  {lot.shelfNumber && <span>Scaff. {lot.shelfNumber}</span>}
+                                  <span style={{ background: '#0284c7', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                    {lot.quantity} bt
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                       <div className="form-grid">
                         <label>Data</label>
@@ -1500,6 +1778,7 @@ export default function WineDetail({ params }) {
                           {metadata.bottleTypes?.map(b => <option key={b} value={b} />)}
                         </datalist>
                       </div>
+
                       <div className="form-grid">
                         <label>Causale</label>
                         <div style={{ display: 'flex', gap: '0.5rem', maxWidth: '400px' }}>
@@ -1657,6 +1936,8 @@ export default function WineDetail({ params }) {
                                 movementType: newMovement.movementType,
                                 quantity: parseInt(newMovement.quantity),
                                 bottleType: newMovement.bottleType,
+                                collocation: newMovement.collocation || null,
+                                shelfNumber: newMovement.shelfNumber || null,
                                 reason: newMovement.reason,
                                 vendor: newMovement.vendor,
                                 price: newMovement.price ? parseFloat(newMovement.price) : null,
@@ -1714,6 +1995,7 @@ export default function WineDetail({ params }) {
                             <th>Data</th>
                             <th>Tipo</th>
                             <th>Cantina</th>
+                            <th>Collocazione</th>
                             <th>Q.tà</th>
                             {!showExtraColumns && (
                               <th style={{ width: '40px', textAlign: 'center', cursor: 'pointer', color: 'var(--primary-color)' }} onClick={() => setShowExtraColumns(true)} title="Espandi dettagli">
@@ -1808,6 +2090,16 @@ export default function WineDetail({ params }) {
                                     {isTransfer && <div style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}>Trasferito</div>}
                                   </td>
                                   <td data-label="Cantina" style={{ color: isTransfer ? '#777' : 'inherit' }}>{m.location?.name || 'N/D'}</td>
+                                  <td data-label="Collocazione" style={{ color: isTransfer ? '#777' : 'inherit' }}>
+                                    {m.collocation ? (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }}>
+                                        {getCollocationIcon(m.collocation)} {m.collocation}
+                                        {m.shelfNumber && <span style={{ color: '#64748b', fontSize: '0.8rem' }}>(Scaff. {m.shelfNumber})</span>}
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: '#94a3b8' }}>-</span>
+                                    )}
+                                  </td>
                                   <td data-label="Q.tà" style={{ color: isTransfer ? '#777' : 'inherit' }}>{m.quantity}</td>
                                   {!showExtraColumns && (
                                     <td style={{ textAlign: 'center', cursor: 'pointer', color: 'var(--primary-color)' }} onClick={() => setShowExtraColumns(true)}>
@@ -2009,6 +2301,7 @@ export default function WineDetail({ params }) {
                         })()}
                       </datalist>
                     </div>
+
                     <div className="form-grid">
                       <label>Cantina Produttrice</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -2440,7 +2733,7 @@ export default function WineDetail({ params }) {
 
       {/* MODAL GESTIONE ELENCHI */}
       {listModal.isOpen && (
-        <div className="modal-overlay" style={{ zIndex: 100000 }} onClick={() => setListModal({ isOpen: false, field: '', label: '', options: [] })}>
+        <div className="modal-overlay" style={{ zIndex: 100050 }} onClick={() => setListModal({ isOpen: false, field: '', label: '', options: [] })}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', width: '90%', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Gestisci {listModal.label}</h2>
@@ -2514,8 +2807,17 @@ export default function WineDetail({ params }) {
                               if (listModal.field === 'grapeVarieties') {
                                 const newGrapes = [...(wine.grapeVarieties || []), { name: opt, percentage: '' }];
                                 setWine({ ...wine, grapeVarieties: newGrapes });
-                              } else if (['bottleType', 'reason', 'vendor'].includes(listModal.field)) {
-                                setNewMovement({ ...newMovement, [listModal.field]: opt });
+                              } else if (['bottleType', 'reason', 'vendor', 'movement_collocation', 'movement_shelfNumber'].includes(listModal.field)) {
+                                const actualField = listModal.field.startsWith('movement_') ? listModal.field.replace('movement_', '') : listModal.field;
+                                setNewMovement({ ...newMovement, [actualField]: opt });
+                              } else if (listModal.field === 'position') {
+                                if (positionModal.isOpen) {
+                                  setPositionModal(prev => ({ ...prev, position: opt }));
+                                }
+                                if (addVintageModal.isOpen) {
+                                  setAddVintageModal(prev => ({ ...prev, position: opt }));
+                                }
+                                setWine(prev => prev ? ({ ...prev, position: opt }) : prev);
                               } else {
                                 setWine({ ...wine, [listModal.field]: opt });
                               }
@@ -2550,15 +2852,28 @@ export default function WineDetail({ params }) {
                                       }
                                     }
                                   } else {
+                                    const targetField = listModal.field.startsWith('movement_') ? listModal.field.replace('movement_', '') : listModal.field;
                                     res = await fetch('/api/wines/metadata', {
                                       method: 'PUT',
                                       headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ field: listModal.field, oldVal: opt, newVal })
+                                      body: JSON.stringify({ field: targetField, oldVal: opt, newVal })
                                     });
                                   }
                                   if (res && res.ok) {
                                     customAlert(`\n✅ Aggiornato con successo!\n`);
                                     fetchMetadata();
+                                    if (listModal.field === 'position') {
+                                      if (positionModal.isOpen && positionModal.position === opt) {
+                                        setPositionModal(prev => ({ ...prev, position: newVal.trim() }));
+                                      }
+                                      if (addVintageModal.isOpen && addVintageModal.position === opt) {
+                                        setAddVintageModal(prev => ({ ...prev, position: newVal.trim() }));
+                                      }
+                                      if (wine && wine.position === opt) {
+                                        setWine(prev => ({ ...prev, position: newVal.trim() }));
+                                      }
+                                      if (fetchWineRef.current) fetchWineRef.current();
+                                    }
                                     setListModal({ isOpen: false, field: '', label: '', options: [] });
                                   } else {
                                     customAlert('Errore durante la modifica globale.');
@@ -2589,14 +2904,27 @@ export default function WineDetail({ params }) {
                               }
                               if (window.confirm(`Sei sicuro di voler ELIMINARE "${opt}" da tutti i vini?`)) {
                                 try {
+                                  const targetField = listModal.field.startsWith('movement_') ? listModal.field.replace('movement_', '') : listModal.field;
                                   const res = await fetch('/api/wines/metadata', {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ field: listModal.field, oldVal: opt, newVal: '' })
+                                    body: JSON.stringify({ field: targetField, oldVal: opt, newVal: '' })
                                   });
                                   if (res.ok) {
                                     customAlert(`\n❌ Elemento eliminato con successo!\n`);
                                     fetchMetadata();
+                                    if (listModal.field === 'position') {
+                                      if (positionModal.isOpen && positionModal.position === opt) {
+                                        setPositionModal(prev => ({ ...prev, position: '' }));
+                                      }
+                                      if (addVintageModal.isOpen && addVintageModal.position === opt) {
+                                        setAddVintageModal(prev => ({ ...prev, position: '' }));
+                                      }
+                                      if (wine && wine.position === opt) {
+                                        setWine(prev => ({ ...prev, position: '' }));
+                                      }
+                                      if (fetchWineRef.current) fetchWineRef.current();
+                                    }
                                     setListModal({ isOpen: false, field: '', label: '', options: [] });
                                   } else {
                                     customAlert('Errore durante l\'eliminazione globale.');
@@ -2641,15 +2969,30 @@ export default function WineDetail({ params }) {
                     const newGrapes = [...(wine.grapeVarieties || []), { name: newVal.trim(), percentage: '' }];
                     setWine({ ...wine, grapeVarieties: newGrapes });
                   } else {
+                    const targetField = listModal.field.startsWith('movement_') ? listModal.field.replace('movement_', '') : listModal.field;
                     try {
                       await fetch('/api/wines/metadata', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ field: listModal.field, oldVal: '', newVal: newVal.trim() })
+                        body: JSON.stringify({ field: targetField, oldVal: '', newVal: newVal.trim() })
                       });
-                      fetchMetadata();
+                      await fetchMetadata();
                     } catch (e) {}
-                    setWine({ ...wine, [listModal.field]: newVal.trim() });
+                    if (listModal.field === 'position') {
+                      if (positionModal.isOpen) {
+                        setPositionModal(prev => ({ ...prev, position: newVal.trim() }));
+                      }
+                      if (addVintageModal.isOpen) {
+                        setAddVintageModal(prev => ({ ...prev, position: newVal.trim() }));
+                      }
+                      if (wine) {
+                        setWine(prev => ({ ...prev, position: newVal.trim() }));
+                      }
+                    } else if (listModal.field.startsWith('movement_')) {
+                      setNewMovement(prev => ({ ...prev, [targetField]: newVal.trim() }));
+                    } else {
+                      setWine({ ...wine, [listModal.field]: newVal.trim() });
+                    }
                   }
                   setListModal({ isOpen: false, field: '', label: '', options: [] });
                 }
@@ -2657,6 +3000,186 @@ export default function WineDetail({ params }) {
             >
               + Aggiungi Nuovo
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL GESTIONE POSIZIONE */}
+      {positionModal.isOpen && (
+        <div className="modal-overlay" style={{ zIndex: 100000 }} onClick={() => setPositionModal({ isOpen: false, wineId: null, locationId: null, locationName: '', vintage: '', bottleType: '', position: '' })}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', width: '90%', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#0f172a' }}>
+                📍 Posizione Vino
+              </h2>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setPositionModal({ isOpen: false, wineId: null, locationId: null, locationName: '', vintage: '', bottleType: '', position: '' })}
+                style={{ border: 'none', background: 'transparent', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '1rem', padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.9rem', color: '#475569' }}>
+              {positionModal.locationName && (
+                <div style={{ marginBottom: '0.25rem' }}>
+                  Cantina Fisica: <strong style={{ color: '#0369a1' }}>📍 {positionModal.locationName}</strong>
+                </div>
+              )}
+              Vino: <strong style={{ color: '#0f172a' }}>{wine?.name}</strong> {positionModal.vintage && `(${positionModal.vintage})`} {positionModal.bottleType && <span style={{ color: '#64748b' }}>({positionModal.bottleType})</span>}
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                Posizione fisica della bottiglia:
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  list="position-suggestions-list"
+                  placeholder="Es. Scaffale 3, Cantina Arezzo, Frigo, Cartone 2..."
+                  value={positionModal.position}
+                  onChange={e => setPositionModal(prev => ({ ...prev, position: e.target.value }))}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSavePosition();
+                    }
+                  }}
+                  style={{ flex: 1, height: '42px', padding: '0 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', boxSizing: 'border-box' }}
+                />
+                {currentUser?.role !== 'viewer' && (
+                  <button
+                    type="button"
+                    className="btn btn-pencil"
+                    title="Gestisci elenco Posizioni"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openListModal('position', 'Posizione', quickPositionChips);
+                    }}
+                    style={{ height: '42px', width: '42px', minWidth: '42px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '1rem', flexShrink: 0 }}
+                  >
+                    ✏️
+                  </button>
+                )}
+              </div>
+              <datalist id="position-suggestions-list">
+                {quickPositionChips.map(p => <option key={p} value={p} />)}
+              </datalist>
+            </div>
+
+            {/* Suggerimenti veloci con 1 click */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#64748b' }}>
+                  💡 Suggerimenti veloci (clicca per applicare):
+                </div>
+                {currentUser?.role !== 'viewer' && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openListModal('position', 'Posizione', quickPositionChips);
+                    }}
+                    style={{
+                      background: '#f1f5f9',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      color: '#0284c7',
+                      fontSize: '0.78rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.2rem 0.5rem'
+                    }}
+                    title="Modifica, rinomina, elimina o aggiungi posizioni predefinite"
+                  >
+                    ✏️ Modifica voci default
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', maxHeight: '140px', overflowY: 'auto' }}>
+                {quickPositionChips.map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPositionModal(prev => ({ ...prev, position: chip }))}
+                    style={{
+                      fontSize: '0.8rem',
+                      padding: '0.3rem 0.65rem',
+                      borderRadius: '6px',
+                      border: positionModal.position === chip ? '1.5px solid #0284c7' : '1px solid #cbd5e1',
+                      background: positionModal.position === chip ? '#e0f2fe' : '#f8fafc',
+                      color: positionModal.position === chip ? '#0369a1' : '#334155',
+                      cursor: 'pointer',
+                      fontWeight: positionModal.position === chip ? 'bold' : '500'
+                    }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+                {currentUser?.role !== 'viewer' && (
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      const newVal = window.prompt('Aggiungi nuova posizione rapida (es. Cella Frigo, Ripiano 2, Vetrina):');
+                      if (newVal && newVal.trim()) {
+                        const trimmed = newVal.trim();
+                        try {
+                          await fetch('/api/wines/metadata', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ field: 'position', oldVal: '', newVal: trimmed })
+                          });
+                          await fetchMetadata();
+                          setPositionModal(prev => ({ ...prev, position: trimmed }));
+                        } catch (err) {
+                          customAlert('Errore di rete durante l\'aggiunta della posizione');
+                        }
+                      }
+                    }}
+                    style={{
+                      fontSize: '0.8rem',
+                      padding: '0.3rem 0.65rem',
+                      borderRadius: '6px',
+                      border: '1px dashed #0284c7',
+                      background: '#f0f9ff',
+                      color: '#0284c7',
+                      cursor: 'pointer',
+                      fontWeight: '600'
+                    }}
+                    title="Aggiungi una nuova posizione rapida"
+                  >
+                    + Nuova
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setPositionModal({ isOpen: false, wineId: null, locationId: null, locationName: '', vintage: '', bottleType: '', position: '' })}
+                style={{ height: '40px', padding: '0 1.25rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f1f5f9', color: '#475569', fontWeight: '600' }}
+              >
+                Annulla
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSavePosition}
+                style={{ height: '40px', padding: '0 1.4rem', borderRadius: '8px', fontWeight: 'bold' }}
+              >
+                Salva Posizione
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -3003,6 +3526,36 @@ export default function WineDetail({ params }) {
                       ✏️
                     </button>
                   </div>
+
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                      Posizione specifica (opzionale):
+                    </label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        list="add-vintage-pos-list"
+                        placeholder="Es. Scaffale 3, Frigo, Cartone 2..."
+                        value={addVintageModal.position || ''}
+                        onChange={(e) => setAddVintageModal(prev => ({ ...prev, position: e.target.value }))}
+                        style={{ flex: 1, height: '42px', padding: '0 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', background: 'white', boxSizing: 'border-box' }}
+                      />
+                      {currentUser?.role !== 'viewer' && (
+                        <button
+                          type="button"
+                          className="btn btn-pencil"
+                          style={{ height: '42px', width: '42px', minWidth: '42px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', flexShrink: 0 }}
+                          onClick={() => openListModal('position', 'Posizione', quickPositionChips)}
+                          title="Seleziona o gestisci posizioni"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                    </div>
+                    <datalist id="add-vintage-pos-list">
+                      {quickPositionChips.map(p => <option key={p} value={p} />)}
+                    </datalist>
+                  </div>
                 </div>
               )}
             </div>
@@ -3067,6 +3620,9 @@ export default function WineDetail({ params }) {
                   delete payload.archivedPhotos;
                   payload.vintage = vStr;
                   payload.bottleType = bStr;
+                  if (addVintageModal.position?.trim()) {
+                    payload.position = addVintageModal.position.trim();
+                  }
 
                   try {
                     const res = await fetch(`/api/wines`, {
@@ -3088,6 +3644,7 @@ export default function WineDetail({ params }) {
                             movementType: 'Ingresso',
                             quantity: qty,
                             bottleType: bStr,
+                            position: addVintageModal.position?.trim() || null,
                             reason: 'Carico Iniziale',
                             date: new Date().toISOString()
                           })

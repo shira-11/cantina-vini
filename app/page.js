@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import * as XLSX from 'xlsx';
 
-import { getCountryFlag, getBadgeClass, correctSpokenWineTranscript, getWineSearchSuggestions } from './utils/wineHelpers';
+import { getCountryFlag, getBadgeClass, getCollocationIcon, correctSpokenWineTranscript, getWineSearchSuggestions } from './utils/wineHelpers';
 import { StockCell } from './components/StockCell';
 import { MobileCatalog } from './components/MobileCatalog';
 import HelpGuideModal from './components/HelpGuideModal';
@@ -107,7 +107,7 @@ export default function Home() {
   }, []);
 
   const [visitorAllowedFilters, setVisitorAllowedFilters] = useState([
-    'country', 'region', 'producerCellar', 'producer',
+    'country', 'region', 'collocation', 'producerCellar', 'producer',
     'classification', 'category', 'location', 'availability',
     'photo', 'bottleType'
   ]);
@@ -228,7 +228,7 @@ export default function Home() {
       if (cached) return JSON.parse(cached);
     }
     return {
-      country: '', region: '', producerCellar: '', producer: '',
+      country: '', region: '', collocation: '', producerCellar: '', producer: '',
       classification: '', category: '', location: '', availability: '', photo: '', bottleType: ''
     };
   });
@@ -569,13 +569,17 @@ export default function Home() {
       const countryMatch = w.country?.toLowerCase().includes(q);
       const regionMatch = w.region?.toLowerCase().includes(q);
       const classificationMatch = w.classification?.toLowerCase().includes(q);
-      if (!idMatch && !nameMatch && !producerMatch && !vintageMatch && !categoryMatch && !countryMatch && !regionMatch && !classificationMatch) {
+      const positionMatch = w.position?.toLowerCase().includes(q);
+      const collocationMatch = w.collocation?.toLowerCase().includes(q);
+      const shelfMatch = w.shelfNumber?.toLowerCase().includes(q);
+      if (!idMatch && !nameMatch && !producerMatch && !vintageMatch && !categoryMatch && !countryMatch && !regionMatch && !classificationMatch && !positionMatch && !collocationMatch && !shelfMatch) {
         return false;
       }
     }
 
     if (canViewFilter('country') && filters.country && w.country !== filters.country) return false;
     if (canViewFilter('region') && filters.region && w.region !== filters.region) return false;
+    if (canViewFilter('collocation') && filters.collocation && w.collocation !== filters.collocation) return false;
     if (canViewFilter('producerCellar') && filters.producerCellar && w.producerCellar !== filters.producerCellar) return false;
     if (canViewFilter('producer') && filters.producer && w.producer !== filters.producer) return false;
     if (canViewFilter('classification') && filters.classification && w.classification !== filters.classification) return false;
@@ -847,6 +851,7 @@ export default function Home() {
   const uniqueProducers = [...new Set(wines.map(w => w.producer).filter(Boolean))].sort();
   const uniqueClassifications = [...new Set(wines.map(w => w.classification).filter(Boolean))].sort();
   const uniqueCategories = [...new Set(wines.map(w => w.category).filter(Boolean))].sort();
+  const uniqueCollocations = [...new Set(wines.map(w => w.collocation).filter(Boolean))].sort();
   const uniqueLocations = [...new Set([...dbLocations, ...wines.flatMap(w => w.movements.map(m => m.location?.name)).filter(Boolean)])].sort();
   const uniqueBottleTypes = [...new Set([
     ...(metadata?.bottleTypes || []),
@@ -909,6 +914,7 @@ export default function Home() {
           uniqueProducers={uniqueProducers}
           uniqueClassifications={uniqueClassifications}
           uniqueCategories={uniqueCategories}
+          uniqueCollocations={uniqueCollocations}
           uniqueLocations={uniqueLocations}
           uniqueBottleTypes={uniqueBottleTypes}
           currentUser={currentUser}
@@ -983,6 +989,7 @@ export default function Home() {
                 setFilters({
                   country: '',
                   region: '',
+                  collocation: '',
                   producerCellar: '',
                   producer: '',
                   classification: '',
@@ -1276,6 +1283,26 @@ export default function Home() {
             </div>
           )}
 
+          {canViewFilter('collocation') && (
+            <div className="filter-group">
+              <label style={filters.collocation ? { color: '#047857', fontWeight: 'bold' } : {}}>
+                {filters.collocation ? '🟢 ' : ''}Collocazione
+              </label>
+              <select
+                value={filters.collocation || ''}
+                onChange={e => setFilters({ ...filters, collocation: e.target.value })}
+                style={filters.collocation ? { backgroundColor: '#ecfdf5', borderColor: '#10b981', color: '#047857', fontWeight: 'bold', boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)' } : {}}
+              >
+                <option value="">Tutte</option>
+                {uniqueCollocations.map(c => (
+                  <option key={c} value={c}>
+                    {getCollocationIcon(c)} {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {canViewFilter('availability') && (
             <div className="filter-group">
               <label style={filters.availability ? { color: '#047857', fontWeight: 'bold' } : {}}>
@@ -1335,6 +1362,7 @@ export default function Home() {
                 setFilters({
                   country: '',
                   region: '',
+                  collocation: '',
                   producerCellar: '',
                   producer: '',
                   classification: '',
@@ -1430,6 +1458,7 @@ export default function Home() {
                 setFilters({
                   country: '',
                   region: '',
+                  collocation: '',
                   producerCellar: '',
                   producer: '',
                   classification: '',

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { syncEventEmitter } from '@/lib/eventEmitter';
+import { addCustomMetadata } from '@/lib/metadata';
 
 export async function DELETE(request, { params }) {
   try {
@@ -73,6 +74,8 @@ export async function PUT(request, { params }) {
           movementType: body.movementType || oldMovement.movementType,
           quantity: body.quantity !== undefined ? parseInt(body.quantity) : oldMovement.quantity,
           bottleType: body.bottleType ?? oldMovement.bottleType,
+          collocation: body.collocation !== undefined ? (body.collocation || null) : oldMovement.collocation,
+          shelfNumber: body.shelfNumber !== undefined ? (body.shelfNumber || null) : oldMovement.shelfNumber,
           reason: body.reason ?? oldMovement.reason,
           vendor: body.vendor ?? oldMovement.vendor,
           price: body.price ? parseFloat(body.price) : null,
@@ -124,6 +127,8 @@ export async function PUT(request, { params }) {
           movementType: body.movementType || 'Ingresso',
           quantity: parseInt(body.quantity) || 0,
           bottleType: body.bottleType || 'Normale 0.75',
+          collocation: body.collocation || null,
+          shelfNumber: body.shelfNumber || null,
           reason: body.reason || '',
           vendor: body.vendor || '',
           price: body.price ? parseFloat(body.price) : null,
@@ -134,6 +139,12 @@ export async function PUT(request, { params }) {
         }
       });
     }
+
+    if (body.collocation) await addCustomMetadata('collocation', body.collocation);
+    if (body.shelfNumber) await addCustomMetadata('shelfNumber', body.shelfNumber);
+    if (body.bottleType) await addCustomMetadata('bottleType', body.bottleType);
+    if (body.reason) await addCustomMetadata('reason', body.reason);
+    if (body.vendor) await addCustomMetadata('vendor', body.vendor);
 
     syncEventEmitter.emit('db_update');
     return NextResponse.json(resultMovement);

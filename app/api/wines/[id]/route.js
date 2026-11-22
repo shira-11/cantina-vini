@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { syncEventEmitter } from '@/lib/eventEmitter';
+import { addCustomMetadata } from '@/lib/metadata';
 
 export async function GET(request, { params }) {
   try {
@@ -32,10 +33,15 @@ export async function GET(request, { params }) {
         id: true,
         vintage: true,
         bottleType: true,
+        position: true,
+        collocation: true,
+        shelfNumber: true,
         movements: {
           select: {
             movementType: true,
-            quantity: true
+            quantity: true,
+            position: true,
+            location: { select: { id: true, name: true } }
           }
         }
       },
@@ -44,14 +50,39 @@ export async function GET(request, { params }) {
 
     const allVintagesWithStock = allVintages.map(v => {
       let stock = 0;
+      const locStockMap = {};
       v.movements.forEach(m => {
+        const locName = m.location?.name;
+        if (locName) {
+          if (!locStockMap[locName]) locStockMap[locName] = 0;
+          if (m.movementType === 'Ingresso') locStockMap[locName] += m.quantity;
+          else if (m.movementType === 'Uscita') locStockMap[locName] -= m.quantity;
+        }
         if (m.movementType === 'Ingresso') stock += m.quantity;
         else if (m.movementType === 'Uscita') stock -= m.quantity;
       });
+
+      const activeLocations = Object.entries(locStockMap)
+        .filter(([_, q]) => q > 0)
+        .map(([name, q]) => ({ name, quantity: q }));
+
+      let displayPosition = (v.position || '').trim();
+      if (!displayPosition) {
+        const parts = [v.collocation, v.shelfNumber ? `Scaffale ${v.shelfNumber}` : ''].filter(Boolean);
+        if (parts.length > 0) {
+          displayPosition = parts.join(' - ');
+        } else if (activeLocations.length > 0) {
+          displayPosition = activeLocations.map(l => l.name).join(', ');
+        }
+      }
+
       return {
         id: v.id,
         vintage: v.vintage || 'N/D',
         bottleType: v.bottleType || 'Normale 0.75',
+        position: v.position || '',
+        displayPosition: displayPosition || '',
+        activeLocations,
         stock
       };
     });
@@ -73,7 +104,27 @@ export async function PUT(request, { params }) {
     const data = await request.json();
     const currentUser = request.headers.get('x-user-username');
     const wineId = parseInt(id);
-    
+
+    // Aggiornamento mirato della posizione per una specifica Cantina Fisica
+    if (data.locationId !== undefined && data.position !== undefined) {
+      const locIdInt = parseInt(data.locationId);
+      const newPos = data.position ? data.position.trim() : null;
+      if (!isNaN(locIdInt)) {
+        await prisma.movement.updateMany({
+          where: { wineId: wineId, locationId: locIdInt },
+          data: { position: newPos }
+        });
+      }
+      if (newPos) {
+        await addCustomMetadata('position', newPos);
+      }
+      const otherKeys = Object.keys(data).filter(k => k !== 'locationId' && k !== 'position');
+      if (otherKeys.length === 0) {
+        syncEventEmitter.emit('db_update');
+        return NextResponse.json({ success: true, position: newPos });
+      }
+    }
+
     // Fetch the current wine to check old photos
     const currentWine = await prisma.wine.findUnique({ where: { id: wineId } });
 
@@ -85,7 +136,7 @@ export async function PUT(request, { params }) {
     if (data.photoBack && currentWine && currentWine.photoBack && data.photoBack !== currentWine.photoBack) {
       newArchivedPhotos.push({ url: currentWine.photoBack, type: 'Retro' });
     }
-    
+
     const allLocations = await prisma.location.findMany();
     const newMovementsToCreate = [];
     const newMovs = data.movements?.filter(m => m.isNew || String(m.id).startsWith('temp-')) || [];
@@ -93,12 +144,14 @@ export async function PUT(request, { params }) {
     for (const m of newMovs) {
       const sourceLocId = parseInt(m.locationId || m.location?.id);
       const sourceLoc = allLocations.find(l => l.id === sourceLocId);
-      
+
       newMovementsToCreate.push({
         date: new Date(m.date),
         movementType: m.movementType,
         quantity: parseInt(m.quantity),
         bottleType: m.bottleType,
+        collocation: m.collocation || null,
+        shelfNumber: m.shelfNumber || null,
         reason: m.reason,
         vendor: m.vendor,
         price: m.price ? parseFloat(m.price) : null,
@@ -135,7 +188,7 @@ export async function PUT(request, { params }) {
       }
     }
 
-    const fieldsToCheck = ['name', 'vintage', 'country', 'region', 'producerCellar', 'producer', 'classification', 'category', 'type', 'notes', 'bottleType', 'alcoholContent', 'tempMin', 'tempMax'];
+    const fieldsToCheck = ['name', 'vintage', 'country', 'region', 'collocation', 'shelfNumber', 'producerCellar', 'producer', 'classification', 'category', 'type', 'notes', 'bottleType', 'alcoholContent', 'tempMin', 'tempMax'];
     let hasTextualChanges = false;
     const changedFieldNames = [];
     for (const field of fieldsToCheck) {
@@ -165,6 +218,9 @@ export async function PUT(request, { params }) {
         vintage: data.vintage,
         country: data.country,
         region: data.region,
+        position: data.position !== undefined ? (data.position ? data.position.trim() : null) : undefined,
+        collocation: data.collocation,
+        shelfNumber: data.shelfNumber,
         producerCellar: data.producerCellar,
         producer: data.producer,
         classification: data.classification,
@@ -256,6 +312,21 @@ export async function PUT(request, { params }) {
       });
     }
 
+    // Auto-register custom metadata to keep in suggestions
+    if (data.position) await addCustomMetadata('position', data.position);
+    if (data.collocation) await addCustomMetadata('collocation', data.collocation);
+    if (data.shelfNumber) await addCustomMetadata('shelfNumber', data.shelfNumber);
+    if (data.producerCellar) await addCustomMetadata('producerCellar', data.producerCellar);
+    if (data.producer) await addCustomMetadata('producer', data.producer);
+    if (data.classification) await addCustomMetadata('classification', data.classification);
+    if (data.category) await addCustomMetadata('category', data.category);
+    if (data.type) await addCustomMetadata('type', data.type);
+
+    for (const m of newMovementsToCreate) {
+      if (m.collocation) await addCustomMetadata('collocation', m.collocation);
+      if (m.shelfNumber) await addCustomMetadata('shelfNumber', m.shelfNumber);
+    }
+
     syncEventEmitter.emit('db_update');
     return NextResponse.json(updatedWine);
   } catch (error) {
@@ -289,11 +360,11 @@ export async function DELETE(request, { params }) {
     // Funzione helper per verificare se una foto è usata da altre annate
     const isPhotoInUseElsewhere = async (url) => {
       if (!url) return true; // se null/empty, non facciamo nulla
-      
+
       const inWines = await prisma.wine.findFirst({
         where: {
           id: { not: wineId },
-          OR: [ { photo: url }, { photoBack: url } ]
+          OR: [{ photo: url }, { photoBack: url }]
         }
       });
       if (inWines) return true;
@@ -338,7 +409,7 @@ export async function DELETE(request, { params }) {
     await prisma.wine.delete({
       where: { id: wineId }
     });
-    
+
     syncEventEmitter.emit('db_update');
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -87,6 +87,48 @@ if (fs.existsSync(dbPath)) {
     }
 
     try {
+      db.prepare('ALTER TABLE Wine ADD COLUMN position TEXT').run();
+      console.log('Added position column to Wine');
+    } catch (e) {
+      console.log('position column on Wine exists or skipped');
+    }
+
+    try {
+      db.prepare('ALTER TABLE Wine ADD COLUMN collocation TEXT').run();
+      console.log('Added collocation column to Wine');
+    } catch (e) {
+      console.log('collocation column on Wine exists or skipped');
+    }
+
+    try {
+      db.prepare('ALTER TABLE Wine ADD COLUMN shelfNumber TEXT').run();
+      console.log('Added shelfNumber column to Wine');
+    } catch (e) {
+      console.log('shelfNumber column on Wine exists or skipped');
+    }
+
+    try {
+      db.prepare('ALTER TABLE Movement ADD COLUMN position TEXT').run();
+      console.log('Added position column to Movement');
+    } catch (e) {
+      console.log('position column on Movement exists or skipped');
+    }
+
+    try {
+      db.prepare('ALTER TABLE Movement ADD COLUMN collocation TEXT').run();
+      console.log('Added collocation column to Movement');
+    } catch (e) {
+      console.log('collocation column on Movement exists or skipped');
+    }
+
+    try {
+      db.prepare('ALTER TABLE Movement ADD COLUMN shelfNumber TEXT').run();
+      console.log('Added shelfNumber column to Movement');
+    } catch (e) {
+      console.log('shelfNumber column on Movement exists or skipped');
+    }
+
+    try {
       db.exec(`
         CREATE TABLE IF NOT EXISTS InventorySession (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
